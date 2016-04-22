@@ -7,6 +7,7 @@ import (
 	"time"
 	"flag"
 	"github.com/tkrex/IDS/common/layers"
+	"github.com/tkrex/IDS/daemon/layers"
 )
 
 func main() {
@@ -15,6 +16,9 @@ func main() {
 	desiredTopic  := "topicInformation"
 	var subscriber common.InformationProducer
 	subscriber = common.NewMqttSubscriber(brokerAddress,desiredTopic)
-	time.Sleep(time.Second * 20)
+	publisher := layers.NewMqttPublisher(brokerAddress, desiredTopic)
+
+	time.Sleep(time.Second * 60)
 	subscriber.Close()
+	publisher.Close()
 }
