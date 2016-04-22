@@ -1,0 +1,12 @@
+# Routes
+# This file defines all application routes (Higher priority routes first)
+# ~~~~
+
+module:testrunner
+
+GET     /                                       App.Index
+
+
+GET     /topics                                 Topics.List
+POST    /topics                                 Topics.Add
+GET     /topics/:topicID                        Topics.Show
