@@ -5,7 +5,6 @@ import (
 	"github.com/tkrex/IDS/common/models"
 	"sync"
 	"sync/atomic"
-	"time"
 	"fmt"
 	"os"
 )
@@ -44,24 +43,23 @@ func (publisher *MqttPublisher) run() {
 	}
 
 	publisher.publisherStarted.Done()
-	for closed := atomic.LoadInt64(&publisher.state) == 1; !closed; closed = atomic.LoadInt64(&publisher.state) == 1 {
-		time.Sleep(time.Second * 5)
-		//Publish
-		fmt.Println("Publish Message")
-		if token := publisher.client.Publish(publisher.publishedTopic, 2, false, "Test"); token.Wait() && token.Error() != nil {
+}
+
+
+func (publisher *MqttPublisher) Publish(topics map[string]*models.Topic) {
+	for _,v := range topics {
+		fmt.Println("Publishing:" + v.Name)
+		if token := publisher.client.Publish(publisher.publishedTopic, 2, false, v.Name); token.Wait() && token.Error() != nil {
 			fmt.Println(token.Error())
 			os.Exit(1)
 		}
-
 	}
-	publisher.publisherStopped.Done()
-}
 
+}
 
 
 func (publisher *MqttPublisher) Close() {
 	atomic.StoreInt64(&publisher.state,1)
-	publisher.publisherStopped.Wait()
 	publisher.client.Disconnect(10)
 	fmt.Println("Publisher Disconnected")
 }

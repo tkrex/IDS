@@ -10,8 +10,14 @@ type InformationProducer interface {
 
 }
 
-type InformationConsumer interface {
+type InformationProcessor interface {
 	Close()
+}
+
+type InformationPublisher interface {
+	Publish(map[string]*models.Topic)
+	Close()
+
 }
 
 type InformationProvider interface {

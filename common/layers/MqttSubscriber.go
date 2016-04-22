@@ -15,7 +15,7 @@ type  MqttSubscriber struct {
   incomingTopicsChannel chan *models.Topic
   client                MQTT.Client
 
-  consumer              InformationConsumer
+  consumer              InformationProcessor
   producerStarted       sync.WaitGroup
   producerStopped       sync.WaitGroup
 
@@ -36,7 +36,7 @@ func NewMqttSubscriber(brokerAddress string, desiredTopic string) *MqttSubscribe
   subscriber.producerStarted.Add(1)
   subscriber.producerStopped.Add(1)
   opts := MQTT.NewClientOptions().AddBroker(brokerAddress)
-  opts.SetClientID("go-simple")
+  opts.SetClientID("subscriber")
       //define a function for the default message handler
   var f MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
       subscriber.OnReceiveMessage(msg)
@@ -51,7 +51,7 @@ func NewMqttSubscriber(brokerAddress string, desiredTopic string) *MqttSubscribe
 }
 
 func (subscriber* MqttSubscriber) createConsumer() {
-  subscriber.consumer = NewDataManager(subscriber)
+  subscriber.consumer = NewTopicProcessor(subscriber)
 }
 
 func (subscriber * MqttSubscriber) CloseConsumer() {
@@ -96,10 +96,9 @@ func (subscriber *MqttSubscriber) StopCollectingTopics() {
 
 
 func (subscriber *MqttSubscriber) OnReceiveMessage(msg MQTT.Message) {
-  subscriber.topicCounter++
-
   topic := models.NewTopic(1,msg.Topic(), msg.Payload())
   if closed := subscriber.State() == 1; !closed {
+    fmt.Println(topic.Name)
     subscriber.incomingTopicsChannel <- topic
   }
 
