@@ -6,7 +6,6 @@ import (
 	"github.com/tkrex/IDS/common/models"
 	"fmt"
 	"time"
-	"github.com/tkrex/IDS/daemon/layers"
 	"github.com/tkrex/IDS/common"
 )
 
@@ -21,6 +20,7 @@ type TopicProcessor struct {
 	incomingTopicChannel chan *models.Topic
 	topicsCollection     map[string]*models.Topic
 	topicPublisher 	     InformationPublisher
+	topicPersistenceManager InformationPersistenceManager
 	publishTicker	*time.Ticker
 
 
@@ -32,6 +32,7 @@ func NewTopicProcessor(producer InformationProducer) *TopicProcessor {
 	processor.topicsCollection = make(map[string]*models.Topic)
 	processor.processorStarted.Add(1)
 	processor.processorStopped.Add(1)
+	processor.topicPersistenceManager = NewMemoryPersistenceManager()
 
 	go processor.run()
 	processor.processorStarted.Wait()
@@ -56,7 +57,7 @@ func (processor *TopicProcessor)  Close() {
 
 func  (processor *TopicProcessor) run() {
 
-	processor.topicPublisher = layers.NewMqttPublisher("tcp://localhost:1883", "burst")
+	processor.topicPublisher = NewMqttPublisher("tcp://localhost:1883", "burst")
 	processor.processorStarted.Done()
 
 	processor.forwardTopics()
@@ -71,11 +72,8 @@ func (processor *TopicProcessor) forwardTopics() {
 	go func() {
 		for _ = range processor.publishTicker.C {
 			fmt.Println("Tick")
-			topics := make(map[string]*models.Topic)
-			for k, v := range processor.topicsCollection {
-				topics[k] = v
-			}
-			go processor.topicPublisher.Publish(topics)
+			topics := processor.topicPersistenceManager.Topics()
+			go processor.topicPublisher.PublishTopics(topics)
 		}
 	}()
 }
@@ -83,14 +81,14 @@ func (processor *TopicProcessor) storeTopic() {
 
 	topic, ok :=  <-processor.incomingTopicChannel
 	if topic != nil {
-		if existingTopic, ok := processor.topicsCollection[topic.Name]; ok {
+		if existingTopic, found := processor.topicPersistenceManager.TopicWithName(topic.Name); found {
 			newUpdateInterval := topic.LastUpdateTimeStamp.Sub(existingTopic.LastUpdateTimeStamp).Seconds()
 			calculateUpdateBehavior(&existingTopic.UpdateBehavior,int(newUpdateInterval))
 			existingTopic.LastPayload = topic.LastPayload
 			existingTopic.LastUpdateTimeStamp = topic.LastUpdateTimeStamp
-			processor.topicsCollection[topic.Name] = existingTopic
+			processor.topicPersistenceManager.StoreTopic(existingTopic)
 		} else {
-			processor.topicsCollection[topic.Name] = topic
+			processor.topicPersistenceManager.StoreTopic(topic)
 		}
 	}
 	if !ok {

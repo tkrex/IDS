@@ -1,4 +1,4 @@
-package layers
+package common
 
 import (
 	"github.com/eclipse/paho.mqtt.golang"
@@ -46,15 +46,23 @@ func (publisher *MqttPublisher) run() {
 }
 
 
-func (publisher *MqttPublisher) Publish(topics map[string]*models.Topic) {
-	for _,v := range topics {
-		fmt.Println("Publishing:" + v.Name)
-		if token := publisher.client.Publish(publisher.publishedTopic, 2, false, v.Name); token.Wait() && token.Error() != nil {
+func (publisher *MqttPublisher) PublishTopics(topics []*models.Topic) {
+	for _,topic := range topics {
+		fmt.Println("Publishing:" + topic.Name)
+		if token := publisher.client.Publish(publisher.publishedTopic, 2, false, topic.Name); token.Wait() && token.Error() != nil {
 			fmt.Println(token.Error())
 			os.Exit(1)
 		}
 	}
 
+}
+
+func (publisher *MqttPublisher) PublishTopic(topic *models.Topic) {
+	fmt.Println("Publishing:" + topic.Name)
+	if token := publisher.client.Publish(publisher.publishedTopic, 2, false, topic.Name); token.Wait() && token.Error() != nil {
+		fmt.Println(token.Error())
+		os.Exit(1)
+	}
 }
 
 

@@ -9,7 +9,7 @@ type Topic struct {
 	ID		    int        `json:"id"`
 	Name                string        `json:"name"`
 	LastPayload         []byte        `json:"payload"`
-	payloadSimilarity   float32
+	payloadSimilarity   float32        `json:"payloadSimilarity"`
 	LastUpdateTimeStamp time.Time        `json:"lastUpdate"`
 	UpdateBehavior      UpdateBehavior
 	Domain		RealWorldDomain   `json:"domain"`
@@ -18,10 +18,10 @@ type Topic struct {
 
 type UpdateBehavior struct {
 	NumberOfUpdates	    int		  `json:"numberOfUpdates"`
-	AverageUpdateIntervalInSeconds int
-	MinimumUpdateIntervalInSeconds int
-	MaximumUpdateIntervalInSeconds int
-	UpdateReliability float32
+	AverageUpdateIntervalInSeconds int `json:"averageInterval"`
+	MinimumUpdateIntervalInSeconds int `json:"minimumInterval"`
+	MaximumUpdateIntervalInSeconds int `json:"maximumInterval"`
+	UpdateReliability float32          `json:"reliability"`
 }
 
 
