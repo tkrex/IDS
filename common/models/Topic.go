@@ -4,16 +4,25 @@ import (
 	"time"
 )
 
+
 type Topic struct {
 	ID		    int        `json:"id"`
 	Name                string        `json:"name"`
 	LastPayload         []byte        `json:"payload"`
+	payloadSimilarity   float32
 	LastUpdateTimeStamp time.Time        `json:"lastUpdate"`
-	UpdateInterval      int      `json:"updateInterval"`
-	NumberOfUpdates	    int		  `json:"numberOfUpdates"`
+	UpdateBehavior      UpdateBehavior
 	Domain		RealWorldDomain   `json:"domain"`
 }
 
+
+type UpdateBehavior struct {
+	NumberOfUpdates	    int		  `json:"numberOfUpdates"`
+	AverageUpdateIntervalInSeconds int
+	MinimumUpdateIntervalInSeconds int
+	MaximumUpdateIntervalInSeconds int
+	UpdateReliability float32
+}
 
 
 func NewTopic(id int, name string, payload []byte) *Topic {

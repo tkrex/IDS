@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 	"github.com/tkrex/IDS/daemon/layers"
+	"github.com/tkrex/IDS/common"
 )
 
 type TopicProcessor struct {
@@ -34,7 +35,7 @@ func NewTopicProcessor(producer InformationProducer) *TopicProcessor {
 
 	go processor.run()
 	processor.processorStarted.Wait()
-	fmt.Println("Consumer Created")
+	fmt.Println("Producer Created")
 	return processor
 }
 
@@ -84,10 +85,9 @@ func (processor *TopicProcessor) storeTopic() {
 	if topic != nil {
 		if existingTopic, ok := processor.topicsCollection[topic.Name]; ok {
 			newUpdateInterval := topic.LastUpdateTimeStamp.Sub(existingTopic.LastUpdateTimeStamp).Seconds()
-			existingTopic.UpdateInterval = int(newUpdateInterval)
+			calculateUpdateBehavior(&existingTopic.UpdateBehavior,int(newUpdateInterval))
 			existingTopic.LastPayload = topic.LastPayload
 			existingTopic.LastUpdateTimeStamp = topic.LastUpdateTimeStamp
-			existingTopic.NumberOfUpdates++
 			processor.topicsCollection[topic.Name] = existingTopic
 		} else {
 			processor.topicsCollection[topic.Name] = topic
@@ -96,4 +96,18 @@ func (processor *TopicProcessor) storeTopic() {
 	if !ok {
 		fmt.Println("IncomingTopicsChannel closed")
 	}
+}
+
+func calculateUpdateBehavior(updateBehavior *models.UpdateBehavior, newUpdateInterval int) {
+	if updateBehavior.NumberOfUpdates == 0 {
+		updateBehavior.AverageUpdateIntervalInSeconds = newUpdateInterval
+		updateBehavior.MaximumUpdateIntervalInSeconds = newUpdateInterval
+		updateBehavior.MinimumUpdateIntervalInSeconds = newUpdateInterval
+	} else {
+		updateBehavior.MaximumUpdateIntervalInSeconds = common.Max(updateBehavior.MaximumUpdateIntervalInSeconds,newUpdateInterval)
+		updateBehavior.MinimumUpdateIntervalInSeconds = common.Min(updateBehavior.MinimumUpdateIntervalInSeconds,newUpdateInterval)
+		updateBehavior.AverageUpdateIntervalInSeconds = (updateBehavior.AverageUpdateIntervalInSeconds * updateBehavior.NumberOfUpdates + newUpdateInterval) / (updateBehavior.NumberOfUpdates +1)
+	}
+
+	updateBehavior.NumberOfUpdates++
 }
