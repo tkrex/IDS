@@ -6,11 +6,11 @@ import (
 	"sync"
 	"sync/atomic"
 	"fmt"
+	"encoding/json"
 )
 
 type MqttPublisher struct {
 	state                 int64
-	outgoingTopicsChannel chan *models.Topic
 	client                mqtt.Client
 	config *models.MqttClientConfiguration
 
@@ -40,17 +40,17 @@ func (publisher *MqttPublisher) run() {
 	publisher.publisherStarted.Done()
 }
 
-func (publisher *MqttPublisher) PublishTopics(topics []models.Topic)  {
-	for _,topic := range topics {
-		if err := publisher.PublishTopic(topic); err != nil {
-			fmt.Printf("Publish Error: %s",err)
-		}
-	}
-}
+func (publisher *MqttPublisher) PublishTopics(topics []models.Topic) error  {
 
-func (publisher *MqttPublisher) PublishTopic(topic models.Topic) error {
-	fmt.Println("Publishing:" + topic.Name)
-	if token := publisher.client.Publish(publisher.config.Topic(), 2, false, topic.Name); token.Wait() && token.Error() != nil {
+	broker := models.NewBroker(3,"127.0.0.1","krex.com")
+	message := models.NewTopicInformationMessage(broker,topics)
+
+	json, err := json.Marshal(message)
+	if err != nil {
+		fmt.Printf("Marshalling Error: %s",err)
+		return  err
+	}
+	if token := publisher.client.Publish(publisher.config.Topic(), 2, false, json); token.Wait() && token.Error() != nil {
 		return token.Error()
 	}
 	return nil

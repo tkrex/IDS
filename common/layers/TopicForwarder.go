@@ -2,7 +2,6 @@ package common
 
 import (
 	"time"
-	"fmt"
 	"sync"
 	"github.com/tkrex/IDS/common/models"
 )
@@ -36,7 +35,6 @@ func (forwarder *TopicForwarder) run() {
 	go func() {
 		for _ = range forwarder.forwardTicker.C {
 			topics := forwarder.persistenceManager.Topics()
-			fmt.Printf("Stored Topics: %d ", len(topics))
 			go forwarder.publisher.PublishTopics(topics)
 		}
 	}()

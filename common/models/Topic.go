@@ -2,6 +2,7 @@ package models
 
 import (
 	"time"
+	"github.com/tkrex/IDS/common"
 )
 
 
@@ -11,7 +12,7 @@ type Topic struct {
 	LastPayload         []byte        `json:"payload"`
 	payloadSimilarity   float32        `json:"payloadSimilarity"`
 	LastUpdateTimeStamp time.Time        `json:"lastUpdate"`
-	UpdateBehavior      UpdateBehavior
+	UpdateBehavior      *UpdateBehavior
 	Domain		RealWorldDomain   `json:"domain"`
 }
 
@@ -24,6 +25,10 @@ type UpdateBehavior struct {
 	UpdateReliability float32          `json:"reliability"`
 }
 
+func NewUpdateBehavior() *UpdateBehavior {
+	behavior := new(UpdateBehavior)
+	return behavior
+}
 
 func NewTopic(id int, name string, payload []byte) *Topic {
 	topic := new(Topic)
@@ -31,33 +36,24 @@ func NewTopic(id int, name string, payload []byte) *Topic {
 	topic.Name = name
 	topic.LastPayload = payload
 	topic.LastUpdateTimeStamp = time.Now()
+	topic.UpdateBehavior = NewUpdateBehavior()
 	return topic
 }
 
-//func (t *Topic) UnmarshalJSON(data []byte) error {
-//	if (t == nil) {
-//		return errors.New("Structure: UnmarshalJSON on nil pointer")
-//	}
-//	var fields map[string]interface{}
-//	json.Unmarshal(data, &fields)
-//	id := int(fields["id"].(float64))
-//
-//	name, errName := fields["name"].(string)
-//
-//	if !errName  {
-//		return errors.New("Name Parsing error")
-//	}
-//	//t.LastPayload= fields["payload"].([]byte)
-//	//t.LastUpdateTimeStamp = time.fields["lastUpdate"].(string)
-//	//t.UpdateInterval = fields["updateInterval"].(int)
-//	//t.NumberOfUpdates = fields["numberOfUpdates"].(int)
-//	t.Name = name
-//	t.ID = id
-//	var domain RealWorldDomain
-//	if err := json.Unmarshal(fields["domain"].([]byte),&domain); err != nil {
-//		return err
-//	}
-//	t.Domain = domain
-//	return nil
-//}
+func (topic *Topic) CalculateUpdateBehavior(newUpdateInterval int) {
+	if topic.UpdateBehavior.NumberOfUpdates == 0 {
+		topic.UpdateBehavior.NumberOfUpdates++
+		return
+	}
+	if topic.UpdateBehavior.NumberOfUpdates == 1 {
+		topic.UpdateBehavior.AverageUpdateIntervalInSeconds = newUpdateInterval
+		topic.UpdateBehavior.MaximumUpdateIntervalInSeconds = newUpdateInterval
+		topic.UpdateBehavior.MinimumUpdateIntervalInSeconds = newUpdateInterval
+	} else {
+		topic.UpdateBehavior.MaximumUpdateIntervalInSeconds = common.Max(topic.UpdateBehavior.MaximumUpdateIntervalInSeconds,newUpdateInterval)
+		topic.UpdateBehavior.MinimumUpdateIntervalInSeconds = common.Min(topic.UpdateBehavior.MinimumUpdateIntervalInSeconds,newUpdateInterval)
+		topic.UpdateBehavior.AverageUpdateIntervalInSeconds = (topic.UpdateBehavior.AverageUpdateIntervalInSeconds * topic.UpdateBehavior.NumberOfUpdates + newUpdateInterval) / (topic.UpdateBehavior.NumberOfUpdates + 1)
+	}
+	topic.UpdateBehavior.NumberOfUpdates++
+}
 

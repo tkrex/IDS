@@ -23,9 +23,6 @@ type  MqttSubscriber struct {
 }
 
 
-func (collector *MqttSubscriber) InformationChannel() chan *models.Topic {
-  return collector.outgoingTopicsChannel
-}
 
 
 func NewMqttSubscriber(subscriberConfig *models.MqttClientConfiguration, outgoingTopicsChannel chan *models.Topic ) *MqttSubscriber {
@@ -86,10 +83,10 @@ func (subscriber *MqttSubscriber) stopCollectingTopics() {
 
 
 func (subscriber *MqttSubscriber) onReceiveMessage(msg MQTT.Message) {
-  topic := models.NewTopic(1,msg.Topic(), msg.Payload())
+  rawTopic := models.NewTopic(1,msg.Topic(), msg.Payload())
   if closed := subscriber.State() == 1; !closed {
-    fmt.Println(topic.Name)
-    subscriber.outgoingTopicsChannel <- topic
+    fmt.Println(rawTopic.Name)
+    subscriber.outgoingTopicsChannel <- rawTopic
   }
 
 }

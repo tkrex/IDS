@@ -6,9 +6,7 @@ import (
 
 type InformationProducer interface {
 	Run()
-	InformationChannel() chan *models.Topic
 	Close()
-
 }
 
 type InformationProcessor interface {
@@ -16,7 +14,7 @@ type InformationProcessor interface {
 }
 
 type InformationPublisher interface {
-	PublishTopics([]models.Topic)
+	PublishTopics([]models.Topic) error
 	Close()
 
 }
