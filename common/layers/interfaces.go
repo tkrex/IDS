@@ -5,6 +5,7 @@ import (
 )
 
 type InformationProducer interface {
+	Run()
 	InformationChannel() chan *models.Topic
 	Close()
 
@@ -15,15 +16,16 @@ type InformationProcessor interface {
 }
 
 type InformationPublisher interface {
-	PublishTopics([]*models.Topic)
+	PublishTopics([]models.Topic)
 	Close()
 
 }
 
 type InformationPersistenceManager interface {
-	Topics() []*models.Topic
-	TopicWithName(string) (*models.Topic,bool)
-	StoreTopic(*models.Topic)
+	Topics() [] models.Topic
+	TopicWithName(string) ( models.Topic,bool)
+	StoreTopic( models.Topic)
+	NumberOfTopics() int
 }
 
 type InformationProvider interface {

@@ -6,25 +6,21 @@ import (
 	"sync"
 	"sync/atomic"
 	"fmt"
-	"os"
 )
 
 type MqttPublisher struct {
 	state                 int64
 	outgoingTopicsChannel chan *models.Topic
 	client                mqtt.Client
+	config *models.MqttClientConfiguration
 
 	publisherStarted       sync.WaitGroup
 	publisherStopped       sync.WaitGroup
-
-	publishedTopic          string
-	brokerAddress		string
 }
 
-func NewMqttPublisher(brokerAddress string, publishedTopic string) *MqttPublisher {
+func NewMqttPublisher(config *models.MqttClientConfiguration) *MqttPublisher {
 	publisher := new(MqttPublisher)
-	publisher.publishedTopic = publishedTopic
-	publisher.brokerAddress = brokerAddress
+	publisher.config = config
 	publisher.publisherStarted.Add(1)
 	publisher.publisherStopped.Add(1)
 	go publisher.run()
@@ -34,41 +30,34 @@ func NewMqttPublisher(brokerAddress string, publishedTopic string) *MqttPublishe
 
 func (publisher *MqttPublisher) run() {
 
-	opts := mqtt.NewClientOptions().AddBroker(publisher.brokerAddress)
-	opts.SetClientID("publisher")
+	opts := mqtt.NewClientOptions().AddBroker(publisher.config.BrokerAddress())
+	opts.SetClientID(publisher.config.ClientID())
 	publisher.client = mqtt.NewClient(opts)
 
 	if token := publisher.client.Connect(); token.Wait() && token.Error() != nil {
 		panic(token.Error())
 	}
-
 	publisher.publisherStarted.Done()
 }
 
-
-func (publisher *MqttPublisher) PublishTopics(topics []*models.Topic) {
+func (publisher *MqttPublisher) PublishTopics(topics []models.Topic)  {
 	for _,topic := range topics {
-		fmt.Println("Publishing:" + topic.Name)
-		if token := publisher.client.Publish(publisher.publishedTopic, 2, false, topic.Name); token.Wait() && token.Error() != nil {
-			fmt.Println(token.Error())
-			os.Exit(1)
+		if err := publisher.PublishTopic(topic); err != nil {
+			fmt.Printf("Publish Error: %s",err)
 		}
 	}
-
 }
 
-func (publisher *MqttPublisher) PublishTopic(topic *models.Topic) {
+func (publisher *MqttPublisher) PublishTopic(topic models.Topic) error {
 	fmt.Println("Publishing:" + topic.Name)
-	if token := publisher.client.Publish(publisher.publishedTopic, 2, false, topic.Name); token.Wait() && token.Error() != nil {
-		fmt.Println(token.Error())
-		os.Exit(1)
+	if token := publisher.client.Publish(publisher.config.Topic(), 2, false, topic.Name); token.Wait() && token.Error() != nil {
+		return token.Error()
 	}
+	return nil
 }
-
 
 func (publisher *MqttPublisher) Close() {
 	atomic.StoreInt64(&publisher.state,1)
 	publisher.client.Disconnect(10)
 	fmt.Println("Publisher Disconnected")
 }
-

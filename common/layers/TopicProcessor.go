@@ -5,7 +5,6 @@ import (
 	"sync"
 	"github.com/tkrex/IDS/common/models"
 	"fmt"
-	"time"
 	"github.com/tkrex/IDS/common"
 )
 
@@ -18,22 +17,15 @@ type TopicProcessor struct {
 	processorStarted     sync.WaitGroup
 	processorStopped     sync.WaitGroup
 	incomingTopicChannel chan *models.Topic
-	topicsCollection     map[string]*models.Topic
-	topicPublisher 	     InformationPublisher
 	topicPersistenceManager InformationPersistenceManager
-	publishTicker	*time.Ticker
-
-
 }
 
-func NewTopicProcessor(producer InformationProducer) *TopicProcessor {
+func NewTopicProcessor(persistenceManager InformationPersistenceManager, incomingTopicChannel chan *models.Topic ) *TopicProcessor {
 	processor := new(TopicProcessor)
-	processor.incomingTopicChannel = producer.InformationChannel()
-	processor.topicsCollection = make(map[string]*models.Topic)
 	processor.processorStarted.Add(1)
 	processor.processorStopped.Add(1)
-	processor.topicPersistenceManager = NewMemoryPersistenceManager()
-
+	processor.topicPersistenceManager = persistenceManager
+	processor.incomingTopicChannel = incomingTopicChannel
 	go processor.run()
 	processor.processorStarted.Wait()
 	fmt.Println("Producer Created")
@@ -48,36 +40,28 @@ func (processor *TopicProcessor) State() int64 {
 
 func (processor *TopicProcessor)  Close() {
 	fmt.Println("Closing Processor")
-	processor.publishTicker.Stop()
-	processor.topicPublisher.Close()
 	atomic.StoreInt64(&processor.state,1)
 	processor.processorStopped.Wait()
 	fmt.Println("Processor Closed")
 }
 
+
+
 func  (processor *TopicProcessor) run() {
 
-	processor.topicPublisher = NewMqttPublisher("tcp://localhost:1883", "burst")
 	processor.processorStarted.Done()
-
-	processor.forwardTopics()
 	for closed := atomic.LoadInt64(&processor.state) == 1; !closed; closed = atomic.LoadInt64(&processor.state) == 1 {
-		processor.storeTopic()
+		open := processor.ProcessIncomingTopics()
+		if !open{
+			processor.Close()
+			break
+		}
 	}
 	processor.processorStopped.Done()
 }
 
-func (processor *TopicProcessor) forwardTopics() {
-	processor.publishTicker = time.NewTicker(time.Second * 10)
-	go func() {
-		for _ = range processor.publishTicker.C {
-			fmt.Println("Tick")
-			topics := processor.topicPersistenceManager.Topics()
-			go processor.topicPublisher.PublishTopics(topics)
-		}
-	}()
-}
-func (processor *TopicProcessor) storeTopic() {
+
+func (processor *TopicProcessor) ProcessIncomingTopics() bool {
 
 	topic, ok :=  <-processor.incomingTopicChannel
 	if topic != nil {
@@ -88,12 +72,10 @@ func (processor *TopicProcessor) storeTopic() {
 			existingTopic.LastUpdateTimeStamp = topic.LastUpdateTimeStamp
 			processor.topicPersistenceManager.StoreTopic(existingTopic)
 		} else {
-			processor.topicPersistenceManager.StoreTopic(topic)
+			processor.topicPersistenceManager.StoreTopic(*topic)
 		}
 	}
-	if !ok {
-		fmt.Println("IncomingTopicsChannel closed")
-	}
+	return ok
 }
 
 func calculateUpdateBehavior(updateBehavior *models.UpdateBehavior, newUpdateInterval int) {
@@ -106,6 +88,5 @@ func calculateUpdateBehavior(updateBehavior *models.UpdateBehavior, newUpdateInt
 		updateBehavior.MinimumUpdateIntervalInSeconds = common.Min(updateBehavior.MinimumUpdateIntervalInSeconds,newUpdateInterval)
 		updateBehavior.AverageUpdateIntervalInSeconds = (updateBehavior.AverageUpdateIntervalInSeconds * updateBehavior.NumberOfUpdates + newUpdateInterval) / (updateBehavior.NumberOfUpdates +1)
 	}
-
 	updateBehavior.NumberOfUpdates++
 }
