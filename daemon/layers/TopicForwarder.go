@@ -5,6 +5,8 @@ import (
 	"sync"
 	"github.com/tkrex/IDS/common/models"
 	"github.com/tkrex/IDS/common/layers"
+	"encoding/json"
+	"fmt"
 )
 
 type TopicForwarder struct {
@@ -34,7 +36,15 @@ func (forwarder *TopicForwarder) run() {
 	go func() {
 		for _ = range forwarder.forwardTicker.C {
 			topics := FindAllTopics()
-			go forwarder.publisher.PublishTopics(topics)
+			broker := models.NewBroker(3,"127.0.0.1","krex.com")
+			domain := models.NewRealWorldDomain("testDomain")
+			message := models.NewDomainInformationMessage(domain,broker,topics)
+			json, err := json.Marshal(message)
+			if err != nil {
+				fmt.Printf("Marshalling Error: %s",err)
+				return
+			}
+			go forwarder.publisher.Publish(json)
 		}
 	}()
 }

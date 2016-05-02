@@ -16,14 +16,12 @@ type DomainInformationProcessor struct {
 	processorStarted                    sync.WaitGroup
 	processorStopped                    sync.WaitGroup
 	incomingTopicChannel                chan *models.RawTopicMessage
-	domainInformationPersistenceManager DomainInformationPersistenceManager
 }
 
-func NewDomainInformationProcessor(persistenceManager DomainInformationPersistenceManager, incomingTopicChannel chan *models.RawTopicMessage) *DomainInformationProcessor {
+func NewDomainInformationProcessor(incomingTopicChannel chan *models.RawTopicMessage) *DomainInformationProcessor {
 	processor := new(DomainInformationProcessor)
 	processor.processorStarted.Add(1)
 	processor.processorStopped.Add(1)
-	processor.domainInformationPersistenceManager = persistenceManager
 	processor.incomingTopicChannel = incomingTopicChannel
 	go processor.run()
 	processor.processorStarted.Wait()
@@ -69,5 +67,5 @@ func (processor *DomainInformationProcessor) processDomainInformationMessage(top
 		fmt.Println(err)
 		return
 	}
-	processor.domainInformationPersistenceManager.Store(&domainInformationMessage)
+	StoreDomainInformation(&domainInformationMessage)
 }

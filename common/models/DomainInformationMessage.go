@@ -1,9 +1,9 @@
 package models
 
 type DomainInformationMessage struct {
-	RealWorldDomain *RealWorldDomain `json:"domain"`
-	Broker   *Broker `json:"broker"`
-	Topics   []*Topic `json:"topics"`
+	RealWorldDomain *RealWorldDomain `json:"domain" bson:"domain"`
+	Broker   *Broker `json:"broker" bson:"broker"`
+	Topics   []*Topic `json:"topics" bson:"topics"`
 }
 
 func NewDomainInformationMessage(domain *RealWorldDomain, broker *Broker, topics []*Topic) *DomainInformationMessage {

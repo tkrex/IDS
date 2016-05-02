@@ -12,18 +12,17 @@ import (
 
 func main() {
 
-	// persistence layer
-	var persistenceManager := domainController.NewDomainInformationMemoryPersistenceManager()
+
 	//processing layer
 	topicChannel := make(chan *models.RawTopicMessage,100)
-	_ = domainController.NewDomainInformationProcessor(persistenceManager,topicChannel)
+	_ = domainController.NewDomainInformationProcessor(topicChannel)
 	//producer layer
 	brokerAddress := "tcp://localhost:1883"
 	desiredTopic  := "domainController"
 	subscriberConfig := models.NewMqttClientConfiguration(brokerAddress,desiredTopic,"domainController")
 	subscriber := common.NewMqttSubscriber(subscriberConfig,topicChannel,false)
 
-	_ = domainController.NewRestInformationProvider(persistenceManager,"8080")
+	_ = domainController.NewRestInformationProvider("8080")
 	for {
 		time.Sleep(time.Second)
 	}

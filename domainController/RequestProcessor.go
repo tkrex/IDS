@@ -11,7 +11,7 @@ import (
 )
 
 type RequestHandler struct {
-	forwardingTable ForwardingTable
+	forwardingTable map[string]string
 }
 
 type PendingRequestTable chan []*models.Topic
@@ -24,7 +24,7 @@ func NewRequestProcessor() *RequestHandler {
 	return handler
 }
 
-func (handler *RequestHandler) handleDomainInformationRequest(request *http.Request) (*[]models.Topic,error) {
+func (handler *RequestHandler) handleDomainInformationRequest(request *http.Request) ([]*models.DomainInformationMessage,error) {
 	vars := mux.Vars(request)
 	domain, _ := vars["domainName"]
 
@@ -35,8 +35,9 @@ func (handler *RequestHandler) handleDomainInformationRequest(request *http.Requ
 
 	if forwardAddress == "self" {
 		//Request Information from persistence Layer
+		domainInformation, error := FindDomainInformationByDomainName(domain)
 
-		return nil, nil
+		return domainInformation, error
 
 	} else {
 		//Forward address to specified address
@@ -50,9 +51,9 @@ func (handler *RequestHandler) handleDomainInformationRequest(request *http.Requ
 			fmt.Printf("%s", err)
 			return nil,err
 		}
-		var domainInformationMessage *models.DomainInformationMessage
+		var domainInformationMessage []*models.DomainInformationMessage
 		json.Unmarshal([]byte(string(contents)), &domainInformationMessage)
-		return &domainInformationMessage,nil
+		return domainInformationMessage,nil
 	}
 }
 

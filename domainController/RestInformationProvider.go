@@ -9,7 +9,6 @@ import (
 )
 
 type RestInformationProvider struct {
-	persistenceManager DomainInformationPersistenceManager
 	port string
 	providerStarted sync.WaitGroup
 	providerStopped sync.WaitGroup
@@ -17,9 +16,8 @@ type RestInformationProvider struct {
 }
 
 
-func NewRestInformationProvider(persistenceManager DomainInformationPersistenceManager, port string) *RestInformationProvider {
+func NewRestInformationProvider(port string) *RestInformationProvider {
 	provider := new(RestInformationProvider)
-	provider.persistenceManager = persistenceManager
 	provider.providerStarted.Add(1)
 	provider.providerStopped.Add(1)
 	go provider.run(port)
@@ -60,7 +58,11 @@ func (provider *RestInformationProvider) handleDomainInformation(res http.Respon
 }
 
 func (provider *RestInformationProvider) handleBrokers(res http.ResponseWriter, req *http.Request) {
-	brokers := provider.persistenceManager.Brokers()
+	brokers, err := FindAllBrokers()
+	if err != nil {
+		http.Error(res, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	fmt.Println(req.RemoteAddr)
 	res.Header().Set("Content-Type", "application/json")
 

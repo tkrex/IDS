@@ -14,7 +14,7 @@ type InformationProcessor interface {
 }
 
 type InformationPublisher interface {
-	PublishTopics([]*models.Topic) error
+	Publish(data []byte) error
 	Close()
 
 }

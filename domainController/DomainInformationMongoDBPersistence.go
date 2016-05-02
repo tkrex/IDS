@@ -8,14 +8,12 @@ import (
 )
 
 const (
-	Host     = "localhost:27017"
+	Host = "localhost:27017"
 	Username = "example"
 	Password = "example"
 	Database = "IDSDomainController"
-	Collection = "domainInformarmation"
+	Collection = "domainInformation"
 )
-
-
 
 func OpenSession() *mgo.Session {
 	//session, err := mgo.DialWithInfo(&mgo.DialInfo{
@@ -28,7 +26,7 @@ func OpenSession() *mgo.Session {
 	//	},
 	//})
 
-	session , err := mgo.Dial(Host)
+	session, err := mgo.Dial(Host)
 
 	if err != nil {
 		panic(err)
@@ -36,7 +34,7 @@ func OpenSession() *mgo.Session {
 
 	return session
 }
-func  StoreDomainInformation(domainInformationMessages []*models.DomainInformationMessage) {
+func StoreDomainInformation(domainInformationMessage *models.DomainInformationMessage) {
 
 	session := OpenSession()
 
@@ -45,7 +43,7 @@ func  StoreDomainInformation(domainInformationMessages []*models.DomainInformati
 
 	coll := session.DB(Database).C(Collection)
 	index := mgo.Index{
-		Key:        []string{"broker.id","domain.id"},
+		Key:        []string{"broker.id"},
 		Unique:     true,
 		DropDups:   true,
 		Background: true,
@@ -53,43 +51,52 @@ func  StoreDomainInformation(domainInformationMessages []*models.DomainInformati
 	}
 	_ = coll.EnsureIndex(index)
 
-
-	bulkTransaction := coll.Bulk()
-
-	for _,message := range domainInformationMessages {
-		bulkTransaction.Remove(bson.M{"broker.id": message.Broker.ID })
-		bulkTransaction.Insert(message)
-
-	}
-	bulkResult, err := bulkTransaction.Run()
+	coll.Remove(bson.M{"broker.id": domainInformationMessage.Broker.ID })
+	err := coll.Insert(domainInformationMessage)
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Println(bulkResult)
 }
-
 
 func FindAllDomainInformation() ([]*models.DomainInformationMessage, error) {
 	session := OpenSession()
 	defer session.Close()
 	coll := session.DB(Database).C(Collection)
 	var domainInformation []*models.DomainInformationMessage
-	if err := coll.Find(nil).All(&domainInformation); err != nil {
-		fmt.Println(err)
-		return err
+	var error error
+
+	if error := coll.Find(nil).All(&domainInformation); error != nil {
+		fmt.Println(error)
 	}
-	return domainInformation
+	return domainInformation, error
 }
 
-func FindDomainInformationByDomainName(domainName string) (*models.DomainInformationMessage, error) {
+func FindDomainInformationByDomainName(domainName string) ([]*models.DomainInformationMessage, error) {
 	session := OpenSession()
 	defer session.Close()
-	var domainInformation *models.DomainInformationMessage
+	var domainInformation []*models.DomainInformationMessage
+	var error error
 	coll := session.DB(Database).C(Collection)
-	if err := coll.Find(bson.M{"domain.name": domainName}).One(&domainInformation); err != nil {
-		fmt.Println(err)
-		return err
+	if error = coll.Find(bson.M{"realworlddomain.name": domainName}).All(&domainInformation); error != nil {
+		fmt.Println(error)
 	}
-	return domainInformation
+	return domainInformation, error
+}
+
+func FindAllBrokers() ([]*models.Broker,error) {
+	session := OpenSession()
+	defer session.Close()
+	coll := session.DB(Database).C(Collection)
+	var domainInformation []*models.DomainInformationMessage
+	var error error
+
+	if error := coll.Find(nil).Select(bson.M{"broker":1}).All(&domainInformation); error != nil {
+		fmt.Printf("Query Error: %s",error)
+	}
+	brokers := make([]*models.Broker,0,len(domainInformation))
+	for _,information := range domainInformation {
+		brokers = append(brokers,information.Broker)
+	}
+	return brokers, error
 }
 

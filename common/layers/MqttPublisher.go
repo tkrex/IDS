@@ -6,7 +6,6 @@ import (
 	"sync"
 	"sync/atomic"
 	"fmt"
-	"encoding/json"
 )
 
 type MqttPublisher struct {
@@ -42,17 +41,8 @@ func (publisher *MqttPublisher) run() {
 
 
 
-func (publisher *MqttPublisher) PublishTopics(topics []*models.Topic) error  {
-
-	broker := models.NewBroker(3,"127.0.0.1","krex.com")
-	domain := models.NewRealWorldDomain(1,"testDomain")
-	message := models.NewDomainInformationMessage(domain,broker,topics)
-	json, err := json.Marshal(message)
-	if err != nil {
-		fmt.Printf("Marshalling Error: %s",err)
-		return  err
-	}
-	if token := publisher.client.Publish(publisher.config.Topic(), 2, false, json); token.Wait() && token.Error() != nil {
+func (publisher *MqttPublisher) Publish(data []byte) error  {
+	if token := publisher.client.Publish(publisher.config.Topic(), 2, false, data); token.Wait() && token.Error() != nil {
 		return token.Error()
 	}
 	fmt.Println("Published to Domain Controller")
