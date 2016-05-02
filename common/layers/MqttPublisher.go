@@ -40,11 +40,13 @@ func (publisher *MqttPublisher) run() {
 	publisher.publisherStarted.Done()
 }
 
-func (publisher *MqttPublisher) PublishTopics(topics []models.Topic) error  {
+
+
+func (publisher *MqttPublisher) PublishTopics(topics []*models.Topic) error  {
 
 	broker := models.NewBroker(3,"127.0.0.1","krex.com")
-	message := models.NewTopicInformationMessage(broker,topics)
-
+	domain := models.NewRealWorldDomain(1,"testDomain")
+	message := models.NewDomainInformationMessage(domain,broker,topics)
 	json, err := json.Marshal(message)
 	if err != nil {
 		fmt.Printf("Marshalling Error: %s",err)
@@ -53,6 +55,7 @@ func (publisher *MqttPublisher) PublishTopics(topics []models.Topic) error  {
 	if token := publisher.client.Publish(publisher.config.Topic(), 2, false, json); token.Wait() && token.Error() != nil {
 		return token.Error()
 	}
+	fmt.Println("Published to Domain Controller")
 	return nil
 }
 

@@ -4,18 +4,18 @@ import (
 	"github.com/tkrex/IDS/common/models"
 )
 
-type MemoryPersistenceManager struct {
+type MemoryTopicPersistenceManager struct {
 	topics map[string] models.Topic
 }
 
-func NewMemoryPersistenceManager() *MemoryPersistenceManager {
-	manager := new(MemoryPersistenceManager)
+func NewMemoryTopicPersistenceManager() *MemoryTopicPersistenceManager {
+	manager := new(MemoryTopicPersistenceManager)
 	manager.topics = make(map[string]models.Topic)
 	return manager
 }
 
 
-func (manager *MemoryPersistenceManager) Topics() []models.Topic {
+func (manager *MemoryTopicPersistenceManager) Topics() []models.Topic {
 	topicArray  := make([]models.Topic,len(manager.topics))
 
 	index := 0
@@ -26,15 +26,15 @@ func (manager *MemoryPersistenceManager) Topics() []models.Topic {
 	return topicArray
 }
 
-func (manager *MemoryPersistenceManager) TopicWithName(name string) (models.Topic,bool) {
+func (manager *MemoryTopicPersistenceManager) TopicWithName(name string) (models.Topic,bool) {
 	topic, ok := manager.topics[name]
 	return topic,ok
 }
 
-func (manager *MemoryPersistenceManager) StoreTopic(topic models.Topic) {
+func (manager *MemoryTopicPersistenceManager) StoreTopic(topic models.Topic) {
 	manager.topics[topic.Name] = topic
 }
 
-func (manager * MemoryPersistenceManager) NumberOfTopics() int  {
+func (manager *MemoryTopicPersistenceManager) NumberOfTopics() int  {
 	return len(manager.topics)
 }

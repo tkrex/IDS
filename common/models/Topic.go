@@ -7,15 +7,28 @@ import (
 
 
 type Topic struct {
-	ID		    int        `json:"id"`
-	Name                string        `json:"name"`
-	LastPayload         []byte        `json:"payload"`
-	payloadSimilarity   float32        `json:"payloadSimilarity"`
-	LastUpdateTimeStamp time.Time        `json:"lastUpdate"`
+	Name                string        `json:"name" bson:"name"`
+	LastPayload         []byte        `json:"payload" bson:"payload"`
+	payloadSimilarity   float32        `json:"payloadSimilarity" bson:"payloadSimilarity"`
+	LastUpdateTimeStamp time.Time        `json:"lastUpdate" bson:"lastUpdate"`
 	UpdateBehavior      *UpdateBehavior
-	Domain		RealWorldDomain   `json:"domain"`
+	Domain		RealWorldDomain   `json:"domain" bson:"domain`
 }
 
+
+type RawTopicMessage struct {
+	Name string
+	Payload []byte
+	ArrivalTime time.Time
+}
+
+func NewRawTopicMessage(name string, payload []byte) *RawTopicMessage {
+	message := new(RawTopicMessage)
+	message.Name = name
+	message.Payload = payload
+	message.ArrivalTime = time.Now()
+	return message
+}
 
 type UpdateBehavior struct {
 	NumberOfUpdates	    int		  `json:"numberOfUpdates"`
@@ -25,14 +38,14 @@ type UpdateBehavior struct {
 	UpdateReliability float32          `json:"reliability"`
 }
 
+
 func NewUpdateBehavior() *UpdateBehavior {
 	behavior := new(UpdateBehavior)
 	return behavior
 }
 
-func NewTopic(id int, name string, payload []byte) *Topic {
+func NewTopic(name string, payload []byte) *Topic {
 	topic := new(Topic)
-	topic.ID = id
 	topic.Name = name
 	topic.LastPayload = payload
 	topic.LastUpdateTimeStamp = time.Now()

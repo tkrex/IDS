@@ -12,7 +12,7 @@ import (
 type  MqttSubscriber struct {
 
   state                 int64
-  outgoingTopicsChannel chan *models.Topic
+  outgoingTopicsChannel chan *models.RawTopicMessage
   client                MQTT.Client
 
   producerStarted       sync.WaitGroup
@@ -20,15 +20,17 @@ type  MqttSubscriber struct {
 
   topicCounter          int
   config                *models.MqttClientConfiguration
+  isDaemon   bool
 }
 
 
 
 
-func NewMqttSubscriber(subscriberConfig *models.MqttClientConfiguration, outgoingTopicsChannel chan *models.Topic ) *MqttSubscriber {
+func NewMqttSubscriber(subscriberConfig *models.MqttClientConfiguration, outgoingTopicsChannel chan *models.RawTopicMessage, isDaemon bool) *MqttSubscriber {
   subscriber := new(MqttSubscriber)
   subscriber.outgoingTopicsChannel = outgoingTopicsChannel
   subscriber.config = subscriberConfig
+  subscriber.isDaemon = isDaemon
   subscriber.producerStarted.Add(1)
   subscriber.producerStopped.Add(1)
   opts := MQTT.NewClientOptions().AddBroker(subscriber.config.BrokerAddress())
@@ -83,7 +85,12 @@ func (subscriber *MqttSubscriber) stopCollectingTopics() {
 
 
 func (subscriber *MqttSubscriber) onReceiveMessage(msg MQTT.Message) {
-  rawTopic := models.NewTopic(1,msg.Topic(), msg.Payload())
+  rawTopic := models.NewRawTopicMessage(msg.Topic(),msg.Payload())
+
+  //DEBUG in case of one local broker for daemon and domainController
+  if subscriber.isDaemon && rawTopic.Name == "domainController" {
+    return
+  }
   if closed := subscriber.State() == 1; !closed {
     fmt.Println(rawTopic.Name)
     subscriber.outgoingTopicsChannel <- rawTopic

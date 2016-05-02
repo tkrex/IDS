@@ -14,15 +14,15 @@ type InformationProcessor interface {
 }
 
 type InformationPublisher interface {
-	PublishTopics([]models.Topic) error
+	PublishTopics([]*models.Topic) error
 	Close()
 
 }
 
-type InformationPersistenceManager interface {
+type TopicPersistenceManager interface {
 	Topics() [] models.Topic
 	TopicWithName(string) ( models.Topic,bool)
-	StoreTopic( models.Topic)
+	StoreTopic(models.Topic)
 	NumberOfTopics() int
 }
 

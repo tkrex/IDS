@@ -1,24 +1,23 @@
-package common
+package layers
 
 import (
 	"time"
 	"sync"
 	"github.com/tkrex/IDS/common/models"
+	"github.com/tkrex/IDS/common/layers"
 )
 
 type TopicForwarder struct {
-	persistenceManager InformationPersistenceManager
-	publisher 	InformationPublisher
-	forwardInterval time.Duration
-	forwardTicker *time.Ticker
+	publisher          common.InformationPublisher
+	forwardInterval    time.Duration
+	forwardTicker      *time.Ticker
 
-	forwarderStarted sync.WaitGroup
-	forwarderStopped sync.WaitGroup
+	forwarderStarted   sync.WaitGroup
+	forwarderStopped   sync.WaitGroup
 }
 
-func NewTopicForwarder(persistenceManager InformationPersistenceManager, forwardInterval time.Duration) *TopicForwarder {
+func NewTopicForwarder(forwardInterval time.Duration) *TopicForwarder {
 	forwarder := new(TopicForwarder)
-	forwarder.persistenceManager = persistenceManager
 	forwarder.forwardInterval = forwardInterval
 	forwarder.forwarderStarted.Add(1)
 	forwarder.forwarderStopped.Add(1)
@@ -29,12 +28,12 @@ func NewTopicForwarder(persistenceManager InformationPersistenceManager, forward
 
 func (forwarder *TopicForwarder) run() {
 	forwarder.forwardTicker = time.NewTicker(forwarder.forwardInterval)
-	config := models.NewMqttClientConfiguration("tcp://localhost:1883","burst","publisher")
-	forwarder.publisher = NewMqttPublisher(config)
+	config := models.NewMqttClientConfiguration("tcp://localhost:1883","domainController","publisher")
+	forwarder.publisher = common.NewMqttPublisher(config)
 	forwarder.forwarderStarted.Done()
 	go func() {
 		for _ = range forwarder.forwardTicker.C {
-			topics := forwarder.persistenceManager.Topics()
+			topics := FindAllTopics()
 			go forwarder.publisher.PublishTopics(topics)
 		}
 	}()
