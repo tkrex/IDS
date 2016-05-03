@@ -2,10 +2,10 @@ package main
 
 import (
 
-	"github.com/tkrex/IDS/common/models"
-	"github.com/tkrex/IDS/common/layers"
 	"github.com/tkrex/IDS/daemon/layers"
 	"time"
+	"github.com/tkrex/IDS/common/models"
+	"github.com/tkrex/IDS/common/layers"
 )
 
 func main() {
@@ -20,7 +20,7 @@ func main() {
 	subscriberConfig := models.NewMqttClientConfiguration(brokerAddress,desiredTopic,"subscriber")
 	subscriber := common.NewMqttSubscriber(subscriberConfig,topicChannel,true)
 
-	_ = layers.NewTopicForwarder(time.Second *10)
+	//_ = layers.NewTopicForwarder(time.Second *10)
 
 	for {
 		time.Sleep(time.Second)
