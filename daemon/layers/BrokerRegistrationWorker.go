@@ -49,6 +49,7 @@ func (worker *BrokerRegistrationWorker) registerBroker() {
 	//TODO: Get IP address from Docker ENV
 	worker.broker.IP = "66.220.158.68"
 	worker.findBrokerDomainName()
+	worker.findBrokerRealWorldDomains()
 	worker.findBrokerGeolocation()
 
 	worker.registerTicker = time.NewTicker(RegisterInterval)
@@ -84,6 +85,16 @@ func (worker *BrokerRegistrationWorker) findBrokerDomainName() {
 		return
 	}
 	worker.broker.InternetDomain = name[0]
+}
+
+func (worker *BrokerRegistrationWorker) findBrokerRealWorldDomains() {
+	categorizer := NewWebsiteCategorizationWorker()
+	categories,_ := categorizer.RequestCategoriesForWebsite("facebook.com")
+	worker.broker.RealWorldDomains = make([]*models.RealWorldDomain,len(categories))
+	for index,category := range categories {
+		domain := models.NewRealWorldDomain(category)
+		worker.broker.RealWorldDomains[index] = domain
+	}
 }
 
 func (worker *BrokerRegistrationWorker) findBrokerGeolocation() {
