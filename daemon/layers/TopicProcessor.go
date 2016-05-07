@@ -81,7 +81,7 @@ func (processor *TopicProcessor) processIncomingTopic(rawTopic *models.RawTopicM
 		for name, _ := range sortedUpdates {
 			fetchRequest = append(fetchRequest, name)
 		}
-		existingTopics := FindTopicsByName(fetchRequest)
+		existingTopics, _ := FindTopicsByName(fetchRequest)
 		fmt.Printf("Number of Existing Topics: %d", len(existingTopics))
 		processor.processSortedTopics(existingTopics, sortedUpdates)
 	}

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"github.com/tkrex/IDS/common/models"
 )
 
 type GeoLocationFetcher struct {
@@ -14,7 +15,7 @@ type GeoLocationFetcher struct {
 
 func NewGeoLocationFetcher(apiServerAddress string) *GeoLocationFetcher {
 	fetcher := new(GeoLocationFetcher)
-	fetcher.apiServerAddress = apiServerAddress
+	fetcher.apiServerAddress = "http://" + apiServerAddress + ":8080"+"/json/"
 	return fetcher
 }
 
@@ -33,7 +34,7 @@ type Location struct {
 }
 
 
-func (fetcher *GeoLocationFetcher) sendGeoLocationRequest(address string) (*Location,error)  {
+func (fetcher *GeoLocationFetcher) SendGeoLocationRequest(address string) (*models.Geolocation,error)  {
 	response, err := http.Get(fetcher.apiServerAddress + address)
 	if err != nil {
 		fmt.Printf("%s", err)
@@ -48,5 +49,6 @@ func (fetcher *GeoLocationFetcher) sendGeoLocationRequest(address string) (*Loca
 	}
 	location := Location{}
 	json.Unmarshal([]byte(string(contents)), &location)
-	return &location,nil
+	geolocation := models.NewGeolocation(location.CountryName,location.RegionName, location.City)
+	return geolocation,nil
 }

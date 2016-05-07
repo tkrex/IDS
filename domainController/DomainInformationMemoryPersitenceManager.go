@@ -15,7 +15,7 @@ func NewDomainInformationMemoryPersistenceManager() *DomainInformationMemoryPers
 
 
 func (manager *DomainInformationMemoryPersistenceManager) Store(message *models.DomainInformationMessage) {
-	manager.domainInformation[message.Broker.ID] = message
+	//manager.domainInformation[message.Broker.ID] = message
 }
 
 

@@ -16,16 +16,6 @@ const (
 )
 
 func OpenSession() *mgo.Session {
-	//session, err := mgo.DialWithInfo(&mgo.DialInfo{
-	//	Addrs:    []string{Host},
-	//	Username: Username,
-	//	Password: Password,
-	//	Database: Database,
-	//	DialServer: func(addr *mgo.ServerAddr) (net.Conn, error) {
-	//		return tls.Dial("tcp", addr.String(), &tls.Config{})
-	//	},
-	//})
-
 	session, err := mgo.Dial(Host)
 
 	if err != nil {

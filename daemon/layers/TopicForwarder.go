@@ -35,8 +35,8 @@ func (forwarder *TopicForwarder) run() {
 	forwarder.forwarderStarted.Done()
 	go func() {
 		for _ = range forwarder.forwardTicker.C {
-			topics := FindAllTopics()
-			broker := models.NewBroker(3,"127.0.0.1","krex.com")
+			topics,_ := FindAllTopics()
+			broker := models.NewBroker("127.0.0.1","krex.com")
 			domain := models.NewRealWorldDomain("testDomain")
 			message := models.NewDomainInformationMessage(domain,broker,topics)
 			json, err := json.Marshal(message)
