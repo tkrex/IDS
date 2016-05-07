@@ -16,6 +16,7 @@ type TopicForwarder struct {
 
 	forwarderStarted   sync.WaitGroup
 	forwarderStopped   sync.WaitGroup
+	databaseDelegate *DaemonDatabaseWorker
 }
 
 func NewTopicForwarder(forwardInterval time.Duration) *TopicForwarder {
@@ -32,10 +33,17 @@ func (forwarder *TopicForwarder) run() {
 	forwarder.forwardTicker = time.NewTicker(forwarder.forwardInterval)
 	config := models.NewMqttClientConfiguration("tcp://localhost:1883","domainController","publisher")
 	forwarder.publisher = common.NewMqttPublisher(config)
+	dbDelegate, error := NewDaemonDatabaseWorker()
+	if error !=nil {
+		fmt.Println("Stopping Forwarder: Cannot Connect to DB")
+		return
+	}
+	forwarder.databaseDelegate = dbDelegate
 	forwarder.forwarderStarted.Done()
 	go func() {
+		defer forwarder.databaseDelegate.Close()
 		for _ = range forwarder.forwardTicker.C {
-			topics,_ := FindAllTopics()
+			topics,_ := dbDelegate.FindAllTopics()
 			broker := models.NewBroker("127.0.0.1","krex.com")
 			domain := models.NewRealWorldDomain("testDomain")
 			message := models.NewDomainInformationMessage(domain,broker,topics)

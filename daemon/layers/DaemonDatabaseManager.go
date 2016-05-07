@@ -15,35 +15,38 @@ const (
 	Database = "IDSDaemon"
 	TopicCollection = "topics"
 	BrokerCollection = "broker"
+	DomainControllerCollection = "domainController"
 )
 
 
+
+type DaemonDatabaseWorker struct {
+	session *mgo.Session
+}
+
+func NewDaemonDatabaseWorker() (*DaemonDatabaseWorker, error) {
+	databaseWorker := new(DaemonDatabaseWorker)
+	var error error
+	databaseWorker.session, error = openSession()
+	if error != nil {
+		return nil , error
+	}
+	return databaseWorker, error
+}
+
+func (dbWoker *DaemonDatabaseWorker)Close() {
+	dbWoker.session.Close()
+}
 
 func openSession() (*mgo.Session,error) {
 	session , err := mgo.Dial(Host)
 	return session, err
 }
 
-func isDatabaseAvailable() bool {
-	session, err := openSession()
-	defer session.Close()
-	if err != nil {
-		return false
-	}
-	return true
-}
 
-func  StoreTopics(topics []*models.Topic) error {
+func  (dbWoker *DaemonDatabaseWorker) StoreTopics(topics []*models.Topic) error {
 
-	session, err := openSession()
-	if err != nil {
-		return err
-	}
-
-	defer session.Close()
-	fmt.Printf("Connected to %v\n", session.LiveServers())
-
-	coll := session.DB(Database).C(TopicCollection)
+	coll := dbWoker.session.DB(Database).C(TopicCollection)
 	index := mgo.Index{
 		Key:        []string{"name"},
 		Unique:     true,
@@ -69,17 +72,9 @@ func  StoreTopics(topics []*models.Topic) error {
 	return nil
 }
 
-func  StoreTopic(topic *models.Topic) error {
+func  (dbWoker *DaemonDatabaseWorker) StoreTopic(topic *models.Topic) error {
 
-	session,err := openSession()
-	if err != nil {
-		return err
-	}
-
-	defer session.Close()
-	fmt.Printf("Connected to %v\n", session.LiveServers())
-
-	coll := session.DB(Database).C(TopicCollection)
+	coll := dbWoker.session.DB(Database).C(TopicCollection)
 	index := mgo.Index{
 		Key:        []string{"name"},
 		Unique:     true,
@@ -96,13 +91,9 @@ func  StoreTopic(topic *models.Topic) error {
 	return nil
 }
 
-func FindAllTopics() ([]*models.Topic,error) {
-	session,err := openSession()
-	if err != nil {
-		return nil, err
-	}
-	defer session.Close()
-	coll := session.DB(Database).C(TopicCollection)
+func (dbWoker *DaemonDatabaseWorker)FindAllTopics() ([]*models.Topic,error) {
+
+	coll := dbWoker.session.DB(Database).C(TopicCollection)
 	var topics []*models.Topic
 	if err := coll.Find(nil).All(&topics); err != nil {
 		fmt.Println(err)
@@ -110,14 +101,8 @@ func FindAllTopics() ([]*models.Topic,error) {
 	return topics, nil
 }
 
-func FindTopicsByName(topicNames []string) (map[string]*models.Topic,error) {
-	session,err := openSession()
-	if err != nil {
-		return nil, err
-	}
-
-	defer session.Close()
-	coll := session.DB(Database).C(TopicCollection)
+func (dbWoker *DaemonDatabaseWorker) FindTopicsByName(topicNames []string) (map[string]*models.Topic,error) {
+	coll := dbWoker.session.DB(Database).C(TopicCollection)
 	existingTopics := make(map[string]*models.Topic)
 	for _,name := range topicNames {
 		var topic models.Topic
@@ -130,17 +115,8 @@ func FindTopicsByName(topicNames []string) (map[string]*models.Topic,error) {
 	return existingTopics, nil
 }
 
-func StoreBroker(broker *models.Broker) (error) {
-	session,err := openSession()
-	if err != nil {
-		return err
-	}
-
-	defer session.Close()
-
-	fmt.Printf("Connected to %v\n", session.LiveServers())
-
-	coll := session.DB(Database).C(BrokerCollection)
+func (dbWoker *DaemonDatabaseWorker) StoreBroker(broker *models.Broker) (error) {
+	coll := dbWoker.session.DB(Database).C(BrokerCollection)
 
 	if err := coll.Insert(broker); err != nil {
 		return err
@@ -148,16 +124,8 @@ func StoreBroker(broker *models.Broker) (error) {
 	return nil
 }
 
-func FindBroker() (*models.Broker,error) {
-
-
-	session,err := openSession()
-	if err != nil {
-		return nil,err
-	}
-
-	defer session.Close()
-	coll := session.DB(Database).C(BrokerCollection)
+func (dbWoker *DaemonDatabaseWorker) FindBroker() (*models.Broker,error) {
+	coll := dbWoker.session.DB(Database).C(BrokerCollection)
 
 	var error error
 	broker := new(models.Broker)
@@ -165,6 +133,18 @@ func FindBroker() (*models.Broker,error) {
 		fmt.Println(error)
 	}
 	return broker, error
+}
+
+
+func (dbWoker *DaemonDatabaseWorker) StoreDomainControllers(domainControllers []*models.DomainController) error {
+	coll := dbWoker.session.DB(Database).C(DomainControllerCollection)
+	bulk := coll.Bulk()
+	bulk.Unordered()
+	for _, domainController := range domainControllers {
+		bulk.Upsert(bson.M{"domain.name":domainController.Domain.Name},bson.M{"$set": domainController})
+	}
+	_, error := bulk.Run()
+	return error
 }
 
 

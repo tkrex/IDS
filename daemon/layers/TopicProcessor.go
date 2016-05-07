@@ -16,6 +16,7 @@ type TopicProcessor struct {
 	state                    int64
 	processorStarted         sync.WaitGroup
 	processorStopped         sync.WaitGroup
+	databaseDelegate 	*DaemonDatabaseWorker
 	topicUpdates             []*models.RawTopicMessage
 	incomingTopicChannel     chan *models.RawTopicMessage
 	bulkUpdateThreshold      int
@@ -48,7 +49,14 @@ func (processor *TopicProcessor)  Close() {
 }
 
 func (processor *TopicProcessor) run() {
+	dbDelegate, err := NewDaemonDatabaseWorker()
+	if err != nil {
+		fmt.Println("Stopping Topic Processor: No Conbection to DB")
+		return
+	}
 
+	processor.databaseDelegate = dbDelegate
+	defer processor.databaseDelegate.Close()
 	processor.processorStarted.Done()
 	for closed := atomic.LoadInt64(&processor.state) == 1; !closed; closed = atomic.LoadInt64(&processor.state) == 1 {
 		open := processor.ProcessIncomingTopics()
@@ -81,7 +89,7 @@ func (processor *TopicProcessor) processIncomingTopic(rawTopic *models.RawTopicM
 		for name, _ := range sortedUpdates {
 			fetchRequest = append(fetchRequest, name)
 		}
-		existingTopics, _ := FindTopicsByName(fetchRequest)
+		existingTopics, _ := processor.databaseDelegate.FindTopicsByName(fetchRequest)
 		fmt.Printf("Number of Existing Topics: %d", len(existingTopics))
 		processor.processSortedTopics(existingTopics, sortedUpdates)
 	}
@@ -112,7 +120,7 @@ func (processor *TopicProcessor) processSortedTopics(existingTopics map[string]*
 		}
 		resultingTopicUpdates = append(resultingTopicUpdates, resultingTopic)
 	}
-	StoreTopics(resultingTopicUpdates)
+	processor.databaseDelegate.StoreTopics(resultingTopicUpdates)
 }
 
 func (processor *TopicProcessor) updateTopicInformation(existingTopic *models.Topic, newTopic *models.RawTopicMessage) *models.Topic {

@@ -13,13 +13,14 @@ import (
 	"sync"
 )
 
-const RegisterInterval  = time.Second * 10
+const RegisterInterval = time.Second * 10
 
 type BrokerRegistrationWorker struct {
-	broker *models.Broker
+	broker         *models.Broker
 	registerTicker *time.Ticker
-	workerStarted sync.WaitGroup
-	workerStopped sync.WaitGroup
+	workerStarted  sync.WaitGroup
+	workerStopped  sync.WaitGroup
+	dbWorker       *DaemonDatabaseWorker
 }
 
 func NewBrokerRegistrationWorker() *BrokerRegistrationWorker {
@@ -33,13 +34,15 @@ func NewBrokerRegistrationWorker() *BrokerRegistrationWorker {
 }
 
 func (worker *BrokerRegistrationWorker) registerBroker() {
-	if !isDatabaseAvailable() {
+	databaseWorker, err := NewDaemonDatabaseWorker()
+	if err != nil {
 		fmt.Println("Database not reachable")
 		return
 	}
+	worker.dbWorker = databaseWorker
 	worker.workerStarted.Done()
 
-	if isBrokerRegistered := worker.isBrokerRegistered(); isBrokerRegistered {
+	if isBrokerRegistered := worker.isBrokerRegistered(databaseWorker); isBrokerRegistered {
 		fmt.Println("Broker is already Registered")
 		return
 	}
@@ -49,8 +52,9 @@ func (worker *BrokerRegistrationWorker) registerBroker() {
 	worker.findBrokerGeolocation()
 
 	worker.registerTicker = time.NewTicker(RegisterInterval)
-	go func(){
+	go func() {
 		registrationSuccess := false
+		defer worker.dbWorker.Close()
 		for _ = range worker.registerTicker.C {
 			fmt.Println("RegistrationTicker Tick")
 			if registrationSuccess {
@@ -62,9 +66,9 @@ func (worker *BrokerRegistrationWorker) registerBroker() {
 	}()
 }
 
-func (worker *BrokerRegistrationWorker) isBrokerRegistered() bool {
+func (worker *BrokerRegistrationWorker) isBrokerRegistered(dbWoker *DaemonDatabaseWorker) bool {
 	isBrokerRegistered := true
-	broker, err := FindBroker()
+	broker, err := dbWoker.FindBroker()
 	if err != nil {
 		isBrokerRegistered = false
 	} else if broker.ID == "" {
@@ -93,7 +97,6 @@ func (worker *BrokerRegistrationWorker) findBrokerGeolocation() {
 }
 
 func (worker *BrokerRegistrationWorker) sendRegistrationRequest() bool {
-	//TODO: get own Broker information
 	fmt.Println("Sending Broker Registration Request")
 
 	jsonString, _ := json.Marshal(&worker.broker)
@@ -110,7 +113,6 @@ func (worker *BrokerRegistrationWorker) sendRegistrationRequest() bool {
 	defer resp.Body.Close()
 
 	fmt.Println("response Status:", resp.Status)
-	fmt.Println("response Headers:", resp.Header)
 	body, _ := ioutil.ReadAll(resp.Body)
 
 	if resp.StatusCode != 200 {
@@ -118,17 +120,18 @@ func (worker *BrokerRegistrationWorker) sendRegistrationRequest() bool {
 		return false
 	}
 
-	responseBroker := new(models.Broker)
+	response := new(models.BrokerRegistrationResponse)
 
-	err = json.Unmarshal(body, responseBroker)
+	err = json.Unmarshal(body, &response)
 	if err != nil {
 		fmt.Println("REGISTER BROKER: Unkown response format")
 		return false
 	}
-	fmt.Println(responseBroker)
 
-	 err = StoreBroker(responseBroker)
+	err = worker.dbWorker.StoreBroker(response.Broker)
+	err = worker.dbWorker.StoreDomainControllers(response.DomainControllers)
 	if err != nil {
+		fmt.Println(err)
 		return false
 	}
 	return true

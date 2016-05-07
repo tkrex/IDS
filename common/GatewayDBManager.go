@@ -13,16 +13,16 @@ const (
 	Username = "example"
 	Password = "example"
 	Database = "IDSGateway"
-	Collection = "broker"
+	BrokerCollection = "brokers"
+	DomainControllerConnection = "domainControllers"
 )
 
 func openSession() (*mgo.Session, error) {
 	session, err := mgo.DialWithTimeout(Host, time.Second * 3)
 
 	if err != nil {
-		panic(err)
+		return nil,err
 	}
-
 	return session, nil
 }
 
@@ -34,7 +34,7 @@ func StoreBroker(broker *models.Broker) (error) {
 	}
 	fmt.Printf("Connected to %v\n", session.LiveServers())
 
-	coll := session.DB(Database).C(Collection)
+	coll := session.DB(Database).C(BrokerCollection)
 
 	if err := coll.Insert(broker); err != nil {
 		return err
@@ -50,7 +50,7 @@ func FindAllBrokers() ([]*models.Broker,error) {
 		return brokers,err
 	}
 	defer session.Close()
-	coll := session.DB(Database).C(Collection)
+	coll := session.DB(Database).C(BrokerCollection)
 
 	var error error
 	if error = coll.Find(nil).All(brokers); error != nil {
@@ -65,7 +65,7 @@ func FindBrokerById(brokerID string) (*models.Broker,bool) {
 		return nil,false
 	}
 	defer session.Close()
-	coll := session.DB(Database).C(Collection)
+	coll := session.DB(Database).C(BrokerCollection)
 
 	broker := new(models.Broker)
 	if error := coll.Find(bson.M{"id":brokerID}).One(broker); error != nil {
@@ -80,7 +80,7 @@ func FindBrokerByIP(brokerIP int) (*models.Broker,error) {
 		return nil, err
 	}
 	defer session.Close()
-	coll := session.DB(Database).C(Collection)
+	coll := session.DB(Database).C(BrokerCollection)
 
 	var broker *models.Broker
 	var error error
@@ -88,4 +88,41 @@ func FindBrokerByIP(brokerIP int) (*models.Broker,error) {
 		fmt.Println(error)
 	}
 	return broker,error
+}
+
+func FindAllDomainController() ([]*models.DomainController,error) {
+	var domainControllers []*models.DomainController
+
+	session,err :=  openSession()
+	if err != nil {
+		return domainControllers,err
+	}
+	defer session.Close()
+	coll := session.DB(Database).C(DomainControllerConnection)
+
+	if error := coll.Find(nil).All(&domainControllers); error != nil && error != mgo.ErrNotFound {
+		return domainControllers,error
+	}
+	return domainControllers, nil
+}
+
+func StoreDomainController(domainController *models.DomainController) error {
+	session,err :=  openSession()
+	if err != nil {
+		return err
+	}
+	defer session.Close()
+	coll := session.DB(Database).C(DomainControllerConnection)
+	index := mgo.Index{
+		Key:        []string{"domain.name"},
+		Unique:     true,
+		DropDups:   true,
+		Background: true,
+		Sparse:     true,
+	}
+	_ = coll.EnsureIndex(index)
+	if _,err := coll.Upsert(bson.M{"domain.name":domainController.Domain.Name},bson.M{"$set": domainController}); err != nil {
+		return err
+	}
+	return nil
 }

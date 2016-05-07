@@ -91,15 +91,15 @@ func (webInterface *IDSGatewayWebInterface) handleBrokers(res http.ResponseWrite
 			return
 		}
 		registrationHandler := NewBrokerRegistrationHandler()
-		resultingBroker, error  :=registrationHandler.registerBroker(broker)
+		response, error  :=registrationHandler.registerBroker(broker)
 		if error != nil {
 			fmt.Println(error.Error())
 			http.Error(res, error.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		outgoingJSON, error := json.Marshal(resultingBroker)
-
+		outgoingJSON, error := json.Marshal(response)
+		fmt.Println(string(outgoingJSON))
 		if error != nil {
 			fmt.Println(error.Error())
 			http.Error(res, error.Error(), http.StatusInternalServerError)
