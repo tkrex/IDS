@@ -59,21 +59,19 @@ func FindAllBrokers() ([]*models.Broker,error) {
 	return brokers, error
 }
 
-func FindBrokerById(brokerID string) (*models.Broker,error) {
+func FindBrokerById(brokerID string) (*models.Broker,bool) {
 	session, err :=  openSession()
 	if err != nil {
-		return nil,err
+		return nil,false
 	}
 	defer session.Close()
 	coll := session.DB(Database).C(Collection)
 
 	broker := new(models.Broker)
-	var error error
 	if error := coll.Find(bson.M{"id":brokerID}).One(broker); error != nil {
-		fmt.Println("Error While searching Broker")
-		fmt.Println(error)
+		return nil, false
 	}
-	return broker,error
+	return broker,true
 }
 
 func FindBrokerByIP(brokerIP int) (*models.Broker,error) {

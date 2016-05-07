@@ -23,7 +23,7 @@ func (handler *BrokerRegistrationHandler) registerBroker(broker *models.Broker) 
 	md5Bytes := md5.Sum(byteArray)
 	brokerID := fmt.Sprintf("%x", md5Bytes)
 
-	if _,error := FindBrokerById(brokerID); error == nil {
+	if _,found := FindBrokerById(brokerID); found {
 		return nil, errors.New("Broker Already Registered")
 	}
 

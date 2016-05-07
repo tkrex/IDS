@@ -19,13 +19,23 @@ const (
 
 
 
-func OpenSession() (*mgo.Session,error) {
+func openSession() (*mgo.Session,error) {
 	session , err := mgo.Dial(Host)
 	return session, err
 }
+
+func isDatabaseAvailable() bool {
+	session, err := openSession()
+	defer session.Close()
+	if err != nil {
+		return false
+	}
+	return true
+}
+
 func  StoreTopics(topics []*models.Topic) error {
 
-	session, err := OpenSession()
+	session, err := openSession()
 	if err != nil {
 		return err
 	}
@@ -61,7 +71,7 @@ func  StoreTopics(topics []*models.Topic) error {
 
 func  StoreTopic(topic *models.Topic) error {
 
-	session,err := OpenSession()
+	session,err := openSession()
 	if err != nil {
 		return err
 	}
@@ -87,7 +97,7 @@ func  StoreTopic(topic *models.Topic) error {
 }
 
 func FindAllTopics() ([]*models.Topic,error) {
-	session,err := OpenSession()
+	session,err := openSession()
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +111,7 @@ func FindAllTopics() ([]*models.Topic,error) {
 }
 
 func FindTopicsByName(topicNames []string) (map[string]*models.Topic,error) {
-	session,err := OpenSession()
+	session,err := openSession()
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +131,7 @@ func FindTopicsByName(topicNames []string) (map[string]*models.Topic,error) {
 }
 
 func StoreBroker(broker *models.Broker) (error) {
-	session,err := OpenSession()
+	session,err := openSession()
 	if err != nil {
 		return err
 	}
@@ -141,7 +151,7 @@ func StoreBroker(broker *models.Broker) (error) {
 func FindBroker() (*models.Broker,error) {
 
 
-	session,err := OpenSession()
+	session,err := openSession()
 	if err != nil {
 		return nil,err
 	}
