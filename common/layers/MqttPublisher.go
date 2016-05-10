@@ -24,6 +24,7 @@ func NewMqttPublisher(config *models.MqttClientConfiguration) *MqttPublisher {
 	publisher.publisherStopped.Add(1)
 	go publisher.run()
 	publisher.publisherStarted.Wait()
+	fmt.Println("Publisher started")
 	return publisher
 }
 

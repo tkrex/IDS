@@ -1,4 +1,4 @@
-package common
+package gateway
 
 import (
 	"gopkg.in/mgo.v2"
@@ -106,10 +106,19 @@ func FindAllDomainController() ([]*models.DomainController,error) {
 	return domainControllers, nil
 }
 
-func StoreDomainController(domainController *models.DomainController) error {
+
+
+//true: entry was updated
+//false: no new data
+func UpdateControllerInformation(domainController *models.DomainController) (bool, error) {
+	info, error := storeDomainController(domainController)
+	return info.Updated != 0, error
+}
+
+func storeDomainController(domainController *models.DomainController) (*mgo.ChangeInfo, error) {
 	session,err :=  openSession()
 	if err != nil {
-		return err
+		return nil,err
 	}
 	defer session.Close()
 	coll := session.DB(Database).C(DomainControllerConnection)
@@ -121,8 +130,6 @@ func StoreDomainController(domainController *models.DomainController) error {
 		Sparse:     true,
 	}
 	_ = coll.EnsureIndex(index)
-	if _,err := coll.Upsert(bson.M{"domain.name":domainController.Domain.Name},bson.M{"$set": domainController}); err != nil {
-		return err
-	}
-	return nil
+	info,err := coll.Upsert(bson.M{"domain.name":domainController.Domain.Name},bson.M{"$set": domainController})
+	return info, err
 }

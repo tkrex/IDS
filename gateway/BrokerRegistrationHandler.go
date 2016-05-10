@@ -1,4 +1,4 @@
-package common
+package gateway
 
 import (
 	"github.com/tkrex/IDS/common/models"

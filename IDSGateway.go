@@ -3,12 +3,14 @@ package main
 import (
 
 )
-import "github.com/tkrex/IDS/common"
+import (
+	"github.com/tkrex/IDS/gateway"
+)
 
 func main() {
 
 
-_ = common.NewIDSGatewayWebInterface("8080")
-
+_ = gateway.NewControlMessageForwarder()
+	for {}
 }
 
