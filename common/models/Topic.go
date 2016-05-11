@@ -8,6 +8,7 @@ type Topic struct {
 	Name                string        `json:"name" bson:"name"`
 	LastPayload         []byte        `json:"payload" bson:"payload"`
 	payloadSimilarity   float32        `json:"payloadSimilarity" bson:"payloadSimilarity"`
+	FirstUpdateTimeStamp time.Time            `json:"firstUpdate"`
 	LastUpdateTimeStamp time.Time        `json:"lastUpdate" bson:"lastUpdate"`
 	UpdateBehavior      *UpdateBehavior
 	Domain              *RealWorldDomain   `json:"domain" bson:"domain`
@@ -47,6 +48,7 @@ func NewTopic(name string, payload []byte,arrivalTime time.Time) *Topic {
 	topic := new(Topic)
 	topic.Name = name
 	topic.LastPayload = payload
+	topic.FirstUpdateTimeStamp = arrivalTime
 	topic.LastUpdateTimeStamp = arrivalTime
 	topic.UpdateBehavior = NewUpdateBehavior()
 	return topic
