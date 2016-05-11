@@ -2,6 +2,7 @@ package models
 
 type DomainInformationMessage struct {
 	RealWorldDomain *RealWorldDomain `json:"domain" bson:"domain"`
+	ForwardPriority int `json:"forwardPriority"`
 	Broker   *Broker `json:"broker" bson:"broker"`
 	Topics   []*Topic `json:"topics" bson:"topics"`
 }

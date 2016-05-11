@@ -16,6 +16,10 @@ type DomainInformationProcessor struct {
 	processorStarted                    sync.WaitGroup
 	processorStopped                    sync.WaitGroup
 	incomingTopicChannel                chan *models.RawTopicMessage
+	forwardingSignalChannel   chan *models.RealWorldDomain
+
+	NewTopicsCounter map[string]int
+
 }
 
 func NewDomainInformationProcessor(incomingTopicChannel chan *models.RawTopicMessage) *DomainInformationProcessor {

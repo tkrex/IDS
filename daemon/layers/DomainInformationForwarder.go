@@ -14,7 +14,7 @@ type DomainInformationForwarder struct {
 	forwarderStopped     sync.WaitGroup
 	forwardSignalChannel chan int
 	databaseDelegate     *DaemonDatabaseWorker
-	updateFlag           bool
+	lastForwardTimestamp           time.Time
 }
 
 const (
@@ -60,9 +60,9 @@ func (forwarder *DomainInformationForwarder) startForwardTicker() {
 
 func (forwarder *DomainInformationForwarder) triggerForwarding() {
 	defer func() {
-		forwarder.updateFlag = false
+		forwarder.lastForwardTimestamp = time.Now()
 	}()
-	if !forwarder.updateFlag {
+	if time.Now().Sub(forwarder.lastForwardTimestamp) > ForwardInterval {
 		forwarder.forwardAllDomainInformation()
 	}
 }
@@ -81,6 +81,17 @@ func (forwarder *DomainInformationForwarder) forwardAllDomainInformation() {
 	}
 
 }
+
+func (forwarder *DomainInformationForwarder) calculateForwardPriority(domainInformation *models.DomainInformationMessage) {
+	priority := 0
+	for _,topic := range domainInformation.Topics {
+		if  topic.FirstUpdateTimeStamp.After(forwarder.lastForwardTimestamp) {
+			priority++
+		}
+	}
+	domainInformation.ForwardPriority = priority
+	fmt.Println("Forward Priority: ",priority)
+}
 func (forwarder *DomainInformationForwarder) forwardDomainInformation(domain *models.RealWorldDomain) {
 	dbDelagte, err := NewDaemonDatabaseWorker()
 	if err != nil {
@@ -90,6 +101,8 @@ func (forwarder *DomainInformationForwarder) forwardDomainInformation(domain *mo
 	defer dbDelagte.Close()
 
 	domainInformation := dbDelagte.FindDomainInformationByDomainName(domain.Name)
+
+
 	if domainInformation == nil {
 		fmt.Printf("\n No topics for domain %s found", domain.Name)
 		return
@@ -102,6 +115,8 @@ func (forwarder *DomainInformationForwarder) forwardDomainInformation(domain *mo
 		dbDelagte.RemoveDomain(domain)
 		return
 	}
+
+	forwarder.calculateForwardPriority(domainInformation)
 
 	json, err := json.Marshal(domainInformation)
 	if err != nil {
