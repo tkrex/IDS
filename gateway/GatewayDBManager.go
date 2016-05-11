@@ -14,17 +14,32 @@ const (
 	Password = "example"
 	Database = "IDSGateway"
 	BrokerCollection = "brokers"
-	DomainControllerConnection = "domainControllers"
+	DomainControllerCollection = "domainControllers"
+	DomainInformationCollection = "domainInformation"
+
 )
 
 func openSession() (*mgo.Session, error) {
 	session, err := mgo.DialWithTimeout(Host, time.Second * 3)
 
-	if err != nil {
-		return nil,err
-	}
-	return session, nil
+	return session, err
 }
+func FindAllDomainInformation() ([]*models.DomainInformationMessage, error) {
+	session, err :=openSession()
+	if err != nil {
+		return nil, err
+	}
+	defer session.Close()
+	coll := session.DB(Database).C(Collection)
+	var domainInformation []*models.DomainInformationMessage
+	var error error
+
+	if error := coll.Find(nil).All(&domainInformation); error != nil {
+		fmt.Println(error)
+	}
+	return domainInformation, error
+}
+
 
 func StoreBroker(broker *models.Broker) (error) {
 	session, error :=  openSession()
@@ -98,7 +113,7 @@ func FindAllDomainController() ([]*models.DomainController,error) {
 		return domainControllers,err
 	}
 	defer session.Close()
-	coll := session.DB(Database).C(DomainControllerConnection)
+	coll := session.DB(Database).C(DomainControllerCollection)
 
 	if error := coll.Find(nil).All(&domainControllers); error != nil && error != mgo.ErrNotFound {
 		return domainControllers,error
@@ -121,7 +136,7 @@ func storeDomainController(domainController *models.DomainController) (*mgo.Chan
 		return nil,err
 	}
 	defer session.Close()
-	coll := session.DB(Database).C(DomainControllerConnection)
+	coll := session.DB(Database).C(DomainControllerCollection)
 	index := mgo.Index{
 		Key:        []string{"domain.name"},
 		Unique:     true,

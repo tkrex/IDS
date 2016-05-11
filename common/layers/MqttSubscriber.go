@@ -12,7 +12,7 @@ import (
 type  MqttSubscriber struct {
 
   state                 int64
-  outgoingTopicsChannel chan *models.RawTopicMessage
+  incomingTopicsChannel chan *models.RawTopicMessage
   client                MQTT.Client
 
   producerStarted       sync.WaitGroup
@@ -20,15 +20,15 @@ type  MqttSubscriber struct {
 
   topicCounter          int
   config                *models.MqttClientConfiguration
-  isDaemon   bool
+  isDaemon              bool
 }
 
 
 
 
-func NewMqttSubscriber(subscriberConfig *models.MqttClientConfiguration, outgoingTopicsChannel chan *models.RawTopicMessage, isDaemon bool) *MqttSubscriber {
+func NewMqttSubscriber(subscriberConfig *models.MqttClientConfiguration, isDaemon bool) *MqttSubscriber {
   subscriber := new(MqttSubscriber)
-  subscriber.outgoingTopicsChannel = outgoingTopicsChannel
+  subscriber.incomingTopicsChannel = make(chan *models.RawTopicMessage,100)
   subscriber.config = subscriberConfig
   subscriber.isDaemon = isDaemon
   subscriber.producerStarted.Add(1)
@@ -46,6 +46,10 @@ func NewMqttSubscriber(subscriberConfig *models.MqttClientConfiguration, outgoin
   go subscriber.run()
   subscriber.producerStarted.Wait()
   return subscriber
+}
+
+func (subscriber *MqttSubscriber) IncomingTopicsChannel() chan *models.RawTopicMessage {
+  return subscriber.incomingTopicsChannel
 }
 
 
@@ -93,7 +97,7 @@ func (subscriber *MqttSubscriber) onReceiveMessage(msg MQTT.Message) {
   }
   if closed := subscriber.State() == 1; !closed {
     fmt.Println(rawTopic.Name)
-    subscriber.outgoingTopicsChannel <- rawTopic
+    subscriber.incomingTopicsChannel <- rawTopic
   }
 
 }
@@ -101,7 +105,7 @@ func (subscriber *MqttSubscriber) onReceiveMessage(msg MQTT.Message) {
 func (subscriber *MqttSubscriber) Close() {
   fmt.Println("Closing Subscriber")
   atomic.StoreInt64(&subscriber.state,1)
-  close(subscriber.outgoingTopicsChannel)
+  close(subscriber.incomingTopicsChannel)
   subscriber.stopCollectingTopics()
   fmt.Println("Change Producer State")
   subscriber.producerStopped.Wait()

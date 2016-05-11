@@ -19,18 +19,28 @@ type TopicProcessor struct {
 	databaseDelegate 	*DaemonDatabaseWorker
 	topicUpdates             []*models.RawTopicMessage
 	incomingTopicChannel     chan *models.RawTopicMessage
-	bulkUpdateThreshold      int
+
+	forwardingSignalChannel chan int
 	topicReliabilityStrategy models.UpdateReliabilityStrategy
+
+	newTopicsCounter int
 }
+
+
+const (
+	TopicForwardThreshold = 10
+	BulkUpdateThreshold = 10
+
+)
 
 func NewTopicProcessor(incomingTopicChannel chan *models.RawTopicMessage) *TopicProcessor {
 	processor := new(TopicProcessor)
 	processor.processorStarted.Add(1)
 	processor.processorStopped.Add(1)
 	processor.incomingTopicChannel = incomingTopicChannel
-	processor.bulkUpdateThreshold = 10
+	processor.forwardingSignalChannel = make(chan int)
 	processor.topicReliabilityStrategy = models.MeanAbsoluteDeviation{}
-	processor.topicUpdates = make([]*models.RawTopicMessage, 0, processor.bulkUpdateThreshold)
+	processor.topicUpdates = make([]*models.RawTopicMessage, 0, BulkUpdateThreshold)
 	go processor.run()
 	processor.processorStarted.Wait()
 	fmt.Println("Processor Created")
@@ -39,6 +49,10 @@ func NewTopicProcessor(incomingTopicChannel chan *models.RawTopicMessage) *Topic
 
 func (processor *TopicProcessor) State() int64 {
 	return atomic.LoadInt64(&processor.state)
+}
+
+func (processor * TopicProcessor) ForwardSignalChannel() chan int {
+	return  processor.forwardingSignalChannel
 }
 
 func (processor *TopicProcessor)  Close() {
@@ -79,10 +93,10 @@ func (processor *TopicProcessor) ProcessIncomingTopics() bool {
 
 func (processor *TopicProcessor) processIncomingTopic(rawTopic *models.RawTopicMessage) {
 	processor.topicUpdates = append(processor.topicUpdates, rawTopic)
-	if len(processor.topicUpdates) == processor.bulkUpdateThreshold {
+	if len(processor.topicUpdates) == BulkUpdateThreshold {
 		updates := make([]*models.RawTopicMessage, len(processor.topicUpdates))
 		copy(updates, processor.topicUpdates)
-		processor.topicUpdates = make([]*models.RawTopicMessage, 0, processor.bulkUpdateThreshold)
+		processor.topicUpdates = make([]*models.RawTopicMessage, 0, BulkUpdateThreshold)
 		fmt.Println("Bulk Update")
 		sortedUpdates := processor.sortTopicUpdatesByName(updates)
 		fetchRequest := make([]string, 0, len(sortedUpdates))
@@ -111,7 +125,6 @@ func (processor *TopicProcessor) sortTopicUpdatesByName(topicUpdates []*models.R
 func (processor *TopicProcessor) processSortedTopics(existingTopics map[string]*models.Topic, sortedTopics map[string][]*models.RawTopicMessage) {
 	resultingTopicUpdates := make([]*models.Topic, 0, len(sortedTopics))
 	for name, topicArray := range sortedTopics {
-		fmt.Printf("\n %d update(s) for Topic %s", len(topicArray), name)
 		var resultingTopic *models.Topic
 		existingTopic, _ := existingTopics[name]
 		resultingTopic = existingTopic
@@ -120,7 +133,20 @@ func (processor *TopicProcessor) processSortedTopics(existingTopics map[string]*
 		}
 		resultingTopicUpdates = append(resultingTopicUpdates, resultingTopic)
 	}
-	processor.databaseDelegate.StoreTopics(resultingTopicUpdates)
+	transactionInfo, err := processor.databaseDelegate.StoreTopics(resultingTopicUpdates)
+	if err != nil {
+		fmt.Println("could not update topics")
+		return
+	}
+
+	NumberOfNewTopics :=  len(sortedTopics) - transactionInfo.Matched
+	processor.newTopicsCounter += NumberOfNewTopics
+	fmt.Println(processor.newTopicsCounter)
+	if processor.newTopicsCounter >= TopicForwardThreshold {
+		processor.forwardingSignalChannel <- 1
+		processor.newTopicsCounter = 0
+	}
+
 }
 
 func (processor *TopicProcessor) updateTopicInformation(existingTopic *models.Topic, newTopic *models.RawTopicMessage) *models.Topic {

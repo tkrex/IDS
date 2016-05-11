@@ -8,6 +8,7 @@ import (
 	"sync"
 	"github.com/tkrex/IDS/domainController"
 	"github.com/tkrex/IDS/common/models"
+	"html/template"
 )
 
 type IDSGatewayWebInterface struct {
@@ -29,9 +30,9 @@ func NewIDSGatewayWebInterface(port string) *IDSGatewayWebInterface {
 }
 
 func (webInterface *IDSGatewayWebInterface) run(port string) {
-	defer func(){
-		webInterface.providerStarted.Done()
-	}()
+	fmt.Print("IDSGatewayInterface started")
+	defer webInterface.providerStarted.Done()
+
 	router := mux.NewRouter()
 	router.HandleFunc("/domains/{domainName}", webInterface.handleDomainInformation).Methods("GET")
 	router.HandleFunc("/rest/brokers", webInterface.handleBrokers).Methods("GET", "POST")
@@ -42,11 +43,15 @@ func (webInterface *IDSGatewayWebInterface) run(port string) {
 
 func (webInterface *IDSGatewayWebInterface) handleDomainInformation(res http.ResponseWriter, req *http.Request) {
 	res.Header().Set("Content-Type", "application/json")
-	domainInformation, err := domainController.FindAllDomainInformation()
+	fmt.Println("domain Information Request Received")
+	domainInformation, err := Fi
 	if err != nil {
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	t, _ := template.ParseFiles("templates/domainInformation.html")
+	t.Execute(res, domainInformation)
 	fmt.Println(req.RemoteAddr)
 	res.Header().Set("Content-Type", "application/json")
 

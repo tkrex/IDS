@@ -12,15 +12,15 @@ func main() {
 
 	// persistence layer
 	//processing layer
-	topicChannel := make(chan *models.RawTopicMessage,100)
-	_ = layers.NewTopicProcessor(topicChannel)
 	//producer layer
 	brokerAddress := "tcp://localhost:1883"
 	desiredTopic  := "#"
 	subscriberConfig := models.NewMqttClientConfiguration(brokerAddress,desiredTopic,"subscriber")
-	subscriber := common.NewMqttSubscriber(subscriberConfig,topicChannel,true)
+	subscriber := common.NewMqttSubscriber(subscriberConfig,true)
+	topicProcessor := layers.NewTopicProcessor(subscriber.IncomingTopicsChannel())
 
-	//_ = layers.NewTopicForwarder(time.Second *10)
+
+	_ = layers.NewDomainInformationForwarder(topicProcessor.ForwardSignalChannel())
 
 	for {
 		time.Sleep(time.Second)

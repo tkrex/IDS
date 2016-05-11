@@ -10,7 +10,7 @@ import (
 func main() {
 
 
-_ = gateway.NewControlMessageForwarder()
-	for {}
+//_ = gateway.NewControlMessageForwarder()
+	_ = gateway.NewIDSGatewayWebInterface("8080")
 }
 

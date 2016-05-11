@@ -44,7 +44,7 @@ func openSession() (*mgo.Session,error) {
 }
 
 
-func  (dbWoker *DaemonDatabaseWorker) StoreTopics(topics []*models.Topic) error {
+func  (dbWoker *DaemonDatabaseWorker) StoreTopics(topics []*models.Topic) (*mgo.BulkResult,error) {
 
 	coll := dbWoker.session.DB(Database).C(TopicCollection)
 	index := mgo.Index{
@@ -65,11 +65,7 @@ func  (dbWoker *DaemonDatabaseWorker) StoreTopics(topics []*models.Topic) error 
 
 	}
 	bulkResult, err := bulkTransaction.Run()
-	if err != nil {
-		return err
-	}
-	fmt.Println(bulkResult)
-	return nil
+	return bulkResult,err
 }
 
 func  (dbWoker *DaemonDatabaseWorker) StoreTopic(topic *models.Topic) error {
