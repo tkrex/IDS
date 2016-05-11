@@ -6,18 +6,21 @@ import (
 	"github.com/tkrex/IDS/common/layers"
 	"encoding/json"
 	"fmt"
+	"time"
 )
 
 type DomainInformationForwarder struct {
-	publisher          common.InformationPublisher
-
-	forwarderStarted   sync.WaitGroup
-	forwarderStopped   sync.WaitGroup
-
+	forwarderStarted     sync.WaitGroup
+	forwarderStopped     sync.WaitGroup
 	forwardSignalChannel chan int
-	databaseDelegate *DaemonDatabaseWorker
-
+	databaseDelegate     *DaemonDatabaseWorker
+	updateFlag           bool
 }
+
+const (
+	ForwardInterval = 5 * time.Minute
+	ForwardTopic = "DomainInformation"
+)
 
 func NewDomainInformationForwarder(forwardSignalChannel chan int) *DomainInformationForwarder {
 	forwarder := new(DomainInformationForwarder)
@@ -30,37 +33,95 @@ func NewDomainInformationForwarder(forwardSignalChannel chan int) *DomainInforma
 }
 
 func (forwarder *DomainInformationForwarder) run() {
-	config := models.NewMqttClientConfiguration("tcp://localhost:1883","domainController","publisher")
-	forwarder.publisher = common.NewMqttPublisher(config)
 	go forwarder.listenOnForwardSignal()
+	go forwarder.startForwardTicker()
 	forwarder.forwarderStarted.Done()
-}
-
-func (forwarder *DomainInformationForwarder) close() {
-	forwarder.publisher.Close()
 }
 
 func (forwarder *DomainInformationForwarder) listenOnForwardSignal() {
 	for {
-		forwardStatus, open := <- forwarder.forwardSignalChannel
+		shouldForward, open := <- forwarder.forwardSignalChannel
 		if !open {
 			break
 		}
-		if forwardStatus == 1 {
-			go forwarder.forwardDomainInformation()
+		if shouldForward == 1 {
+			go forwarder.forwardAllDomainInformation()
 		}
 	}
 }
 
-func (forwarder *DomainInformationForwarder) forwardDomainInformation() {
-		dbDelegate,_ := NewDaemonDatabaseWorker()
-		topics,_ := dbDelegate.FindAllTopics()
-		broker,_ := dbDelegate.FindBroker()
-		message := models.NewDomainInformationMessage(broker.RealWorldDomains[0],broker,topics)
-		json, err := json.Marshal(message)
-		if err != nil {
-			fmt.Printf("Marshalling Error: %s",err)
-			return
-		}
-		go forwarder.publisher.Publish(json)
+func (forwarder *DomainInformationForwarder) startForwardTicker() {
+	forwardTicker := time.NewTicker(ForwardInterval)
+	for _ = range forwardTicker.C {
+		fmt.Println("Forward Ticker tick")
+		forwarder.triggerForwarding()
+	}
+}
+
+func (forwarder *DomainInformationForwarder) triggerForwarding() {
+	defer func() {
+		forwarder.updateFlag = false
+	}()
+	if !forwarder.updateFlag {
+		forwarder.forwardAllDomainInformation()
+	}
+}
+
+func (forwarder *DomainInformationForwarder) forwardAllDomainInformation() {
+	fmt.Println("Forwarding All Domain Information")
+	dbDelegate, _ := NewDaemonDatabaseWorker()
+	if dbDelegate == nil {
+		return
+	}
+	domains, _ := dbDelegate.FindAllDomains()
+	dbDelegate.Close()
+
+	for _, domain := range domains {
+		go forwarder.forwardDomainInformation(domain)
+	}
+
+}
+func (forwarder *DomainInformationForwarder) forwardDomainInformation(domain *models.RealWorldDomain) {
+	dbDelagte, err := NewDaemonDatabaseWorker()
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	defer dbDelagte.Close()
+
+	domainInformation := dbDelagte.FindDomainInformationByDomainName(domain.Name)
+	if domainInformation == nil {
+		fmt.Printf("\n No topics for domain %s found", domain.Name)
+		return
+	}
+	fmt.Printf("\n Forwarding %d Topics for the domain %s", len(domainInformation.Topics), domainInformation.RealWorldDomain.Name)
+
+
+
+	if len(domainInformation.Topics) == 0 {
+		dbDelagte.RemoveDomain(domain)
+		return
+	}
+
+	json, err := json.Marshal(domainInformation)
+	if err != nil {
+		fmt.Printf("Marshalling Error: %s", err)
+		return
+	}
+	serverAddress := ""
+	if domainController, _ := dbDelagte.FindDomainControllerForDomain(domain.Name); domainController != nil {
+		serverAddress = domainController.IpAddress
+	} else if rootController, _ := dbDelagte.FindDomainControllerForDomain("rootController"); rootController != nil {
+		serverAddress = rootController.IpAddress
+	}
+
+	if serverAddress == "" {
+		fmt.Println("No Domain Controller found for forwarding")
+		return
+	}
+
+	publisherConfig := models.NewMqttClientConfiguration(serverAddress, ForwardTopic, domainInformation.Broker.ID)
+	publisher := common.NewMqttPublisher(publisherConfig)
+	publisher.Publish(json)
+	publisher.Close()
 }

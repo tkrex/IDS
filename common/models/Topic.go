@@ -10,7 +10,7 @@ type Topic struct {
 	payloadSimilarity   float32        `json:"payloadSimilarity" bson:"payloadSimilarity"`
 	LastUpdateTimeStamp time.Time        `json:"lastUpdate" bson:"lastUpdate"`
 	UpdateBehavior      *UpdateBehavior
-	Domain              RealWorldDomain   `json:"domain" bson:"domain`
+	Domain              *RealWorldDomain   `json:"domain" bson:"domain`
 }
 
 type RawTopicMessage struct {

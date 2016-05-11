@@ -16,21 +16,20 @@ type TopicProcessor struct {
 	state                    int64
 	processorStarted         sync.WaitGroup
 	processorStopped         sync.WaitGroup
-	databaseDelegate 	*DaemonDatabaseWorker
+	databaseDelegate         *DaemonDatabaseWorker
 	topicUpdates             []*models.RawTopicMessage
 	incomingTopicChannel     chan *models.RawTopicMessage
 
-	forwardingSignalChannel chan int
+	forwardingSignalChannel   chan int
 	topicReliabilityStrategy models.UpdateReliabilityStrategy
 
-	newTopicsCounter int
+	newTopicsCounter         int
 }
-
 
 const (
 	TopicForwardThreshold = 10
-	BulkUpdateThreshold = 10
 
+	BulkUpdateThreshold = 10
 )
 
 func NewTopicProcessor(incomingTopicChannel chan *models.RawTopicMessage) *TopicProcessor {
@@ -38,6 +37,7 @@ func NewTopicProcessor(incomingTopicChannel chan *models.RawTopicMessage) *Topic
 	processor.processorStarted.Add(1)
 	processor.processorStopped.Add(1)
 	processor.incomingTopicChannel = incomingTopicChannel
+	//processor.newTopicsCounter = make(map[string]int)
 	processor.forwardingSignalChannel = make(chan int)
 	processor.topicReliabilityStrategy = models.MeanAbsoluteDeviation{}
 	processor.topicUpdates = make([]*models.RawTopicMessage, 0, BulkUpdateThreshold)
@@ -51,8 +51,8 @@ func (processor *TopicProcessor) State() int64 {
 	return atomic.LoadInt64(&processor.state)
 }
 
-func (processor * TopicProcessor) ForwardSignalChannel() chan int {
-	return  processor.forwardingSignalChannel
+func (processor *TopicProcessor) ForwardSignalChannel() chan int {
+	return processor.forwardingSignalChannel
 }
 
 func (processor *TopicProcessor)  Close() {
@@ -124,6 +124,12 @@ func (processor *TopicProcessor) sortTopicUpdatesByName(topicUpdates []*models.R
 
 func (processor *TopicProcessor) processSortedTopics(existingTopics map[string]*models.Topic, sortedTopics map[string][]*models.RawTopicMessage) {
 	resultingTopicUpdates := make([]*models.Topic, 0, len(sortedTopics))
+	processor.newTopicsCounter += (len(sortedTopics) - len(existingTopics))
+
+	var brokerDomain *models.RealWorldDomain
+	broker, _ := processor.databaseDelegate.FindBroker()
+	brokerDomain = broker.RealWorldDomains[0]
+
 	for name, topicArray := range sortedTopics {
 		var resultingTopic *models.Topic
 		existingTopic, _ := existingTopics[name]
@@ -131,22 +137,27 @@ func (processor *TopicProcessor) processSortedTopics(existingTopics map[string]*
 		for _, topic := range topicArray {
 			resultingTopic = processor.updateTopicInformation(resultingTopic, topic)
 		}
+		if brokerDomain != nil {
+			resultingTopic.Domain = brokerDomain
+		}
+
 		resultingTopicUpdates = append(resultingTopicUpdates, resultingTopic)
 	}
-	transactionInfo, err := processor.databaseDelegate.StoreTopics(resultingTopicUpdates)
+	_, err := processor.databaseDelegate.StoreTopics(resultingTopicUpdates)
 	if err != nil {
 		fmt.Println("could not update topics")
 		return
 	}
 
-	NumberOfNewTopics :=  len(sortedTopics) - transactionInfo.Matched
-	processor.newTopicsCounter += NumberOfNewTopics
-	fmt.Println(processor.newTopicsCounter)
-	if processor.newTopicsCounter >= TopicForwardThreshold {
-		processor.forwardingSignalChannel <- 1
-		processor.newTopicsCounter = 0
-	}
+	go processor.triggerDomainInformationUpdate()
+}
 
+func (processor *TopicProcessor) triggerDomainInformationUpdate() {
+		if processor.newTopicsCounter >= TopicForwardThreshold {
+			fmt.Println("Trigger Forwarding")
+			processor.forwardingSignalChannel <- 1
+			processor.newTopicsCounter = 0
+		}
 }
 
 func (processor *TopicProcessor) updateTopicInformation(existingTopic *models.Topic, newTopic *models.RawTopicMessage) *models.Topic {
@@ -175,10 +186,10 @@ func (processor *TopicProcessor) calculateUpdateBehavior(topic *models.Topic, ne
 		updateBehavior.AverageUpdateIntervalInSeconds = float64(newUpdateInterval)
 		updateBehavior.MaximumUpdateIntervalInSeconds = int(newUpdateInterval)
 		updateBehavior.MinimumUpdateIntervalInSeconds = int(newUpdateInterval)
-	} else if  topic.UpdateBehavior.NumberOfUpdates > 1{
+	} else if topic.UpdateBehavior.NumberOfUpdates > 1 {
 		updateBehavior.MaximumUpdateIntervalInSeconds = common.Max(updateBehavior.MaximumUpdateIntervalInSeconds, newUpdateInterval)
 		updateBehavior.MinimumUpdateIntervalInSeconds = common.Min(updateBehavior.MinimumUpdateIntervalInSeconds, newUpdateInterval)
-		updateBehavior.AverageUpdateIntervalInSeconds = (updateBehavior.AverageUpdateIntervalInSeconds * float64(len(updateBehavior.UpdateIntervalsInSeconds)) + float64(newUpdateInterval)) / float64(len(updateBehavior.UpdateIntervalsInSeconds)+1)
+		updateBehavior.AverageUpdateIntervalInSeconds = (updateBehavior.AverageUpdateIntervalInSeconds * float64(len(updateBehavior.UpdateIntervalsInSeconds)) + float64(newUpdateInterval)) / float64(len(updateBehavior.UpdateIntervalsInSeconds) + 1)
 	}
 
 	updateBehavior.UpdateIntervalsInSeconds = append(updateBehavior.UpdateIntervalsInSeconds, float64(newUpdateInterval))
