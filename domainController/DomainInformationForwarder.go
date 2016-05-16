@@ -26,7 +26,7 @@ const (
 	ForwardTopic = "DomainInformation"
 )
 
-func NewDomainInformationForwarder(forwardSignalChannel chan int) *DomainInformationForwarder {
+func NewDomainInformationForwarder(forwardSignalChannel chan *models.RealWorldDomain) *DomainInformationForwarder {
 	forwarder := new(DomainInformationForwarder)
 	forwarder.forwardSignalChannel = forwardSignalChannel
 	forwarder.updateFlags = make(map[string]bool)
