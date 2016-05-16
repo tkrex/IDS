@@ -16,40 +16,33 @@ const (
 	BrokerCollection = "brokers"
 	DomainControllerCollection = "domainControllers"
 	DomainInformationCollection = "domainInformation"
-
 )
 
-func openSession() (*mgo.Session, error) {
+type GatewayDBWorker struct {
+	session *mgo.Session
+}
+
+func NewGatewayDBWorker() *GatewayDBWorker {
+	worker := new(GatewayDBWorker)
+
 	session, err := mgo.DialWithTimeout(Host, time.Second * 3)
-
-	return session, err
-}
-func FindAllDomainInformation() ([]*models.DomainInformationMessage, error) {
-	session, err :=openSession()
 	if err != nil {
-		return nil, err
+		return nil
 	}
-	defer session.Close()
-	coll := session.DB(Database).C(Collection)
-	var domainInformation []*models.DomainInformationMessage
-	var error error
-
-	if error := coll.Find(nil).All(&domainInformation); error != nil {
-		fmt.Println(error)
-	}
-	return domainInformation, error
+	worker.session = session
+	return worker
 }
 
+func (worker *GatewayDBWorker) brokerCollection() *mgo.Collection {
+	return worker.session.DB(Database).C(BrokerCollection)
+}
 
-func StoreBroker(broker *models.Broker) (error) {
-	session, error :=  openSession()
-	defer session.Close()
-	if error != nil {
-		return error
-	}
-	fmt.Printf("Connected to %v\n", session.LiveServers())
+func (worker *GatewayDBWorker) domainControllerCollection() *mgo.Collection {
+	return worker.session.DB(Database).C(DomainControllerCollection)
+}
 
-	coll := session.DB(Database).C(BrokerCollection)
+func (worker *GatewayDBWorker) StoreBroker(broker *models.Broker) (error) {
+	coll := worker.brokerCollection()
 
 	if err := coll.Insert(broker); err != nil {
 		return err
@@ -57,16 +50,9 @@ func StoreBroker(broker *models.Broker) (error) {
 	return nil
 }
 
-func FindAllBrokers() ([]*models.Broker,error) {
+func (worker *GatewayDBWorker) FindAllBrokers() ([]*models.Broker, error) {
+	coll := worker.brokerCollection()
 	var brokers []*models.Broker
-
-	session,err :=  openSession()
-	if err != nil {
-		return brokers,err
-	}
-	defer session.Close()
-	coll := session.DB(Database).C(BrokerCollection)
-
 	var error error
 	if error = coll.Find(nil).All(brokers); error != nil {
 		fmt.Println(error)
@@ -74,69 +60,48 @@ func FindAllBrokers() ([]*models.Broker,error) {
 	return brokers, error
 }
 
-func FindBrokerById(brokerID string) (*models.Broker,bool) {
-	session, err :=  openSession()
-	if err != nil {
-		return nil,false
-	}
-	defer session.Close()
-	coll := session.DB(Database).C(BrokerCollection)
+func (worker *GatewayDBWorker) FindBrokerById(brokerID string) (*models.Broker, bool) {
+	coll := worker.brokerCollection()
 
 	broker := new(models.Broker)
 	if error := coll.Find(bson.M{"id":brokerID}).One(broker); error != nil {
 		return nil, false
 	}
-	return broker,true
+	return broker, true
 }
 
-func FindBrokerByIP(brokerIP int) (*models.Broker,error) {
-	session, err :=  openSession()
-	if err != nil {
-		return nil, err
-	}
-	defer session.Close()
-	coll := session.DB(Database).C(BrokerCollection)
+func (worker *GatewayDBWorker) FindBrokerByIP(brokerIP int) (*models.Broker, error) {
+	coll := worker.brokerCollection()
 
 	var broker *models.Broker
 	var error error
 	if error := coll.Find(bson.M{"ip":brokerIP}).One(broker); error != nil {
 		fmt.Println(error)
 	}
-	return broker,error
+	return broker, error
 }
 
-func FindAllDomainController() ([]*models.DomainController,error) {
+func (worker *GatewayDBWorker) FindAllDomainController() ([]*models.DomainController, error) {
 	var domainControllers []*models.DomainController
 
-	session,err :=  openSession()
-	if err != nil {
-		return domainControllers,err
-	}
-	defer session.Close()
-	coll := session.DB(Database).C(DomainControllerCollection)
+	coll := worker.domainControllerCollection()
 
 	if error := coll.Find(nil).All(&domainControllers); error != nil && error != mgo.ErrNotFound {
-		return domainControllers,error
+		return domainControllers, error
 	}
 	return domainControllers, nil
 }
 
-
-
 //true: entry was updated
 //false: no new data
-func UpdateControllerInformation(domainController *models.DomainController) (bool, error) {
-	info, error := storeDomainController(domainController)
-	return info.Updated != 0, error
+func (worker *GatewayDBWorker) UpdateControllerInformation(domainController *models.DomainController) (bool, error) {
+	info, error := worker.storeDomainController(domainController)
+	newInformation := info.Updated != 0 || info.Matched == 0
+	return newInformation, error
 }
 
-func storeDomainController(domainController *models.DomainController) (*mgo.ChangeInfo, error) {
-	session,err :=  openSession()
-	if err != nil {
-		return nil,err
-	}
-	defer session.Close()
-	coll := session.DB(Database).C(DomainControllerCollection)
+func (worker *GatewayDBWorker) storeDomainController(domainController *models.DomainController) (*mgo.ChangeInfo, error) {
+	coll := worker.domainControllerCollection()
 	index := mgo.Index{
 		Key:        []string{"domain.name"},
 		Unique:     true,
@@ -145,6 +110,6 @@ func storeDomainController(domainController *models.DomainController) (*mgo.Chan
 		Sparse:     true,
 	}
 	_ = coll.EnsureIndex(index)
-	info,err := coll.Upsert(bson.M{"domain.name":domainController.Domain.Name},bson.M{"$set": domainController})
+	info, err := coll.Upsert(bson.M{"domain.name":domainController.Domain.Name}, bson.M{"$set": domainController})
 	return info, err
 }

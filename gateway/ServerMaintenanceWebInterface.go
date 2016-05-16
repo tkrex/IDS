@@ -13,20 +13,24 @@ type ServerMaintenanceWebInterface struct {
 	port                           string
 	providerStarted                sync.WaitGroup
 	providerStopped                sync.WaitGroup
-	incomingControlMessagesChannel chan *models.DomainController
+	incomingControlMessagesChannel chan []*models.DomainController
 }
 
 
 
 func NewServerMaintenanceWebInterface(port string) *ServerMaintenanceWebInterface {
 	webInterface := new(ServerMaintenanceWebInterface)
-	webInterface.incomingControlMessagesChannel = make(chan *models.DomainController,1000)
+	webInterface.incomingControlMessagesChannel = make(chan []*models.DomainController,1000)
 	webInterface.providerStarted.Add(1)
 	webInterface.providerStopped.Add(1)
 	go webInterface.run(port)
 	webInterface.providerStarted.Wait()
 	fmt.Println("Maintance Web Interface Started")
 	return webInterface
+}
+
+func (webInterface *ServerMaintenanceWebInterface) IncomingControlMessagesChannel() chan []*models.DomainController {
+	return webInterface.incomingControlMessagesChannel
 }
 
 func (webInterface *ServerMaintenanceWebInterface) run(port string) {
@@ -50,7 +54,6 @@ func (webInterface ServerMaintenanceWebInterface) handleControlMessages(res http
 	}
 
 	fmt.Fprint(res, nil)
-	for _,information := range domainControllerInformation {
-		webInterface.incomingControlMessagesChannel <- information
-	}
+	webInterface.incomingControlMessagesChannel <- domainControllerInformation
+
 }
