@@ -98,7 +98,7 @@ func (worker *BrokerRegistrationWorker) findBrokerRealWorldDomains() {
 }
 
 func (worker *BrokerRegistrationWorker) findBrokerGeolocation() {
-	geolocationFetcher := common.NewGeoLocationFetcher("192.168.99.100")
+	geolocationFetcher := common.NewGeoLocationFetcher()
 	location, err := geolocationFetcher.SendGeoLocationRequest(worker.broker.IP)
 	if err != nil {
 		worker.broker.Geolocation = new(models.Geolocation)

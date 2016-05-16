@@ -9,16 +9,15 @@ import (
 )
 
 type GeoLocationFetcher struct {
-	apiServerAddress string
 }
 
 
-func NewGeoLocationFetcher(apiServerAddress string) *GeoLocationFetcher {
+func NewGeoLocationFetcher() *GeoLocationFetcher {
 	fetcher := new(GeoLocationFetcher)
-	fetcher.apiServerAddress = "http://" + apiServerAddress + ":8080"+"/json/"
 	return fetcher
 }
 
+const APIEndpont = "http://192.168.99.100:8080/json/"
 type Location struct {
 	IP          string  `json:"id"`
 	CountryCode string  `json:"country_code"`
@@ -35,7 +34,7 @@ type Location struct {
 
 
 func (fetcher *GeoLocationFetcher) SendGeoLocationRequest(address string) (*models.Geolocation,error)  {
-	response, err := http.Get(fetcher.apiServerAddress + address)
+	response, err := http.Get(APIEndpont + address)
 	if err != nil {
 		fmt.Printf("%s", err)
 		return nil,err
