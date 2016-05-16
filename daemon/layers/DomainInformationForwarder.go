@@ -59,15 +59,14 @@ func (forwarder *DomainInformationForwarder) startForwardTicker() {
 }
 
 func (forwarder *DomainInformationForwarder) triggerForwarding() {
-	defer func() {
-		forwarder.lastForwardTimestamp = time.Now()
-	}()
 	if time.Now().Sub(forwarder.lastForwardTimestamp) > ForwardInterval {
 		forwarder.forwardAllDomainInformation()
 	}
 }
 
 func (forwarder *DomainInformationForwarder) forwardAllDomainInformation() {
+	forwarder.lastForwardTimestamp = time.Now()
+
 	fmt.Println("Forwarding All Domain Information")
 	dbDelegate, _ := NewDaemonDatabaseWorker()
 	if dbDelegate == nil {

@@ -1,4 +1,4 @@
-package layers
+package domainController
 
 import (
 	"sync"
@@ -15,8 +15,8 @@ type DomainInformationForwarder struct {
 	forwarderStarted     sync.WaitGroup
 	forwarderStopped     sync.WaitGroup
 
-	forwardSignalChannel chan int
-	databaseDelegate     *DaemonDatabaseWorker
+	forwardSignalChannel chan *models.RealWorldDomain
+	databaseDelegate     *DomainControllerDatabaseWorker
 
 	updateFlags          map[string]bool
 }
@@ -25,8 +25,6 @@ const (
 	ForwardInterval = 1 * time.Minute
 	ForwardTopic = "DomainInformation"
 )
-
-
 
 func NewDomainInformationForwarder(forwardSignalChannel chan int) *DomainInformationForwarder {
 	forwarder := new(DomainInformationForwarder)
@@ -40,7 +38,7 @@ func NewDomainInformationForwarder(forwardSignalChannel chan int) *DomainInforma
 }
 
 func (forwarder *DomainInformationForwarder) run() {
-	config := models.NewMqttClientConfiguration("tcp://localhost:1883","domainController","publisher")
+	config := models.NewMqttClientConfiguration("tcp://localhost:1883", "domainController", "publisher")
 	forwarder.publisher = common.NewMqttPublisher(config)
 	go forwarder.listenOnForwardSignal()
 	go forwarder.startForwardTicker()
@@ -53,7 +51,7 @@ func (forwarder *DomainInformationForwarder) close() {
 
 func (forwarder *DomainInformationForwarder) listenOnForwardSignal() {
 	for {
-		domain, open := <- forwarder.forwardSignalChannel
+		domain, open := <-forwarder.forwardSignalChannel
 		if !open {
 			break
 		}
@@ -71,56 +69,49 @@ func (forwarder *DomainInformationForwarder) startForwardTicker() {
 }
 
 func (forwarder *DomainInformationForwarder) checkDomainsForForwarding() {
-	dbDelagte,_ := NewDaemonDatabaseWorker()
+	dbDelagte, _ := NewDomainControllerDatabaseWorker()
 	defer dbDelagte.Close()
 	domains, _ := dbDelagte.FindAllDomains()
-	for _,domain := range domains {
+	for _, domain := range domains {
 		if updateFlag := forwarder.updateFlags[domain.Name]; !updateFlag {
-			 forwarder.forwardDomainInformation(domain)
+			go forwarder.forwardDomainInformation(domain)
 		}
 		forwarder.updateFlags[domain.Name] = false
 	}
-	
-}
-
-func (forwarder *DomainInformationForwarder) forwardAllDomainInformation(domain *models.RealWorldDomain) {
 
 }
+
 func (forwarder *DomainInformationForwarder) forwardDomainInformation(domain *models.RealWorldDomain) {
-		dbDelagte,_ := NewDaemonDatabaseWorker()
-		defer dbDelagte.Close()
+	dbDelagte, _ := NewDomainControllerDatabaseWorker()
+	defer dbDelagte.Close()
 
-		domainInformation,err := dbDelagte.FindDomainInformationByDomainName(domain.Name)
-		fmt.Printf("\n Forwarding %d Topics for the domain %s", len(domainInformation.Topics), domainInformation.RealWorldDomain.Name)
+	domainInformation, err := dbDelagte.FindDomainInformationByDomainName(domain.Name)
 
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	if len(domainInformation.Topics) == 0 {
-		dbDelagte.RemoveDomain(domain)
+
+	json, err := json.Marshal(domainInformation)
+	if err != nil {
+		fmt.Printf("Marshalling Error: %s", err)
+		return
+	}
+	serverAddress := ""
+	if domainController, _ := dbDelagte.FindDomainControllerForDomain(domain.Name); domainController != nil {
+		serverAddress = domainController.IpAddress
+	} else if rootController, _ := dbDelagte.FindDomainControllerForDomain("rootController"); rootController != nil {
+		serverAddress = rootController.IpAddress
+	}
+
+	if serverAddress == "" {
+		fmt.Println("No Domain Controller found for forwarding")
 		return
 	}
 
-		json, err := json.Marshal(domainInformation)
-		if err != nil {
-			fmt.Printf("Marshalling Error: %s",err)
-			return
-		}
-		serverAddress := ""
-		if domainController,_ := dbDelagte.FindDomainControllerForDomain(domain.Name); domainController != nil {
-			serverAddress = domainController.IpAddress
-		} else if rootController,_ := dbDelagte.FindDomainControllerForDomain("rootController"); rootController != nil {
-			serverAddress = rootController.IpAddress
-		}
-
-		if serverAddress == "" {
-			fmt.Println("No Domain Controller found for forwarding")
-			return
-		}
-
-		publisherConfig := models.NewMqttClientConfiguration(serverAddress,ForwardTopic,domainInformation.Broker.ID)
-		publisher := common.NewMqttPublisher(publisherConfig)
-		publisher.Publish(json)
-		publisher.Close()
+	//TODO: Come up with DomainConroller ID
+	publisherConfig := models.NewMqttClientConfiguration(serverAddress, ForwardTopic, "DomainCOntrollerID")
+	publisher := common.NewMqttPublisher(publisherConfig)
+	publisher.Publish(json)
+	publisher.Close()
 }

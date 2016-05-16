@@ -8,18 +8,21 @@ import (
 	"github.com/tkrex/IDS/common/models"
 )
 
+const (
+	ForwardThreshold = 10
+)
+
 type DomainInformationProcessor struct {
 	// Flag to indicate that the consumer state
 	// 0 == Running
 	// 1 == Closed
-	state                               int64
-	processorStarted                    sync.WaitGroup
-	processorStopped                    sync.WaitGroup
-	incomingTopicChannel                chan *models.RawTopicMessage
-	forwardingSignalChannel   chan *models.RealWorldDomain
+	state                       int64
+	processorStarted            sync.WaitGroup
+	processorStopped            sync.WaitGroup
+	incomingTopicChannel        chan *models.RawTopicMessage
+	forwardingSignalChannel     chan *models.RealWorldDomain
 
-	NewTopicsCounter map[string]int
-
+	newDomainInformationCounter map[string]int
 }
 
 func NewDomainInformationProcessor(incomingTopicChannel chan *models.RawTopicMessage) *DomainInformationProcessor {
@@ -27,6 +30,8 @@ func NewDomainInformationProcessor(incomingTopicChannel chan *models.RawTopicMes
 	processor.processorStarted.Add(1)
 	processor.processorStopped.Add(1)
 	processor.incomingTopicChannel = incomingTopicChannel
+	processor.forwardingSignalChannel = make(chan *models.RealWorldDomain)
+	processor.newDomainInformationCounter = make(map[string]int)
 	go processor.run()
 	processor.processorStarted.Wait()
 	fmt.Println("Producer Created")
@@ -60,16 +65,33 @@ func (processor *DomainInformationProcessor) run() {
 func (processor *DomainInformationProcessor) ProcessDomainInformationMessages() bool {
 	rawTopic, ok := <-processor.incomingTopicChannel
 	if rawTopic != nil {
-		processor.processDomainInformationMessage(rawTopic)
+		go processor.processDomainInformationMessage(rawTopic)
 	}
 	return ok
 }
 
 func (processor *DomainInformationProcessor) processDomainInformationMessage(topic *models.RawTopicMessage) {
-	var domainInformationMessage models.DomainInformationMessage
-	if err := json.Unmarshal(topic.Payload, &domainInformationMessage); err != nil {
+	var domainInformationMessages []*models.DomainInformationMessage
+	if err := json.Unmarshal(topic.Payload, &domainInformationMessages); err != nil {
 		fmt.Println(err)
 		return
 	}
-	StoreDomainInformation(&domainInformationMessage)
+
+	go processor.storeDomainInformation(domainInformationMessages)
+
+	for _, message := range domainInformationMessages {
+		processor.newDomainInformationCounter[message.RealWorldDomain.Name] += message.ForwardPriority
+		if processor.newDomainInformationCounter[message.RealWorldDomain.Name] > ForwardThreshold {
+			processor.forwardingSignalChannel <- message.RealWorldDomain
+		}
+	}
+}
+
+func (processor *DomainInformationProcessor) storeDomainInformation(information []*models.DomainInformationMessage) {
+	dbDelegate, _ := NewDomainControllerDatabaseWorker()
+	if dbDelegate == nil {
+		return
+	}
+	defer dbDelegate.Close()
+	dbDelegate.StoreDomainInformation(information)
 }

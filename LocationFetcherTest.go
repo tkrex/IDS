@@ -1,33 +1,18 @@
 package main
 
 import (
-	"github.com/tkrex/IDS/common/models"
-	"encoding/json"
-	"net/http"
-	"bytes"
+
 	"fmt"
-	"io/ioutil"
+	"github.com/tkrex/IDS/daemon/layers"
 )
 
 func main() {
-	domain1 := models.NewRealWorldDomain("domain1")
- 	domainC1 := models.NewDomainController("address1",domain1)
-	domains := []*models.DomainController{domainC1}
-	json,_:= json.Marshal(domains)
+	//fetcher := common.NewGeoLocationFetcher()
+	//location,_ := fetcher.SendGeoLocationRequest("ma-krex-bruegge.in.tum.de")
+	//fmt.Println(location)
 
-
-	req, err := http.NewRequest("POST", "http://localhost:8080/controlling", bytes.NewBuffer(json))
-	req.Header.Set("Content-Type", "application/json")
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		panic(err)
-	}
-	defer resp.Body.Close()
-	fmt.Println("response Status:", resp.Status)
-	fmt.Println("response Headers:", resp.Header)
-	body, _ := ioutil.ReadAll(resp.Body)
-	fmt.Println("response Body:", string(body))
+	categorizer := layers.NewWebsiteCategorizationWorker()
+	categories,_ :=categorizer.RequestCategoriesForWebsite("www.in.tum.de")
+	fmt.Println(categories)
 
 }

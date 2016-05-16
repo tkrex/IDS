@@ -1,6 +1,9 @@
 package common
 
-import "math"
+import (
+	"math"
+	"github.com/tkrex/IDS/common/models"
+)
 
 func Min(x, y int) int {
 	if x < y {
@@ -24,3 +27,23 @@ func RoundUp(input float64, places int) (newVal float64) {
 	newVal = round / pow
 	return
 }
+
+
+
+// Returns the first index of the target string `t`, or
+// -1 if no match is found.
+func Index(vs []*models.RealWorldDomain, t *models.RealWorldDomain) int {
+	for i, v := range vs {
+		if v.Name == t.Name {
+			return i
+		}
+	}
+	return -1
+}
+
+// Returns `true` if the target string t is in the
+// slice.
+func Include(vs []*models.RealWorldDomain, t *models.RealWorldDomain) bool {
+	return Index(vs, t) >= 0
+}
+
