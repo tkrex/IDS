@@ -9,6 +9,7 @@ import (
 	"github.com/tkrex/IDS/common/models"
 	"github.com/tkrex/IDS/gateway/persistence"
 	"github.com/tkrex/IDS/gateway/registration"
+	"html/template"
 )
 
 type IDSGatewayWebInterface struct {
@@ -41,26 +42,41 @@ func (webInterface *IDSGatewayWebInterface) run(port string) {
 
 func (webInterface *IDSGatewayWebInterface) handleDomainInformation(res http.ResponseWriter, req *http.Request) {
 	//res.Header().Set("Content-Type", "application/json")
-	//fmt.Println("domain Information Request Received")
-	//domainInformation, err := Fi
-	//if err != nil {
-	//	http.Error(res, err.Error(), http.StatusInternalServerError)
-	//	return
-	//}
-	//
-	//t, _ := template.ParseFiles("templates/domainInformation.html")
-	//t.Execute(res, domainInformation)
-	//fmt.Println(req.RemoteAddr)
-	//res.Header().Set("Content-Type", "application/json")
-	//
+	fmt.Println("domain Information Request Received")
+
+	requestParameters := mux.Vars(req)
+	domainName := requestParameters["domain"]
+	requestHandler := NewDomainInformationRequestHandler()
+	domainInformation := requestHandler.handleRequest(domainName)
+	if domainInformation == nil {
+		http.Error(res, "Error", http.StatusInternalServerError)
+		return
+	}
+
+	t := template.New("domainInformation.html")
+	var parseError error
+
+
+	t, parseError = t.ParseFiles("gateway/templates/domainInformation.html")
+	if parseError != nil {
+		http.Error(res, parseError.Error(), http.StatusInternalServerError)
+		return
+	}
+	executeError := t.Execute(res,domainInformation)
+	if executeError != nil {
+		http.Error(res, executeError.Error(), http.StatusInternalServerError)
+		return
+	}
+
+
+
 	//outgoingJSON, error := json.Marshal(domainInformation)
 	//
 	//if error != nil {
 	//	fmt.Println(error.Error())
-	//	http.Error(res, error.Error(), http.StatusInternalServerError)
+	//	http.Error(res, "Error", http.StatusInternalServerError)
 	//	return
 	//}
-	//
 	//fmt.Fprint(res, string(outgoingJSON))
 }
 
@@ -100,7 +116,7 @@ func (webInterface *IDSGatewayWebInterface) handleBrokers(res http.ResponseWrite
 			return
 		}
 		registrationHandler := registration.NewBrokerRegistrationHandler()
-		response, error  :=registrationHandler.RegisterBroker(broker)
+		response, error  := registrationHandler.RegisterBroker(broker)
 		if error != nil {
 			fmt.Println(error.Error())
 			http.Error(res, error.Error(), http.StatusInternalServerError)

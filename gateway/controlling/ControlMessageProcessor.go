@@ -15,7 +15,7 @@ type ControlMessageProcessor struct {
 	workerStopped                  sync.WaitGroup
 	state                          int64
 	incomingControlMessagesChannel chan *models.ControlMessage
-	informationPublisher           *common.MqttPublisher
+	informationPublisher           *publishing.MqttPublisher
 }
 
 func NewControlMessageProcessor(incomingControlMessagesChanel chan *models.ControlMessage) *ControlMessageProcessor {
@@ -32,7 +32,7 @@ func NewControlMessageProcessor(incomingControlMessagesChanel chan *models.Contr
 func (worker *ControlMessageProcessor) run() {
 	PublishConfig := models.NewMqttClientConfiguration("tcp://localhost:1883", "ControlMessage", "gateway")
 
-	worker.informationPublisher = common.NewMqttPublisher(PublishConfig)
+	worker.informationPublisher = publishing.NewMqttPublisher(PublishConfig)
 	worker.workerStarted.Done()
 
 	for closed := atomic.LoadInt64(&worker.state) == 1; !closed; closed = atomic.LoadInt64(&worker.state) == 1 {

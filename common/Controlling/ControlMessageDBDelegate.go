@@ -52,12 +52,12 @@ func (dbWoker *ControlMessageDBDelegate) StoreDomainControllers(domainController
 	return error
 }
 
-func (dbWoker *ControlMessageDBDelegate) FindDomainControllerForDomain(domain string) (*models.DomainController,error) {
+func (dbWoker *ControlMessageDBDelegate) FindDomainControllerForDomain(domain string) *models.DomainController {
 	coll := dbWoker.domainControllerCollection()
 	var domainController *models.DomainController
 	error := coll.Find(bson.M{"domain.name":domain}).One(&domainController)
 	fmt.Println(error)
-	return domainController,error
+	return domainController
 }
 
 func (worker *ControlMessageDBDelegate) removeDomainControllers(domainControllers []*models.DomainController) error{
