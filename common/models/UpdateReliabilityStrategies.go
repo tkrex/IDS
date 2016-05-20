@@ -2,7 +2,10 @@ package models
 
 import (
 )
-import "math"
+import (
+	"math"
+	"fmt"
+)
 
 type UpdateReliabilityStrategy interface {
 	Name() string
@@ -19,12 +22,15 @@ func (m MeanAbsoluteDeviation) Name() string{
 }
 
 func (m MeanAbsoluteDeviation) Calculate(updateStats *UpdateBehavior) float64 {
-	deviationSum := 0.0
-	for interval := range updateStats.UpdateIntervalsInSeconds {
-		deviationSum += math.Abs(float64(interval) - updateStats.AverageUpdateIntervalInSeconds)
+	if len(updateStats.UpdateIntervalsInSeconds) < 2 {
+		return 0.0
 	}
-
-	 meanAbsoluteDeviation := float64(deviationSum) / float64(len(updateStats.UpdateIntervalsInSeconds))
+	deviationSum := float64(0)
+	for _,interval := range updateStats.UpdateIntervalsInSeconds {
+		deviation := math.Abs(interval - updateStats.AverageUpdateIntervalInSeconds)
+		deviationSum +=  deviation
+	}
+	 meanAbsoluteDeviation := deviationSum / float64(len(updateStats.UpdateIntervalsInSeconds))
 
 	//Reset Array to current average + deviation to avoid memory leak
 	if len(updateStats.UpdateIntervalsInSeconds) == 1000 {
