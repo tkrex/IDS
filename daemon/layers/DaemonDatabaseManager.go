@@ -15,7 +15,6 @@ const (
 	Database = "IDSDaemon"
 	TopicCollection = "topics"
 	BrokerCollection = "broker"
-	DomainControllerCollection = "domainController"
 	DomainCollection = "domains"
 )
 
@@ -56,9 +55,7 @@ func (dbWorker *DaemonDatabaseWorker) brokerCollection() *mgo.Collection {
 	return dbWorker.session.DB(Database).C(BrokerCollection)
 }
 
-func (dbWorker *DaemonDatabaseWorker) domainControllerCollection() *mgo.Collection {
-	return dbWorker.session.DB(Database).C(DomainControllerCollection)
-}
+
 
 
 
@@ -247,35 +244,5 @@ func (dbWoker *DaemonDatabaseWorker) FindBroker() (*models.Broker,error) {
 	return broker, error
 }
 
-
-func (dbWoker *DaemonDatabaseWorker) StoreDomainControllers(domainControllers []*models.DomainController) error {
-	coll := dbWoker.domainControllerCollection()
-	bulk := coll.Bulk()
-	bulk.Unordered()
-	for _, domainController := range domainControllers {
-		bulk.Upsert(bson.M{"domain.name":domainController.Domain.Name},bson.M{"$set": domainController})
-	}
-	_, error := bulk.Run()
-	return error
-}
-
-func (dbWoker *DaemonDatabaseWorker) FindDomainControllerForDomain(domain string) (*models.DomainController,error) {
-	coll := dbWoker.domainControllerCollection()
-	var domainController *models.DomainController
-	error := coll.Find(bson.M{"domain.name":domain}).One(&domainController)
-	fmt.Println(error)
-	return domainController,error
-}
-
-func (worker *DaemonDatabaseWorker) removeDomainControllers(domainControllers []*models.DomainController) error{
-	coll := worker.domainControllerCollection()
-	bulk := coll.Bulk()
-	bulk.Unordered()
-	for _, domainController := range domainControllers {
-		bulk.Remove(bson.M{"domain.name":domainController.Domain.Name, "ipAddress": domainController.IpAddress})
-	}
-	_, err := bulk.Run()
-	return err
-}
 
 

@@ -36,7 +36,7 @@ func startControlMessageProcessing() {
 	//TODO: figure out client id
 	subscriberConfig := models.NewMqttClientConfiguration(brokerAddress,desiredTopic,"controlMessageSubscriber")
 	subscriber := common.NewMqttSubscriber(subscriberConfig,true)
-	_ = layers.NewControlMessageProcessor(subscriber.IncomingTopicsChannel())
+	_ = common.NewControlMessageProcessor(subscriber.IncomingTopicsChannel())
 
 }
 

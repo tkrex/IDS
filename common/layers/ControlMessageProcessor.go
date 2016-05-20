@@ -1,4 +1,4 @@
-package layers
+package common
 
 import (
 	"sync"
@@ -71,7 +71,7 @@ func (processor *ControlMessageProcessor) processIncomingControlMessage() bool {
 
 
 func (processor *ControlMessageProcessor) storeDomainControllers(controllers []*models.DomainController) {
-	dbWorker, err := NewDaemonDatabaseWorker()
+	dbWorker, err := NewControlMessageDBDelegate()
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -81,7 +81,7 @@ func (processor *ControlMessageProcessor) storeDomainControllers(controllers []*
 }
 
 func (processor *ControlMessageProcessor) removeDomainControllers(controllers []*models.DomainController) {
-	dbWorker, err := NewDaemonDatabaseWorker()
+	dbWorker, err := NewControlMessageDBDelegate()
 	if err != nil {
 		fmt.Println(err)
 		return

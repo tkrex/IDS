@@ -14,6 +14,13 @@ func main() {
 
 
 
+	startDomainInformationProcessing()
+	startControlMessageProcessing()
+	for {}
+}
+
+
+func startDomainInformationProcessing() {
 	//producer layer
 	brokerAddress := "tcp://localhost:1883"
 	desiredTopic  := "DomainInformation"
@@ -21,12 +28,5 @@ func main() {
 	subscriber := common.NewMqttSubscriber(subscriberConfig,false)
 	//processing layer
 	_ = domainController.NewDomainInformationProcessor(subscriber.IncomingTopicsChannel())
-
-	for {
-		time.Sleep(time.Second)
-	}
-	subscriber.Close()
-
-
 }
 

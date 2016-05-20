@@ -16,7 +16,6 @@ const (
 	Database = "IDSDomainController"
 
 	BrokerCollection = "brokers"
-	DomainControllerCollection = "domainControllers"
 	DomainInformationCollection = "domainInformation"
 )
 
@@ -54,10 +53,6 @@ func (dbWorker *DomainControllerDatabaseWorker) domainInformationCollection() *m
 
 func (dbWorker *DomainControllerDatabaseWorker) brokerCollection() *mgo.Collection {
 	return dbWorker.session.DB(Database).C(BrokerCollection)
-}
-
-func (dbWorker *DomainControllerDatabaseWorker) domainControllerCollection() *mgo.Collection {
-	return dbWorker.session.DB(Database).C(DomainInformationCollection)
 }
 
 
@@ -100,26 +95,6 @@ func (dbWoker *DomainControllerDatabaseWorker) FindBroker() (*models.Broker,erro
 	}
 	return broker, error
 }
-
-
-func (dbWoker *DomainControllerDatabaseWorker) StoreDomainControllers(domainControllers []*models.DomainController) error {
-	coll := dbWoker.domainControllerCollection()
-	bulk := coll.Bulk()
-	bulk.Unordered()
-	for _, domainController := range domainControllers {
-		bulk.Upsert(bson.M{"domain.name":domainController.Domain.Name},bson.M{"$set": domainController})
-	}
-	_, error := bulk.Run()
-	return error
-}
-
-func (dbWoker *DomainControllerDatabaseWorker) FindDomainControllerForDomain(domain string) (*models.DomainController,error) {
-	coll := dbWoker.domainControllerCollection()
-	var domainController *models.DomainController
-	error := coll.Find(bson.M{"domain.name":domain}).One(domainController)
-	return domainController,error
-}
-
 
 
 func (dbWoker *DomainControllerDatabaseWorker) StoreDomainInformation(domainInformationMessages []*models.DomainInformationMessage) error {

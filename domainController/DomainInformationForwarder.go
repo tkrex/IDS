@@ -82,10 +82,10 @@ func (forwarder *DomainInformationForwarder) checkDomainsForForwarding() {
 }
 
 func (forwarder *DomainInformationForwarder) forwardDomainInformation(domain *models.RealWorldDomain) {
-	dbDelagte, _ := NewDomainControllerDatabaseWorker()
-	defer dbDelagte.Close()
+	domainInformationDelegate, _ := NewDomainControllerDatabaseWorker()
+	defer domainInformationDelegate.Close()
 
-	domainInformation, err := dbDelagte.FindDomainInformationByDomainName(domain.Name)
+	domainInformation, err := domainInformationDelegate.FindDomainInformationByDomainName(domain.Name)
 
 	if err != nil {
 		fmt.Println(err)
@@ -98,9 +98,16 @@ func (forwarder *DomainInformationForwarder) forwardDomainInformation(domain *mo
 		return
 	}
 	serverAddress := ""
-	if domainController, _ := dbDelagte.FindDomainControllerForDomain(domain.Name); domainController != nil {
+
+	controlMessagesDBDelagte, err := common.NewControlMessageDBDelegate()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	if domainController, _ := controlMessagesDBDelagte.FindDomainControllerForDomain(domain.Name); domainController != nil {
 		serverAddress = domainController.IpAddress
-	} else if rootController, _ := dbDelagte.FindDomainControllerForDomain("rootController"); rootController != nil {
+	} else if rootController, _ := controlMessagesDBDelagte.FindDomainControllerForDomain("rootController"); rootController != nil {
 		serverAddress = rootController.IpAddress
 	}
 
