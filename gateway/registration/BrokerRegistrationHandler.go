@@ -1,10 +1,11 @@
-package gateway
+package registration
 
 import (
 	"github.com/tkrex/IDS/common/models"
 	"crypto/md5"
 	"fmt"
 	"errors"
+	"github.com/tkrex/IDS/gateway/persistence"
 )
 
 type BrokerRegistrationHandler struct {
@@ -16,7 +17,7 @@ func NewBrokerRegistrationHandler() *BrokerRegistrationHandler {
 	return handler
 }
 
-func (handler *BrokerRegistrationHandler) registerBroker(broker *models.Broker) (*models.BrokerRegistrationResponse, error) {
+func (handler *BrokerRegistrationHandler) RegisterBroker(broker *models.Broker) (*models.BrokerRegistrationResponse, error) {
 
 	brokerIdentificationString := broker.IP + broker.InternetDomain
 	byteArray := []byte(brokerIdentificationString)
@@ -25,7 +26,7 @@ func (handler *BrokerRegistrationHandler) registerBroker(broker *models.Broker) 
 
 	var domainControllers []*models.DomainController
 	var err error
-	dbWorker := NewGatewayDBWorker()
+	dbWorker := persistence.NewGatewayDBWorker()
 	if dbWorker == nil {
 		return nil,errors.New("Can't connect with database")
 	}

@@ -1,4 +1,4 @@
-package layers
+package registration
 
 
 import (

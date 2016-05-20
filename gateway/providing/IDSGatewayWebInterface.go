@@ -1,4 +1,4 @@
-package gateway
+package providing
 
 import (
 	"net/http"
@@ -7,6 +7,8 @@ import (
 	"encoding/json"
 	"sync"
 	"github.com/tkrex/IDS/common/models"
+	"github.com/tkrex/IDS/gateway/persistence"
+	"github.com/tkrex/IDS/gateway/registration"
 )
 
 type IDSGatewayWebInterface struct {
@@ -67,7 +69,7 @@ func (webInterface *IDSGatewayWebInterface) handleBrokers(res http.ResponseWrite
 	switch req.Method {
 	case "GET":
 		fmt.Println("Received Broker Request")
-		dbWorker := NewGatewayDBWorker()
+		dbWorker := persistence.NewGatewayDBWorker()
 		if dbWorker == nil {
 			fmt.Println("Can't connect to database")
 			return
@@ -97,8 +99,8 @@ func (webInterface *IDSGatewayWebInterface) handleBrokers(res http.ResponseWrite
 			http.Error(res, error.Error(), http.StatusInternalServerError)
 			return
 		}
-		registrationHandler := NewBrokerRegistrationHandler()
-		response, error  :=registrationHandler.registerBroker(broker)
+		registrationHandler := registration.NewBrokerRegistrationHandler()
+		response, error  :=registrationHandler.RegisterBroker(broker)
 		if error != nil {
 			fmt.Println(error.Error())
 			http.Error(res, error.Error(), http.StatusInternalServerError)
@@ -114,10 +116,7 @@ func (webInterface *IDSGatewayWebInterface) handleBrokers(res http.ResponseWrite
 		}
 
 		fmt.Fprint(res, string(outgoingJSON))
-
 	}
-
-
 }
 
 

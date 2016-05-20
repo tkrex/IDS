@@ -1,4 +1,4 @@
-package domainController
+package processing
 
 import (
 	"sync/atomic"
@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"encoding/json"
 	"github.com/tkrex/IDS/common/models"
+	"github.com/tkrex/IDS/domainController/persistence"
 )
 
 const (
@@ -88,7 +89,7 @@ func (processor *DomainInformationProcessor) processDomainInformationMessage(top
 }
 
 func (processor *DomainInformationProcessor) storeDomainInformation(information []*models.DomainInformationMessage) {
-	dbDelegate, _ := NewDomainControllerDatabaseWorker()
+	dbDelegate, _ := persistence.NewDomainControllerDatabaseWorker()
 	if dbDelegate == nil {
 		return
 	}

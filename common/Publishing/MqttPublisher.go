@@ -1,4 +1,4 @@
-package common
+package publishing
 
 import (
 	"github.com/eclipse/paho.mqtt.golang"

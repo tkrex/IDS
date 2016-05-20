@@ -1,4 +1,4 @@
-package layers
+package processing
 
 import (
 	"sync/atomic"
@@ -7,6 +7,7 @@ import (
 
 	"github.com/tkrex/IDS/common"
 	"github.com/tkrex/IDS/common/models"
+	"github.com/tkrex/IDS/daemon/persistence"
 )
 
 type TopicProcessor struct {
@@ -16,7 +17,7 @@ type TopicProcessor struct {
 	state                    int64
 	processorStarted         sync.WaitGroup
 	processorStopped         sync.WaitGroup
-	databaseDelegate         *DaemonDatabaseWorker
+	databaseDelegate         *persistence.DaemonDatabaseWorker
 	topicUpdates             []*models.RawTopicMessage
 	incomingTopicChannel     chan *models.RawTopicMessage
 
@@ -63,7 +64,7 @@ func (processor *TopicProcessor)  Close() {
 }
 
 func (processor *TopicProcessor) run() {
-	dbDelegate, err := NewDaemonDatabaseWorker()
+	dbDelegate, err := persistence.NewDaemonDatabaseWorker()
 	if err != nil {
 		fmt.Println("Stopping Topic Processor: No Conbection to DB")
 		return

@@ -1,4 +1,4 @@
-package common
+package subscribing
 import (
   "fmt"
   //import the Paho Go MQTT library

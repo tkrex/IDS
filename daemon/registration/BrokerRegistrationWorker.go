@@ -1,4 +1,4 @@
-package layers
+package registration
 
 import (
 	"github.com/tkrex/IDS/common/models"
@@ -8,9 +8,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net"
-	"github.com/tkrex/IDS/daemon"
 	"time"
 	"sync"
+	"github.com/tkrex/IDS/daemon/persistence"
+	"github.com/tkrex/IDS/common/controlling"
 )
 
 const RegisterInterval = time.Second * 10
@@ -20,7 +21,7 @@ type BrokerRegistrationWorker struct {
 	registerTicker *time.Ticker
 	workerStarted  sync.WaitGroup
 	workerStopped  sync.WaitGroup
-	dbWorker       *DaemonDatabaseWorker
+	dbDelegate     *persistence.DaemonDatabaseWorker
 }
 
 func NewBrokerRegistrationWorker() *BrokerRegistrationWorker {
@@ -34,15 +35,15 @@ func NewBrokerRegistrationWorker() *BrokerRegistrationWorker {
 }
 
 func (worker *BrokerRegistrationWorker) registerBroker() {
-	databaseWorker, err := NewDaemonDatabaseWorker()
+	databaseWorker, err := persistence.NewDaemonDatabaseWorker()
 	if err != nil {
 		fmt.Println("Database not reachable")
 		return
 	}
-	worker.dbWorker = databaseWorker
+	worker.dbDelegate = databaseWorker
 	worker.workerStarted.Done()
 
-	if isBrokerRegistered := worker.isBrokerRegistered(databaseWorker); isBrokerRegistered {
+	if isBrokerRegistered := worker.isBrokerRegistered(); isBrokerRegistered {
 		fmt.Println("Broker is already Registered")
 		return
 	}
@@ -55,7 +56,7 @@ func (worker *BrokerRegistrationWorker) registerBroker() {
 	worker.registerTicker = time.NewTicker(RegisterInterval)
 	go func() {
 		registrationSuccess := false
-		defer worker.dbWorker.Close()
+		defer worker.dbDelegate.Close()
 		for _ = range worker.registerTicker.C {
 			fmt.Println("RegistrationTicker Tick")
 			if registrationSuccess {
@@ -67,9 +68,9 @@ func (worker *BrokerRegistrationWorker) registerBroker() {
 	}()
 }
 
-func (worker *BrokerRegistrationWorker) isBrokerRegistered(dbWoker *DaemonDatabaseWorker) bool {
+func (worker *BrokerRegistrationWorker) isBrokerRegistered() bool {
 	isBrokerRegistered := true
-	broker, err := dbWoker.FindBroker()
+	broker, err := worker.dbDelegate.FindBroker()
 	if err != nil {
 		isBrokerRegistered = false
 	} else if broker.ID == "" {
@@ -98,7 +99,7 @@ func (worker *BrokerRegistrationWorker) findBrokerRealWorldDomains() {
 }
 
 func (worker *BrokerRegistrationWorker) findBrokerGeolocation() {
-	geolocationFetcher := common.NewGeoLocationFetcher()
+	geolocationFetcher := NewGeoLocationFetcher()
 	location, err := geolocationFetcher.SendGeoLocationRequest(worker.broker.IP)
 	if err != nil {
 		worker.broker.Geolocation = new(models.Geolocation)
@@ -140,8 +141,15 @@ func (worker *BrokerRegistrationWorker) sendRegistrationRequest() bool {
 		return false
 	}
 
-	err = worker.dbWorker.StoreBroker(response.Broker)
-	err = worker.dbWorker.StoreDomainControllers(response.DomainControllers)
+	err = worker.dbDelegate.StoreBroker(response.Broker)
+
+	controllingDBDelegate, error := controlling.NewControlMessageDBDelegate()
+	if error != nil {
+		fmt.Println(error)
+		return false
+	}
+	defer controllingDBDelegate.Close()
+	err = controllingDBDelegate.StoreDomainControllers(response.DomainControllers)
 	if err != nil {
 		fmt.Println(err)
 		return false

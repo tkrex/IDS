@@ -2,10 +2,9 @@ package main
 
 import (
 
-	"time"
-	"github.com/tkrex/IDS/common/layers"
 	"github.com/tkrex/IDS/common/models"
-	"github.com/tkrex/IDS/domainController"
+	"github.com/tkrex/IDS/common/subscribing"
+	"github.com/tkrex/IDS/domainController/processing"
 )
 
 
@@ -15,7 +14,6 @@ func main() {
 
 
 	startDomainInformationProcessing()
-	startControlMessageProcessing()
 	for {}
 }
 
@@ -25,8 +23,8 @@ func startDomainInformationProcessing() {
 	brokerAddress := "tcp://localhost:1883"
 	desiredTopic  := "DomainInformation"
 	subscriberConfig := models.NewMqttClientConfiguration(brokerAddress,desiredTopic,"domainController")
-	subscriber := common.NewMqttSubscriber(subscriberConfig,false)
+	subscriber := subscribing.NewMqttSubscriber(subscriberConfig,false)
 	//processing layer
-	_ = domainController.NewDomainInformationProcessor(subscriber.IncomingTopicsChannel())
+	_ = processing.NewDomainInformationProcessor(subscriber.IncomingTopicsChannel())
 }
 

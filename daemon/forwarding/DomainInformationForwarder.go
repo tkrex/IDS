@@ -1,19 +1,20 @@
-package layers
+package forwarding
 
 import (
 	"sync"
 	"github.com/tkrex/IDS/common/models"
-	"github.com/tkrex/IDS/common/layers"
 	"encoding/json"
 	"fmt"
 	"time"
+	"github.com/tkrex/IDS/daemon/persistence"
+	"github.com/tkrex/IDS/common/controlling"
+	"github.com/tkrex/IDS/common/publishing"
 )
 
 type DomainInformationForwarder struct {
 	forwarderStarted     sync.WaitGroup
 	forwarderStopped     sync.WaitGroup
 	forwardSignalChannel chan int
-	databaseDelegate     *DaemonDatabaseWorker
 	lastForwardTimestamp           time.Time
 }
 
@@ -69,7 +70,7 @@ func (forwarder *DomainInformationForwarder) forwardAllDomainInformation() {
 	defer func() { forwarder.lastForwardTimestamp = time.Now()}()
 
 	fmt.Println("Forwarding All Domain Information")
-	dbDelegate, _ := NewDaemonDatabaseWorker()
+	dbDelegate, _ := persistence.NewDaemonDatabaseWorker()
 	if dbDelegate == nil {
 		return
 	}
@@ -93,7 +94,7 @@ func (forwarder *DomainInformationForwarder) calculateForwardPriority(domainInfo
 }
 
 func (forwarder *DomainInformationForwarder) forwardDomainInformation(domain *models.RealWorldDomain) {
-	dbDelagte, err := NewDaemonDatabaseWorker()
+	dbDelagte, err := persistence.NewDaemonDatabaseWorker()
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -124,10 +125,16 @@ func (forwarder *DomainInformationForwarder) forwardDomainInformation(domain *mo
 		return
 	}
 	serverAddress := ""
-	if domainController, _ := dbDelagte.FindDomainControllerForDomain(domain.Name); domainController != nil {
+	controlMessagesDBDelagte, err := controlling.NewControlMessageDBDelegate()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer controlMessagesDBDelagte.Close()
+	if domainController, _ := controlMessagesDBDelagte.FindDomainControllerForDomain(domain.Name); domainController != nil {
 		serverAddress = domainController.IpAddress
 		fmt.Println("Sending information to %s DomainController: %s",domainController.Domain.Name,domainController.IpAddress)
-	} else if rootController, _ := dbDelagte.FindDomainControllerForDomain("root"); rootController != nil {
+	} else if rootController, _ := controlMessagesDBDelagte.FindDomainControllerForDomain("root"); rootController != nil {
 		serverAddress = rootController.IpAddress
 	}
 
@@ -137,7 +144,7 @@ func (forwarder *DomainInformationForwarder) forwardDomainInformation(domain *mo
 	}
 
 	publisherConfig := models.NewMqttClientConfiguration(serverAddress, ForwardTopic, domainInformation.Broker.ID)
-	publisher := common.NewMqttPublisher(publisherConfig)
+	publisher := publishing.NewMqttPublisher(publisherConfig)
 	publisher.Publish(json)
 	publisher.Close()
 }

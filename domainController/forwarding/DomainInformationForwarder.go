@@ -1,23 +1,21 @@
-package domainController
+package forwarding
 
 import (
 	"sync"
-	"github.com/tkrex/IDS/common/models"
-	"github.com/tkrex/IDS/common/layers"
 	"encoding/json"
 	"fmt"
 	"time"
+	"github.com/tkrex/IDS/common/models"
+	"github.com/tkrex/IDS/common/controlling"
+	"github.com/tkrex/IDS/domainController/persistence"
+	"github.com/tkrex/IDS/common/publishing"
 )
 
 type DomainInformationForwarder struct {
-	publisher            common.InformationPublisher
-
 	forwarderStarted     sync.WaitGroup
 	forwarderStopped     sync.WaitGroup
 
 	forwardSignalChannel chan *models.RealWorldDomain
-	databaseDelegate     *DomainControllerDatabaseWorker
-
 	updateFlags          map[string]bool
 }
 
@@ -38,15 +36,12 @@ func NewDomainInformationForwarder(forwardSignalChannel chan *models.RealWorldDo
 }
 
 func (forwarder *DomainInformationForwarder) run() {
-	config := models.NewMqttClientConfiguration("tcp://localhost:1883", "domainController", "publisher")
-	forwarder.publisher = common.NewMqttPublisher(config)
 	go forwarder.listenOnForwardSignal()
 	go forwarder.startForwardTicker()
 	forwarder.forwarderStarted.Done()
 }
 
 func (forwarder *DomainInformationForwarder) close() {
-	forwarder.publisher.Close()
 }
 
 func (forwarder *DomainInformationForwarder) listenOnForwardSignal() {
@@ -69,7 +64,7 @@ func (forwarder *DomainInformationForwarder) startForwardTicker() {
 }
 
 func (forwarder *DomainInformationForwarder) checkDomainsForForwarding() {
-	dbDelagte, _ := NewDomainControllerDatabaseWorker()
+	dbDelagte, _ := persistence.NewDomainControllerDatabaseWorker()
 	defer dbDelagte.Close()
 	domains, _ := dbDelagte.FindAllDomains()
 	for _, domain := range domains {
@@ -82,7 +77,7 @@ func (forwarder *DomainInformationForwarder) checkDomainsForForwarding() {
 }
 
 func (forwarder *DomainInformationForwarder) forwardDomainInformation(domain *models.RealWorldDomain) {
-	domainInformationDelegate, _ := NewDomainControllerDatabaseWorker()
+	domainInformationDelegate, _ := persistence.NewDomainControllerDatabaseWorker()
 	defer domainInformationDelegate.Close()
 
 	domainInformation, err := domainInformationDelegate.FindDomainInformationByDomainName(domain.Name)
@@ -99,7 +94,7 @@ func (forwarder *DomainInformationForwarder) forwardDomainInformation(domain *mo
 	}
 	serverAddress := ""
 
-	controlMessagesDBDelagte, err := common.NewControlMessageDBDelegate()
+	controlMessagesDBDelagte, err := controlling.NewControlMessageDBDelegate()
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -118,7 +113,7 @@ func (forwarder *DomainInformationForwarder) forwardDomainInformation(domain *mo
 
 	//TODO: Come up with DomainConroller ID
 	publisherConfig := models.NewMqttClientConfiguration(serverAddress, ForwardTopic, "DomainCOntrollerID")
-	publisher := common.NewMqttPublisher(publisherConfig)
+	publisher :=  publishing.NewMqttPublisher(publisherConfig)
 	publisher.Publish(json)
 	publisher.Close()
 }

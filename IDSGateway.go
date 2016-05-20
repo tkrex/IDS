@@ -1,17 +1,15 @@
 package main
 
 import (
-
-)
-import (
-	"github.com/tkrex/IDS/gateway"
+	"github.com/tkrex/IDS/gateway/providing"
+	"github.com/tkrex/IDS/gateway/controlling"
 )
 
 func main() {
 
-	gateway.NewIDSGatewayWebInterface("8080")
-	webInterface := gateway.NewServerMaintenanceWebInterface("8080")
-	_ = gateway.NewControlMessageProcessor(webInterface.IncomingControlMessagesChannel())
+	providing.NewIDSGatewayWebInterface("8080")
+	webInterface := controlling.NewServerMaintenanceWebInterface("8080")
+	_ = controlling.NewControlMessageProcessor(webInterface.IncomingControlMessagesChannel())
 	for  {}
 }
 

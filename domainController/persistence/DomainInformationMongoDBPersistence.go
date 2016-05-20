@@ -1,4 +1,4 @@
-package domainController
+package persistence
 
 import (
 	"fmt"

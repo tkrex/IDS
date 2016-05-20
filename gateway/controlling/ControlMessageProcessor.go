@@ -1,12 +1,13 @@
-package gateway
+package controlling
 
 import (
 	"sync"
-	"github.com/tkrex/IDS/common/layers"
 	"github.com/tkrex/IDS/common/models"
 	"sync/atomic"
 	"fmt"
 	"encoding/json"
+	"github.com/tkrex/IDS/common/publishing"
+	"github.com/tkrex/IDS/gateway/persistence"
 )
 
 type ControlMessageProcessor struct {
@@ -17,7 +18,7 @@ type ControlMessageProcessor struct {
 	informationPublisher           *common.MqttPublisher
 }
 
-func NewControlMessageProcessor(incomingControlMessagesChanel chan []*models.DomainController) *ControlMessageProcessor {
+func NewControlMessageProcessor(incomingControlMessagesChanel chan *models.ControlMessage) *ControlMessageProcessor {
 	worker := new(ControlMessageProcessor)
 	worker.workerStarted.Add(1)
 	worker.workerStopped.Add(1)
@@ -49,19 +50,19 @@ func (worker *ControlMessageProcessor) processIncomingControlMessage() bool {
 
 
 	controlMessage, open := <-worker.incomingControlMessagesChannel
-	 dbWorker := NewGatewayDBWorker()
+	 dbWorker := persistence.NewGatewayDBWorker()
 	if dbWorker == nil {
 		fmt.Println("Can't connect to database")
-		return true
+		return false
 	}
 	 defer dbWorker.Close()
 
 	if controlMessage == nil {
-		return
+		return false
 	}
 
 	if controlMessage.MessageType == models.DomainControllerDelete {
-		dbWorker.removeDomainControllers(controlMessage.DomainControllers)
+		dbWorker.RemoveDomainControllers(controlMessage.DomainControllers)
 		worker.forwardControlMessage(controlMessage)
 	} else if controlMessage.MessageType == models.DomainControllerDelete {
 		forwardedDomainControllers := [] *models.DomainController{}

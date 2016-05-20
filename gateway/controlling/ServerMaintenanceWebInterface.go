@@ -1,4 +1,4 @@
-package gateway
+package controlling
 
 import (
 	"sync"
@@ -29,7 +29,7 @@ func NewServerMaintenanceWebInterface(port string) *ServerMaintenanceWebInterfac
 	return webInterface
 }
 
-func (webInterface *ServerMaintenanceWebInterface) IncomingControlMessagesChannel() chan []*models.DomainController {
+func (webInterface *ServerMaintenanceWebInterface) IncomingControlMessagesChannel() chan *models.ControlMessage {
 	return webInterface.incomingControlMessagesChannel
 }
 

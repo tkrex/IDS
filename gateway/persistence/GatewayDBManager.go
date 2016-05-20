@@ -1,4 +1,4 @@
-package gateway
+package persistence
 
 import (
 	"gopkg.in/mgo.v2"
@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"gopkg.in/mgo.v2/bson"
 	"time"
-	"github.com/tkrex/IDS/domainController"
 )
 
 const (
@@ -96,12 +95,12 @@ func (worker *GatewayDBWorker) FindAllDomainController() ([]*models.DomainContro
 //true: entry was updated
 //false: no new data
 func (worker *GatewayDBWorker) UpdateControllerInformation(domainController *models.DomainController) (bool, error) {
-	info, error := worker.storeDomainController(domainController)
+	info, error := worker.StoreDomainController(domainController)
 	newInformation := info.Updated != 0 || info.Matched == 0
 	return newInformation, error
 }
 
-func (worker *GatewayDBWorker) storeDomainController(domainController *models.DomainController) (*mgo.ChangeInfo, error) {
+func (worker *GatewayDBWorker) StoreDomainController(domainController *models.DomainController) (*mgo.ChangeInfo, error) {
 	coll := worker.domainControllerCollection()
 	index := mgo.Index{
 		Key:        []string{"domain.name"},
@@ -115,7 +114,7 @@ func (worker *GatewayDBWorker) storeDomainController(domainController *models.Do
 	return info, err
 }
 
-func (worker *GatewayDBWorker) removeDomainControllers(domainControllers []*models.DomainController) error{
+func (worker *GatewayDBWorker) RemoveDomainControllers(domainControllers []*models.DomainController) error{
 	coll := worker.domainControllerCollection()
 	bulk := coll.Bulk()
 	bulk.Unordered()
