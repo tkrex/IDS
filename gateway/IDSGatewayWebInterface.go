@@ -6,9 +6,7 @@ import (
 	"fmt"
 	"encoding/json"
 	"sync"
-	"github.com/tkrex/IDS/domainController"
 	"github.com/tkrex/IDS/common/models"
-	"html/template"
 )
 
 type IDSGatewayWebInterface struct {
@@ -17,8 +15,6 @@ type IDSGatewayWebInterface struct {
 	providerStopped sync.WaitGroup
 
 }
-
-
 
 func NewIDSGatewayWebInterface(port string) *IDSGatewayWebInterface {
 	webInterface := new(IDSGatewayWebInterface)
@@ -30,8 +26,8 @@ func NewIDSGatewayWebInterface(port string) *IDSGatewayWebInterface {
 }
 
 func (webInterface *IDSGatewayWebInterface) run(port string) {
-	fmt.Print("IDSGatewayInterface started")
-	defer webInterface.providerStarted.Done()
+	fmt.Println("IDSGatewayInterface started")
+	 webInterface.providerStarted.Done()
 
 	router := mux.NewRouter()
 	router.HandleFunc("/domains/{domainName}", webInterface.handleDomainInformation).Methods("GET")
@@ -42,35 +38,41 @@ func (webInterface *IDSGatewayWebInterface) run(port string) {
 }
 
 func (webInterface *IDSGatewayWebInterface) handleDomainInformation(res http.ResponseWriter, req *http.Request) {
-	res.Header().Set("Content-Type", "application/json")
-	fmt.Println("domain Information Request Received")
-	domainInformation, err := Fi
-	if err != nil {
-		http.Error(res, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	t, _ := template.ParseFiles("templates/domainInformation.html")
-	t.Execute(res, domainInformation)
-	fmt.Println(req.RemoteAddr)
-	res.Header().Set("Content-Type", "application/json")
-
-	outgoingJSON, error := json.Marshal(domainInformation)
-
-	if error != nil {
-		fmt.Println(error.Error())
-		http.Error(res, error.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	fmt.Fprint(res, string(outgoingJSON))
+	//res.Header().Set("Content-Type", "application/json")
+	//fmt.Println("domain Information Request Received")
+	//domainInformation, err := Fi
+	//if err != nil {
+	//	http.Error(res, err.Error(), http.StatusInternalServerError)
+	//	return
+	//}
+	//
+	//t, _ := template.ParseFiles("templates/domainInformation.html")
+	//t.Execute(res, domainInformation)
+	//fmt.Println(req.RemoteAddr)
+	//res.Header().Set("Content-Type", "application/json")
+	//
+	//outgoingJSON, error := json.Marshal(domainInformation)
+	//
+	//if error != nil {
+	//	fmt.Println(error.Error())
+	//	http.Error(res, error.Error(), http.StatusInternalServerError)
+	//	return
+	//}
+	//
+	//fmt.Fprint(res, string(outgoingJSON))
 }
 
 func (webInterface *IDSGatewayWebInterface) handleBrokers(res http.ResponseWriter, req *http.Request) {
 	res.Header().Set("Content-Type", "application/json")
 	switch req.Method {
 	case "GET":
-		brokers, err := FindAllBrokers()
+		fmt.Println("Received Broker Request")
+		dbWorker := NewGatewayDBWorker()
+		if dbWorker == nil {
+			fmt.Println("Can't connect to database")
+			return
+		}
+		brokers, err := dbWorker.FindAllBrokers()
 
 		if err != nil {
 			http.Error(res, err.Error(), http.StatusInternalServerError)

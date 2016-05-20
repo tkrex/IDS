@@ -15,7 +15,6 @@ const (
 	Password = "example"
 	Database = "IDSDomainController"
 
-	TopicCollection = "topics"
 	BrokerCollection = "brokers"
 	DomainControllerCollection = "domainControllers"
 	DomainInformationCollection = "domainInformation"

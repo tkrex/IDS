@@ -5,23 +5,23 @@ import (
 	"github.com/tkrex/IDS/common/layers"
 	"github.com/tkrex/IDS/common/models"
 	"sync/atomic"
-	"encoding/json"
 	"fmt"
+	"encoding/json"
 )
 
-
 type ControlMessageProcessor struct {
-	workerStarted sync.WaitGroup
-	workerStopped sync.WaitGroup
-	state int64
-	webInterface *ServerMaintenanceWebInterface
-	informationPublisher *common.MqttPublisher
+	workerStarted                  sync.WaitGroup
+	workerStopped                  sync.WaitGroup
+	state                          int64
+	incomingControlMessagesChannel chan *models.ControlMessage
+	informationPublisher           *common.MqttPublisher
 }
 
-func NewControlMessageForwarder() *ControlMessageProcessor {
+func NewControlMessageProcessor(incomingControlMessagesChanel chan []*models.DomainController) *ControlMessageProcessor {
 	worker := new(ControlMessageProcessor)
 	worker.workerStarted.Add(1)
 	worker.workerStopped.Add(1)
+	worker.incomingControlMessagesChannel = incomingControlMessagesChanel
 	go worker.run()
 	worker.workerStarted.Wait()
 	fmt.Println("ControlMessageForwarder started")
@@ -29,14 +29,13 @@ func NewControlMessageForwarder() *ControlMessageProcessor {
 }
 
 func (worker *ControlMessageProcessor) run() {
-	PublishConfig := models.NewMqttClientConfiguration("tcp://localhost:1883","controlInformation","gateway")
+	PublishConfig := models.NewMqttClientConfiguration("tcp://localhost:1883", "ControlMessage", "gateway")
 
 	worker.informationPublisher = common.NewMqttPublisher(PublishConfig)
-	worker.webInterface = NewServerMaintenanceWebInterface("8080")
 	worker.workerStarted.Done()
 
 	for closed := atomic.LoadInt64(&worker.state) == 1; !closed; closed = atomic.LoadInt64(&worker.state) == 1 {
-		open := worker.processIncomingDomainControllerInformation()
+		open := worker.processIncomingControlMessage()
 		if !open {
 			worker.Close()
 			break
@@ -45,23 +44,51 @@ func (worker *ControlMessageProcessor) run() {
 	worker.workerStopped.Done()
 }
 
+func (worker *ControlMessageProcessor) processIncomingControlMessage() bool {
 
-func (worker *ControlMessageProcessor) processIncomingDomainControllerInformation() bool {
-	domainControllerInformation , open := <-worker.webInterface.incomingControlMessagesChannel
-	if domainControllerInformation != nil {
-		updated , _ := UpdateControllerInformation(domainControllerInformation)
-		if !updated {
-			fmt.Println("Domain COntroller information already exist")
-			return open
+
+
+	controlMessage, open := <-worker.incomingControlMessagesChannel
+	 dbWorker := NewGatewayDBWorker()
+	if dbWorker == nil {
+		fmt.Println("Can't connect to database")
+		return true
+	}
+	 defer dbWorker.Close()
+
+	if controlMessage == nil {
+		return
+	}
+
+	if controlMessage.MessageType == models.DomainControllerDelete {
+		dbWorker.removeDomainControllers(controlMessage.DomainControllers)
+		worker.forwardControlMessage(controlMessage)
+	} else if controlMessage.MessageType == models.DomainControllerDelete {
+		forwardedDomainControllers := [] *models.DomainController{}
+		for _, domainController := range controlMessage.DomainControllers {
+			updated, _ := dbWorker.UpdateControllerInformation(domainController)
+			if !updated {
+				fmt.Println("Domain Controller information already exist")
+			} else {
+				forwardedDomainControllers = append(forwardedDomainControllers, domainController)
+			}
 		}
-		json, err := json.Marshal(&domainControllerInformation)
-		if err != nil {
-			fmt.Print(err)
-		} else {
-			go worker.informationPublisher.Publish(json)
+		if len(forwardedDomainControllers) > 0 {
+			forwardControlMessage := models.NewControlMessage(controlMessage.MessageType, forwardedDomainControllers)
+			worker.forwardControlMessage(forwardControlMessage)
 		}
 	}
+
 	return open
+}
+
+func (worker *ControlMessageProcessor) forwardControlMessage(controlMessage *models.ControlMessage) {
+	json, err := json.Marshal(&controlMessage)
+	if err != nil {
+		fmt.Print(err)
+	} else {
+		go worker.informationPublisher.Publish(json)
+	}
 }
 
 func (worker *ControlMessageProcessor) Close() {

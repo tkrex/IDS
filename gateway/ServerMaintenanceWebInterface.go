@@ -13,14 +13,14 @@ type ServerMaintenanceWebInterface struct {
 	port                           string
 	providerStarted                sync.WaitGroup
 	providerStopped                sync.WaitGroup
-	incomingControlMessagesChannel chan []*models.DomainController
+	incomingControlMessagesChannel chan *models.ControlMessage
 }
 
 
 
 func NewServerMaintenanceWebInterface(port string) *ServerMaintenanceWebInterface {
 	webInterface := new(ServerMaintenanceWebInterface)
-	webInterface.incomingControlMessagesChannel = make(chan []*models.DomainController,1000)
+	webInterface.incomingControlMessagesChannel = make(chan *models.ControlMessage,1000)
 	webInterface.providerStarted.Add(1)
 	webInterface.providerStopped.Add(1)
 	go webInterface.run(port)
@@ -36,7 +36,7 @@ func (webInterface *ServerMaintenanceWebInterface) IncomingControlMessagesChanne
 func (webInterface *ServerMaintenanceWebInterface) run(port string) {
 	webInterface.providerStarted.Done()
 	router := mux.NewRouter()
-	router.HandleFunc("/controlling", webInterface.handleControlMessages).Methods("POST")
+	router.HandleFunc("/controlling", webInterface.handleControlMessages).Methods("POST","DELETE")
 	http.ListenAndServe(":" + port, router)
 }
 
@@ -53,7 +53,16 @@ func (webInterface ServerMaintenanceWebInterface) handleControlMessages(res http
 		return
 	}
 
+	controlMessage := new(models.ControlMessage)
+	switch req.Method {
+	case "POST":
+		controlMessage.MessageType = models.DomainControllerUpdate
+	case "DELETE":
+		controlMessage.MessageType = models.DomainControllerDelete
+	}
+
+
 	fmt.Fprint(res, nil)
-	webInterface.incomingControlMessagesChannel <- domainControllerInformation
+	webInterface.incomingControlMessagesChannel <- controlMessage
 
 }

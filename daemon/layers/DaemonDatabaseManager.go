@@ -262,8 +262,20 @@ func (dbWoker *DaemonDatabaseWorker) StoreDomainControllers(domainControllers []
 func (dbWoker *DaemonDatabaseWorker) FindDomainControllerForDomain(domain string) (*models.DomainController,error) {
 	coll := dbWoker.domainControllerCollection()
 	var domainController *models.DomainController
-	error := coll.Find(bson.M{"domain.name":domain}).One(domainController)
+	error := coll.Find(bson.M{"domain.name":domain}).One(&domainController)
+	fmt.Println(error)
 	return domainController,error
+}
+
+func (worker *DaemonDatabaseWorker) removeDomainControllers(domainControllers []*models.DomainController) error{
+	coll := worker.domainControllerCollection()
+	bulk := coll.Bulk()
+	bulk.Unordered()
+	for _, domainController := range domainControllers {
+		bulk.Remove(bson.M{"domain.name":domainController.Domain.Name, "ipAddress": domainController.IpAddress})
+	}
+	_, err := bulk.Run()
+	return err
 }
 
 

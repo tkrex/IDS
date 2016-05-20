@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"gopkg.in/mgo.v2/bson"
 	"time"
+	"github.com/tkrex/IDS/domainController"
 )
 
 const (
@@ -112,4 +113,19 @@ func (worker *GatewayDBWorker) storeDomainController(domainController *models.Do
 	_ = coll.EnsureIndex(index)
 	info, err := coll.Upsert(bson.M{"domain.name":domainController.Domain.Name}, bson.M{"$set": domainController})
 	return info, err
+}
+
+func (worker *GatewayDBWorker) removeDomainControllers(domainControllers []*models.DomainController) error{
+	coll := worker.domainControllerCollection()
+	bulk := coll.Bulk()
+	bulk.Unordered()
+	for _, domainController := range domainControllers {
+		bulk.Remove(bson.M{"domain.name":domainController.Domain.Name, "ipAddress": domainController.IpAddress})
+	}
+	_, err := bulk.Run()
+	return err
+}
+
+func (worker *GatewayDBWorker) Close() {
+	worker.session.Close()
 }

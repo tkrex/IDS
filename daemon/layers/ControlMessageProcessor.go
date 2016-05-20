@@ -36,7 +36,7 @@ func (processor *ControlMessageProcessor) run() {
 	processor.processorStarted.Done()
 
 	for closed := atomic.LoadInt64(&processor.state) == 1; !closed; closed = atomic.LoadInt64(&processor.state) == 1 {
-		open := processor.processIncomingControlMessages()
+		open := processor.processIncomingControlMessage()
 		if !open {
 			processor.Close()
 			break
@@ -45,22 +45,26 @@ func (processor *ControlMessageProcessor) run() {
 	processor.processorStopped.Done()
 }
 
-func (processor *ControlMessageProcessor) processIncomingControlMessages() bool {
+func (processor *ControlMessageProcessor) processIncomingControlMessage() bool {
 	message, open := <- processor.incomingControlMessageChannel
 	fmt.Println("Received ControlMessage")
 	if message.Name != "ControlMessage" {
 		fmt.Println("Wrong topic name")
 		return open
 	}
-	var domainControllers []*models.DomainController
-	err := json.Unmarshal(message.Payload,&domainControllers)
+	var controlMessage *models.ControlMessage
+	err := json.Unmarshal(message.Payload,&controlMessage)
 	if err != nil {
 		fmt.Println(err)
 		return open
 	}
 
-	if domainControllers != nil {
-		go processor.storeDomainControllers(domainControllers)
+	if controlMessage != nil {
+		if controlMessage.MessageType == models.DomainControllerUpdate {
+			go processor.storeDomainControllers(controlMessage.DomainControllers)
+		} else if controlMessage.MessageType == models.DomainControllerDelete {
+			go processor.removeDomainControllers(controlMessage.DomainControllers)
+		}
 	}
 	return open
 }
@@ -74,6 +78,16 @@ func (processor *ControlMessageProcessor) storeDomainControllers(controllers []*
 	}
 	defer dbWorker.Close()
 	dbWorker.StoreDomainControllers(controllers)
+}
+
+func (processor *ControlMessageProcessor) removeDomainControllers(controllers []*models.DomainController) {
+	dbWorker, err := NewDaemonDatabaseWorker()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer dbWorker.Close()
+	dbWorker.removeDomainControllers(controllers)
 }
 
 func (processor *ControlMessageProcessor)  Close() {
