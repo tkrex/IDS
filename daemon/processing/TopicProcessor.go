@@ -31,7 +31,7 @@ type TopicProcessor struct {
 
 const (
 	TopicForwardThreshold = 10
-	SimilarityCheckInterval = 7 * 24 * time.Hour
+	SimilarityCheckInterval time.Duration = 7 * 24 * time.Hour
 	BulkUpdateThreshold = 10
 )
 
@@ -184,17 +184,21 @@ func (processor *TopicProcessor) updateTopicInformation(existingTopic *models.To
 	} else {
 		resultingTopic = existingTopic
 		newUpdateInterval := int(newTopic.ArrivalTime.Sub(resultingTopic.LastUpdateTimeStamp).Seconds())
-		processor.calculatePayloadSimilarity(resultingTopic, newTopic.Payload)
-		resultingTopic.LastPayload = newTopic.Payload
 		resultingTopic.LastUpdateTimeStamp = newTopic.ArrivalTime
 		processor.calculateUpdateBehavior(resultingTopic, newUpdateInterval)
+		processor.calculatePayloadSimilarity(resultingTopic, newTopic.Payload)
+		resultingTopic.LastPayload = newTopic.Payload
 
 	}
 	return resultingTopic
 }
 
 func (processor *TopicProcessor) calculatePayloadSimilarity(topic *models.Topic, newJSONPayload json.RawMessage) {
-	if topic.UpdateBehavior.NumberOfUpdates + 1 >= 10 && topic.UpdateBehavior.NumberOfUpdates % topic.SimilarityCheckInterval == 0 {
+	if topic.UpdateBehavior.NumberOfUpdates % 100 == 0 {
+		processor.calculatePayloadSimilarityCheckInterval(topic)
+
+	}
+	if topic.UpdateBehavior.NumberOfUpdates  >= 10 && topic.UpdateBehavior.NumberOfUpdates % topic.SimilarityCheckInterval == 0 {
 		fmt.Println("calculating similarity")
 		oldJsonKeys :=  getKeysFromJSONObject(topic.LastPayload)
 		newJsonKeys := getKeysFromJSONObject(newJSONPayload)
@@ -213,6 +217,12 @@ func (processor *TopicProcessor) calculatePayloadSimilarity(topic *models.Topic,
 		similarity := float64(hitCounter) / float64(len(oldJsonKeys)) * 100.0
 		topic.PayloadSimilarity = common.RoundUp(similarity,2)
 	}
+}
+
+func (processor *TopicProcessor) calculatePayloadSimilarityCheckInterval(topic *models.Topic) {
+	topicSimilarityCheckInterval := int(SimilarityCheckInterval.Seconds()) / int(topic.UpdateBehavior.AverageUpdateIntervalInSeconds)
+	fmt.Println(topicSimilarityCheckInterval)
+	topic.SimilarityCheckInterval = topicSimilarityCheckInterval
 }
 
 func Include(array []string, value string) bool {

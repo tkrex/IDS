@@ -4,7 +4,6 @@ import (
 )
 import (
 	"math"
-	"fmt"
 )
 
 type UpdateReliabilityStrategy interface {

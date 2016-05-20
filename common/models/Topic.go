@@ -51,7 +51,7 @@ func NewTopic(name string, payload []byte,arrivalTime time.Time) *Topic {
 	topic.LastPayload = payload
 	topic.FirstUpdateTimeStamp = arrivalTime
 	topic.LastUpdateTimeStamp = arrivalTime
-	topic.SimilarityCheckInterval = 1
+	topic.SimilarityCheckInterval = 0
 	topic.UpdateBehavior = NewUpdateBehavior()
 	return topic
 }
