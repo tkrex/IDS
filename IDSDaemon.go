@@ -10,9 +10,16 @@ import (
 
 func main() {
 
-	// persistence layer
-	//processing layer
-	//producer layer
+	go startBrokerRegistration()
+	go startControlMessageProcessing()
+	go startTopicProcessing()
+	for {
+		time.Sleep(time.Second)
+	}
+}
+
+
+func startTopicProcessing() {
 	brokerAddress := "tcp://localhost:1883"
 	desiredTopic  := "#"
 	subscriberConfig := models.NewMqttClientConfiguration(brokerAddress,desiredTopic,"subscriber")
@@ -22,15 +29,17 @@ func main() {
 
 	_ = layers.NewDomainInformationForwarder(topicProcessor.ForwardSignalChannel())
 
-	for {
-		time.Sleep(time.Second)
-	}
-	subscriber.Close()
-
-
-	//worker := common.NewWebsiteCategorizationWorker("owLf4fHmY0jMwQLNapZD","http://api.webshrinker.com/categories/v2")
-	//worker.RequestCategoriesForWebsite("www1.in.tum.de")
-
+}
+func startControlMessageProcessing() {
+	brokerAddress := "tcp://localhost:1883"
+	desiredTopic  := "ControlMessage"
+	//TODO: figure out client id
+	subscriberConfig := models.NewMqttClientConfiguration(brokerAddress,desiredTopic,"controlMessageSubscriber")
+	subscriber := common.NewMqttSubscriber(subscriberConfig,true)
+	_ = layers.NewControlMessageProcessor(subscriber.IncomingTopicsChannel())
 
 }
 
+func startBrokerRegistration() {
+	_ = layers.NewBrokerRegistrationWorker()
+}

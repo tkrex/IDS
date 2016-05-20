@@ -25,6 +25,7 @@ const (
 func NewDomainInformationForwarder(forwardSignalChannel chan int) *DomainInformationForwarder {
 	forwarder := new(DomainInformationForwarder)
 	forwarder.forwardSignalChannel = forwardSignalChannel
+	forwarder.lastForwardTimestamp = time.Now()
 	forwarder.forwarderStarted.Add(1)
 	forwarder.forwarderStopped.Add(1)
 	go forwarder.run()
@@ -65,7 +66,7 @@ func (forwarder *DomainInformationForwarder) triggerForwarding() {
 }
 
 func (forwarder *DomainInformationForwarder) forwardAllDomainInformation() {
-	forwarder.lastForwardTimestamp = time.Now()
+	defer func() { forwarder.lastForwardTimestamp = time.Now()}()
 
 	fmt.Println("Forwarding All Domain Information")
 	dbDelegate, _ := NewDaemonDatabaseWorker()
@@ -76,7 +77,7 @@ func (forwarder *DomainInformationForwarder) forwardAllDomainInformation() {
 	dbDelegate.Close()
 
 	for _, domain := range domains {
-		go forwarder.forwardDomainInformation(domain)
+		forwarder.forwardDomainInformation(domain)
 	}
 
 }
@@ -89,8 +90,8 @@ func (forwarder *DomainInformationForwarder) calculateForwardPriority(domainInfo
 		}
 	}
 	domainInformation.ForwardPriority = priority
-	fmt.Println("Forward Priority: ",priority)
 }
+
 func (forwarder *DomainInformationForwarder) forwardDomainInformation(domain *models.RealWorldDomain) {
 	dbDelagte, err := NewDaemonDatabaseWorker()
 	if err != nil {
@@ -125,7 +126,8 @@ func (forwarder *DomainInformationForwarder) forwardDomainInformation(domain *mo
 	serverAddress := ""
 	if domainController, _ := dbDelagte.FindDomainControllerForDomain(domain.Name); domainController != nil {
 		serverAddress = domainController.IpAddress
-	} else if rootController, _ := dbDelagte.FindDomainControllerForDomain("rootController"); rootController != nil {
+		fmt.Println("Sending information to %s DomainController: %s",domainController.Domain.Name,domainController.IpAddress)
+	} else if rootController, _ := dbDelagte.FindDomainControllerForDomain("root"); rootController != nil {
 		serverAddress = rootController.IpAddress
 	}
 

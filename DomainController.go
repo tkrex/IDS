@@ -16,7 +16,7 @@ func main() {
 
 	//producer layer
 	brokerAddress := "tcp://localhost:1883"
-	desiredTopic  := "domainController"
+	desiredTopic  := "DomainInformation"
 	subscriberConfig := models.NewMqttClientConfiguration(brokerAddress,desiredTopic,"domainController")
 	subscriber := common.NewMqttSubscriber(subscriberConfig,false)
 	//processing layer

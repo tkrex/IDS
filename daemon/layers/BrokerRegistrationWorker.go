@@ -89,7 +89,7 @@ func (worker *BrokerRegistrationWorker) findBrokerDomainName() {
 
 func (worker *BrokerRegistrationWorker) findBrokerRealWorldDomains() {
 	categorizer := NewWebsiteCategorizationWorker()
-	categories,_ := categorizer.RequestCategoriesForWebsite("facebook.com")
+	categories,_ := categorizer.RequestCategoriesForWebsite("www.in.tum.de")
 	worker.broker.RealWorldDomains = make([]*models.RealWorldDomain,len(categories))
 	for index,category := range categories {
 		domain := models.NewRealWorldDomain(category)
@@ -127,6 +127,7 @@ func (worker *BrokerRegistrationWorker) sendRegistrationRequest() bool {
 	body, _ := ioutil.ReadAll(resp.Body)
 
 	if resp.StatusCode != 200 {
+		fmt.Println(resp.Status)
 		fmt.Println(body)
 		return false
 	}

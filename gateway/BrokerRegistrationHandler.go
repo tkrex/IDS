@@ -4,6 +4,7 @@ import (
 	"github.com/tkrex/IDS/common/models"
 	"crypto/md5"
 	"fmt"
+	"errors"
 )
 
 type BrokerRegistrationHandler struct {
@@ -24,16 +25,21 @@ func (handler *BrokerRegistrationHandler) registerBroker(broker *models.Broker) 
 
 	var domainControllers []*models.DomainController
 	var err error
-	if domainControllers, err = FindAllDomainController(); err != nil {
+	dbWorker := NewGatewayDBWorker()
+	if dbWorker == nil {
+		return nil,errors.New("Can't connect with database")
+	}
+	defer dbWorker.Close()
+	if domainControllers, err = dbWorker.FindAllDomainController(); err != nil {
 		return nil, err
 	}
 	fmt.Println(domainControllers)
 
 	broker.ID = brokerID
-	if _, found := FindBrokerById(brokerID); found {
+	if _, found := dbWorker.FindBrokerById(brokerID); found {
 		fmt.Println("Broker Already Registered")
 	} else {
-		if err = StoreBroker(broker); err != nil {
+		if err = dbWorker.StoreBroker(broker); err != nil {
 			return nil, err
 		}
 	}

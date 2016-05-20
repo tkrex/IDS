@@ -10,9 +10,12 @@ import (
 )
 
 func main() {
-	domain1 := models.NewRealWorldDomain("domain1")
- 	domainC1 := models.NewDomainController("address1",domain1)
-	domains := []*models.DomainController{domainC1}
+	educationDomain := models.NewRealWorldDomain("education")
+	educationDomainController := models.NewDomainController("tcp://localhost:1883", educationDomain)
+
+	rootDomain := models.NewRealWorldDomain("root")
+	rootDomainController := models.NewDomainController("tcp://localhost:1883",rootDomain)
+	domains := []*models.DomainController{rootDomainController,educationDomainController}
 	json,_:= json.Marshal(domains)
 
 
