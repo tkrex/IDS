@@ -86,6 +86,12 @@ func (forwarder *DomainInformationForwarder) forwardDomainInformation(domain *mo
 		fmt.Println(err)
 		return
 	}
+	
+	if len(domainInformation) == 0 {
+		domainInformationDelegate.RemoveDomain(domain)
+		delete(forwarder.updateFlags,domain.Name)
+		return
+	}
 
 	json, err := json.Marshal(domainInformation)
 	if err != nil {
@@ -100,9 +106,9 @@ func (forwarder *DomainInformationForwarder) forwardDomainInformation(domain *mo
 		return
 	}
 
-	if domainController, _ := controlMessagesDBDelagte.FindDomainControllerForDomain(domain.Name); domainController != nil {
+	if domainController := controlMessagesDBDelagte.FindDomainControllerForDomain(domain.Name); domainController != nil {
 		serverAddress = domainController.IpAddress
-	} else if rootController, _ := controlMessagesDBDelagte.FindDomainControllerForDomain("rootController"); rootController != nil {
+	} else if rootController := controlMessagesDBDelagte.FindDomainControllerForDomain("rootController"); rootController != nil {
 		serverAddress = rootController.IpAddress
 	}
 

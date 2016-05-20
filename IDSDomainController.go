@@ -11,8 +11,6 @@ import (
 
 func main() {
 
-
-
 	startDomainInformationProcessing()
 	for {}
 }

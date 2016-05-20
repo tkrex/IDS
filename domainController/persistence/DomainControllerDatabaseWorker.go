@@ -17,6 +17,7 @@ const (
 
 	BrokerCollection = "brokers"
 	DomainInformationCollection = "domainInformation"
+	DomainCollection = "domains"
 )
 
 
@@ -50,30 +51,12 @@ func (dbWorker *DomainControllerDatabaseWorker) domainInformationCollection() *m
 	return dbWorker.session.DB(Database).C(DomainInformationCollection)
 }
 
+func (dbWorker *DomainControllerDatabaseWorker) domainCollection() *mgo.Collection {
+	return dbWorker.session.DB(Database).C(DomainCollection)
+}
 
 func (dbWorker *DomainControllerDatabaseWorker) brokerCollection() *mgo.Collection {
 	return dbWorker.session.DB(Database).C(BrokerCollection)
-}
-
-
-type DomainQuery struct {
-	Domain *models.RealWorldDomain `bson:"domain"`
-}
-
-func (dbWorker* DomainControllerDatabaseWorker) FindAllDomains() ([]*models.RealWorldDomain,error) {
-	coll := dbWorker.domainInformationCollection()
-
-
-	domainFields := []*DomainQuery{}
-	domains := []*models.RealWorldDomain{}
-	err := coll.Find(nil).Select(bson.M{"_id": 0, "domain": 1}).All(&domainFields)
-	for _, domainQuery := range domainFields {
-		domain := domainQuery.Domain
-		if !common.Include(domains,domain) {
-			domains = append(domains,domain)
-		}
-	}
-	return domains, err
 }
 
 func (dbWoker *DomainControllerDatabaseWorker) StoreBroker(broker *models.Broker) (error) {
@@ -98,7 +81,7 @@ func (dbWoker *DomainControllerDatabaseWorker) FindBroker() (*models.Broker,erro
 
 
 func (dbWoker *DomainControllerDatabaseWorker) StoreDomainInformation(domainInformationMessages []*models.DomainInformationMessage) error {
-	coll := dbWoker.domainInformationCollection()
+	domainInformationCollection := dbWoker.domainInformationCollection()
 	index := mgo.Index{
 		Key:        []string{"broker.id","domain.name"},
 		Unique:     true,
@@ -106,15 +89,20 @@ func (dbWoker *DomainControllerDatabaseWorker) StoreDomainInformation(domainInfo
 		Background: true,
 		Sparse:     true,
 	}
-	_ = coll.EnsureIndex(index)
+	_ = domainInformationCollection.EnsureIndex(index)
 
 	dbWoker.RemoveDomainInformation(domainInformationMessages)
-	transaction := coll.Bulk()
+	insertDomainInformationBulk := domainInformationCollection.Bulk()
+
 
 	for _,information := range domainInformationMessages {
-		transaction.Insert(information)
+		insertDomainInformationBulk.Insert(information)
+		dbWoker.StoreDomain(information.RealWorldDomain)
+
 	}
-	_,err := transaction.Run()
+	_,err := insertDomainInformationBulk.Run()
+
+
 	return err
 }
 
@@ -168,3 +156,40 @@ func (dbWoker *DomainControllerDatabaseWorker) FindAllBrokers() ([]*models.Broke
 	return brokers, error
 }
 
+func  (dbWoker *DomainControllerDatabaseWorker) StoreDomain(domain *models.RealWorldDomain) error {
+
+	coll := dbWoker.domainCollection()
+	index := mgo.Index{
+		Key:        []string{"name"},
+		Unique:     true,
+		DropDups:   true,
+		Background: true,
+		Sparse:     true,
+	}
+	_ = coll.EnsureIndex(index)
+	error := coll.Insert(domain)
+
+	if error != nil && !mgo.IsDup(error) {
+		return error
+	}
+	return nil
+}
+
+
+func  (dbWoker *DomainControllerDatabaseWorker) RemoveDomain(domain *models.RealWorldDomain) error {
+
+	coll := dbWoker.domainCollection()
+	error := coll.Remove(domain)
+
+	if error != nil && !mgo.IsDup(error) {
+		return error
+	}
+	return nil
+}
+
+func (dbWorker* DomainControllerDatabaseWorker) FindAllDomains() ([]*models.RealWorldDomain,error){
+	var domains []*models.RealWorldDomain
+	coll := dbWorker.domainCollection()
+	err := coll.Find(nil).All(&domains)
+	return domains, err
+}
