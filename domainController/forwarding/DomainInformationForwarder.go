@@ -86,7 +86,7 @@ func (forwarder *DomainInformationForwarder) forwardDomainInformation(domain *mo
 		fmt.Println(err)
 		return
 	}
-	
+
 	if len(domainInformation) == 0 {
 		domainInformationDelegate.RemoveDomain(domain)
 		delete(forwarder.updateFlags,domain.Name)
@@ -108,7 +108,7 @@ func (forwarder *DomainInformationForwarder) forwardDomainInformation(domain *mo
 
 	if domainController := controlMessagesDBDelagte.FindDomainControllerForDomain(domain.Name); domainController != nil {
 		serverAddress = domainController.IpAddress
-	} else if rootController := controlMessagesDBDelagte.FindDomainControllerForDomain("rootController"); rootController != nil {
+	} else if rootController := controlMessagesDBDelagte.FindDomainControllerForDomain("default"); rootController != nil {
 		serverAddress = rootController.IpAddress
 	}
 
@@ -118,7 +118,7 @@ func (forwarder *DomainInformationForwarder) forwardDomainInformation(domain *mo
 	}
 
 	//TODO: Come up with DomainConroller ID
-	publisherConfig := models.NewMqttClientConfiguration(serverAddress, ForwardTopic, "DomainCOntrollerID")
+	publisherConfig := models.NewMqttClientConfiguration(serverAddress, ForwardTopic, "DomainControllerID")
 	publisher :=  publishing.NewMqttPublisher(publisherConfig)
 	publisher.Publish(json)
 	publisher.Close()
