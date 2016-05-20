@@ -8,6 +8,8 @@ import (
 	"github.com/tkrex/IDS/common"
 	"github.com/tkrex/IDS/common/models"
 	"github.com/tkrex/IDS/daemon/persistence"
+	"time"
+	"encoding/json"
 )
 
 type TopicProcessor struct {
@@ -21,7 +23,7 @@ type TopicProcessor struct {
 	topicUpdates             []*models.RawTopicMessage
 	incomingTopicChannel     chan *models.RawTopicMessage
 
-	forwardingSignalChannel   chan int
+	forwardingSignalChannel  chan int
 	topicReliabilityStrategy models.UpdateReliabilityStrategy
 
 	newTopicsCounter         int
@@ -29,7 +31,7 @@ type TopicProcessor struct {
 
 const (
 	TopicForwardThreshold = 10
-
+	SimilarityCheckInterval = 7 * 24 * time.Hour
 	BulkUpdateThreshold = 10
 )
 
@@ -86,10 +88,22 @@ func (processor *TopicProcessor) run() {
 func (processor *TopicProcessor) ProcessIncomingTopics() bool {
 	rawTopic, ok := <-processor.incomingTopicChannel
 	if rawTopic != nil {
+		if !containsDataJSON(rawTopic.Payload) {
+			fmt.Println("Drop Topic since it does not contain JSON")
+			return ok
+		}
 		processor.processIncomingTopic(rawTopic)
 
 	}
 	return ok
+}
+func containsDataJSON(data []byte ) bool {
+	var jsonData map[string]*json.RawMessage
+	err := json.Unmarshal(data,&jsonData)
+	if err != nil {
+		return false
+	}
+	return true
 }
 
 func (processor *TopicProcessor) processIncomingTopic(rawTopic *models.RawTopicMessage) {
@@ -154,11 +168,11 @@ func (processor *TopicProcessor) processSortedTopics(existingTopics map[string]*
 }
 
 func (processor *TopicProcessor) triggerDomainInformationUpdate() {
-		if processor.newTopicsCounter >= TopicForwardThreshold {
-			fmt.Println("Trigger Forwarding")
-			processor.forwardingSignalChannel <- 1
-			processor.newTopicsCounter = 0
-		}
+	if processor.newTopicsCounter >= TopicForwardThreshold {
+		fmt.Println("Trigger Forwarding")
+		processor.forwardingSignalChannel <- 1
+		processor.newTopicsCounter = 0
+	}
 }
 
 func (processor *TopicProcessor) updateTopicInformation(existingTopic *models.Topic, newTopic *models.RawTopicMessage) *models.Topic {
@@ -170,12 +184,59 @@ func (processor *TopicProcessor) updateTopicInformation(existingTopic *models.To
 	} else {
 		resultingTopic = existingTopic
 		newUpdateInterval := int(newTopic.ArrivalTime.Sub(resultingTopic.LastUpdateTimeStamp).Seconds())
+		processor.calculatePayloadSimilarity(resultingTopic, newTopic.Payload)
 		resultingTopic.LastPayload = newTopic.Payload
 		resultingTopic.LastUpdateTimeStamp = newTopic.ArrivalTime
 		processor.calculateUpdateBehavior(resultingTopic, newUpdateInterval)
 
 	}
 	return resultingTopic
+}
+
+func (processor *TopicProcessor) calculatePayloadSimilarity(topic *models.Topic, newJSONPayload json.RawMessage) {
+	if topic.UpdateBehavior.NumberOfUpdates + 1 >= 10 && topic.UpdateBehavior.NumberOfUpdates % topic.SimilarityCheckInterval == 0 {
+		fmt.Println("calculating similarity")
+		oldJsonKeys :=  getKeysFromJSONObject(topic.LastPayload)
+		newJsonKeys := getKeysFromJSONObject(newJSONPayload)
+		if len(oldJsonKeys) == 0 || len(newJsonKeys) == 0 {
+			fmt.Println("failed to get keys from JSON file")
+			return
+
+		}
+		hitCounter := 0
+		for  _,key := range oldJsonKeys {
+			if Include(newJsonKeys,key) {
+				hitCounter++
+			}
+		}
+
+		similarity := float64(hitCounter) / float64(len(oldJsonKeys)) * 100.0
+		topic.PayloadSimilarity = common.RoundUp(similarity,2)
+	}
+}
+
+func Include(array []string, value string) bool {
+	for _,element := range array {
+		if element == value {
+			return true
+		}
+	}
+	return false
+}
+
+func getKeysFromJSONObject(jsonData []byte) []string {
+
+	var objmap map[string]*json.RawMessage
+	if err := json.Unmarshal(jsonData, &objmap); err != nil {
+		fmt.Println(err)
+		return []string{}
+	}
+	jsonKeys := make([]string, len(objmap))
+	for key, _ := range objmap {
+		jsonKeys = append(jsonKeys, key)
+	}
+	fmt.Println(jsonKeys)
+	return jsonKeys
 }
 
 func (processor *TopicProcessor) calculateUpdateBehavior(topic *models.Topic, newUpdateInterval int) {
