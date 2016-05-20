@@ -131,10 +131,10 @@ func (forwarder *DomainInformationForwarder) forwardDomainInformation(domain *mo
 		return
 	}
 	defer controlMessagesDBDelagte.Close()
-	if domainController, _ := controlMessagesDBDelagte.FindDomainControllerForDomain(domain.Name); domainController != nil {
+	if domainController := controlMessagesDBDelagte.FindDomainControllerForDomain(domain.Name); domainController != nil {
 		serverAddress = domainController.IpAddress
 		fmt.Println("Sending information to %s DomainController: %s",domainController.Domain.Name,domainController.IpAddress)
-	} else if rootController, _ := controlMessagesDBDelagte.FindDomainControllerForDomain("root"); rootController != nil {
+	} else if rootController := controlMessagesDBDelagte.FindDomainControllerForDomain("root"); rootController != nil {
 		serverAddress = rootController.IpAddress
 	}
 
