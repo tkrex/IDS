@@ -87,10 +87,12 @@ func (webInterface ConfigurationInterface) handleTopics(res http.ResponseWriter,
 		topics, err := dbDelegate.FindAllTopics()
 		if err != nil {
 			http.Error(res, err.Error(), http.StatusInternalServerError)
+			return
 		}
 		jsonData, err := json.Marshal(topics)
 		if err != nil {
 			http.Error(res, err.Error(), http.StatusInternalServerError)
+			return
 
 		}
 		fmt.Fprint(res, string(jsonData))
