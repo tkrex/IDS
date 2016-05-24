@@ -9,13 +9,15 @@ import (
 	"github.com/tkrex/IDS/daemon/forwarding"
 	"github.com/tkrex/IDS/common/controlling"
 	"github.com/tkrex/IDS/daemon/registration"
+	"github.com/tkrex/IDS/daemon/configuration"
 )
 
 func main() {
 
-	go startBrokerRegistration()
-	go startControlMessageProcessing()
-	go startTopicProcessing()
+	//go startBrokerRegistration()
+	//go startControlMessageProcessing()
+	//go startTopicProcessing()
+	startControlInterface()
 	for {
 		time.Sleep(time.Second)
 	}
@@ -45,4 +47,8 @@ func startControlMessageProcessing() {
 
 func startBrokerRegistration() {
 	_ = registration.NewBrokerRegistrationWorker()
+}
+
+func startControlInterface () {
+	_ = configuration.NewConfigurationInterface("8080")
 }

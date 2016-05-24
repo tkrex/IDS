@@ -179,29 +179,29 @@ func (processor *TopicProcessor) updateTopicInformation(existingTopic *models.To
 	var resultingTopic *models.Topic
 
 	if existingTopic == nil {
-		resultingTopic = models.NewTopic(newTopic.Name, newTopic.Payload, newTopic.ArrivalTime)
+		resultingTopic = models.NewTopic(newTopic.Name, string(newTopic.Payload), newTopic.ArrivalTime)
 		processor.calculateUpdateBehavior(resultingTopic, 0)
 	} else {
 		resultingTopic = existingTopic
 		newUpdateInterval := int(newTopic.ArrivalTime.Sub(resultingTopic.LastUpdateTimeStamp).Seconds())
 		resultingTopic.LastUpdateTimeStamp = newTopic.ArrivalTime
 		processor.calculateUpdateBehavior(resultingTopic, newUpdateInterval)
-		processor.calculatePayloadSimilarity(resultingTopic, newTopic.Payload)
-		resultingTopic.LastPayload = newTopic.Payload
+		processor.calculatePayloadSimilarity(resultingTopic, string(newTopic.Payload))
+		resultingTopic.LastPayload = string(newTopic.Payload)
 
 	}
 	return resultingTopic
 }
 
-func (processor *TopicProcessor) calculatePayloadSimilarity(topic *models.Topic, newJSONPayload json.RawMessage) {
+func (processor *TopicProcessor) calculatePayloadSimilarity(topic *models.Topic, newJSONPayload string) {
 	if topic.UpdateBehavior.NumberOfUpdates % 100 == 0 {
 		processor.calculatePayloadSimilarityCheckInterval(topic)
 
 	}
 	if topic.UpdateBehavior.NumberOfUpdates  >= 10 && topic.UpdateBehavior.NumberOfUpdates % topic.SimilarityCheckInterval == 0 {
 		fmt.Println("calculating similarity")
-		oldJsonKeys :=  getKeysFromJSONObject(topic.LastPayload)
-		newJsonKeys := getKeysFromJSONObject(newJSONPayload)
+		oldJsonKeys :=  getKeysFromJSONString(topic.LastPayload)
+		newJsonKeys := getKeysFromJSONString(newJSONPayload)
 		if len(oldJsonKeys) == 0 || len(newJsonKeys) == 0 {
 			fmt.Println("failed to get keys from JSON file")
 			return
@@ -234,9 +234,10 @@ func Include(array []string, value string) bool {
 	return false
 }
 
-func getKeysFromJSONObject(jsonData []byte) []string {
+func getKeysFromJSONString(jsonString string) []string {
 
 	var objmap map[string]*json.RawMessage
+	jsonData := []byte(jsonString)
 	if err := json.Unmarshal(jsonData, &objmap); err != nil {
 		fmt.Println(err)
 		return []string{}
@@ -266,7 +267,7 @@ func (processor *TopicProcessor) calculateUpdateBehavior(topic *models.Topic, ne
 
 	updateBehavior.UpdateIntervalsInSeconds = append(updateBehavior.UpdateIntervalsInSeconds, float64(newUpdateInterval))
 	updateBehavior.NumberOfUpdates++
-	updateBehavior.UpdateReliability[processor.topicReliabilityStrategy.Name()] = processor.topicReliabilityStrategy.Calculate(updateBehavior)
+	updateBehavior.UpdateIntervalDeviation = processor.topicReliabilityStrategy.Calculate(updateBehavior)
 }
 
 

@@ -1,15 +1,14 @@
 package persistence
 
 import (
-    "fmt"
+	"fmt"
 	"github.com/tkrex/IDS/common/models"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
 
-
 const (
-	Host     = "localhost:27017"
+	Host = "localhost:27017"
 	Username = "example"
 	Password = "example"
 	Database = "IDSDaemon"
@@ -17,8 +16,6 @@ const (
 	BrokerCollection = "broker"
 	DomainCollection = "domains"
 )
-
-
 
 type DaemonDatabaseWorker struct {
 	session *mgo.Session
@@ -29,7 +26,7 @@ func NewDaemonDatabaseWorker() (*DaemonDatabaseWorker, error) {
 	var error error
 	databaseWorker.session, error = openSession()
 	if error != nil {
-		return nil , error
+		return nil, error
 	}
 	return databaseWorker, error
 }
@@ -38,8 +35,8 @@ func (dbWoker *DaemonDatabaseWorker)Close() {
 	dbWoker.session.Close()
 }
 
-func openSession() (*mgo.Session,error) {
-	session , err := mgo.Dial(Host)
+func openSession() (*mgo.Session, error) {
+	session, err := mgo.Dial(Host)
 	return session, err
 }
 
@@ -55,16 +52,10 @@ func (dbWorker *DaemonDatabaseWorker) brokerCollection() *mgo.Collection {
 	return dbWorker.session.DB(Database).C(BrokerCollection)
 }
 
+func (dbWorker*DaemonDatabaseWorker) FindDomainInformationByDomainName(domainName string) (*models.DomainInformationMessage) {
 
-
-
-
-
-
-func (dbWorker* DaemonDatabaseWorker) FindDomainInformationByDomainName(domainName string) (*models.DomainInformationMessage){
-
-	 domainInformation := new(models.DomainInformationMessage)
-	topics ,topicsError :=dbWorker.FindTopicsByDomain(domainName)
+	domainInformation := new(models.DomainInformationMessage)
+	topics, topicsError := dbWorker.FindTopicsByDomain(domainName)
 	if topicsError != nil {
 		fmt.Println(topicsError)
 		return nil
@@ -82,14 +73,14 @@ func (dbWorker* DaemonDatabaseWorker) FindDomainInformationByDomainName(domainNa
 	return domainInformation
 }
 
-func (dbWorker* DaemonDatabaseWorker) FindAllDomainInformation() ([]*models.DomainInformationMessage,error){
+func (dbWorker*DaemonDatabaseWorker) FindAllDomainInformation() ([]*models.DomainInformationMessage, error) {
 
 	domains, err := dbWorker.FindAllDomains()
 	if err != nil {
 		return nil, err
 	}
 	var domainInformationMessages []*models.DomainInformationMessage
-	for _,domain := range domains {
+	for _, domain := range domains {
 		domainInformation := dbWorker.FindDomainInformationByDomainName(domain.Name)
 		if domainInformation != nil {
 			domainInformationMessages = append(domainInformationMessages, domainInformation)
@@ -98,9 +89,7 @@ func (dbWorker* DaemonDatabaseWorker) FindAllDomainInformation() ([]*models.Doma
 	return domainInformationMessages, nil
 }
 
-
-
-func  (dbWoker *DaemonDatabaseWorker) StoreDomain(domain *models.RealWorldDomain) error {
+func (dbWoker *DaemonDatabaseWorker) StoreDomain(domain *models.RealWorldDomain) error {
 
 	coll := dbWoker.domainCollection()
 	index := mgo.Index{
@@ -119,8 +108,7 @@ func  (dbWoker *DaemonDatabaseWorker) StoreDomain(domain *models.RealWorldDomain
 	return nil
 }
 
-
-func  (dbWoker *DaemonDatabaseWorker) RemoveDomain(domain *models.RealWorldDomain) error {
+func (dbWoker *DaemonDatabaseWorker) RemoveDomain(domain *models.RealWorldDomain) error {
 
 	coll := dbWoker.domainCollection()
 	index := mgo.Index{
@@ -139,16 +127,14 @@ func  (dbWoker *DaemonDatabaseWorker) RemoveDomain(domain *models.RealWorldDomai
 	return nil
 }
 
-func (dbWorker* DaemonDatabaseWorker) FindAllDomains() ([]*models.RealWorldDomain,error){
+func (dbWorker*DaemonDatabaseWorker) FindAllDomains() ([]*models.RealWorldDomain, error) {
 	var domains []*models.RealWorldDomain
 	coll := dbWorker.domainCollection()
 	err := coll.Find(nil).All(&domains)
 	return domains, err
 }
 
-
-
-func  (dbWoker *DaemonDatabaseWorker) StoreTopics(topics []*models.Topic) (*mgo.BulkResult,error) {
+func (dbWoker *DaemonDatabaseWorker) StoreTopics(topics []*models.Topic) (*mgo.BulkResult, error) {
 
 	coll := dbWoker.topicCollection()
 	index := mgo.Index{
@@ -160,32 +146,26 @@ func  (dbWoker *DaemonDatabaseWorker) StoreTopics(topics []*models.Topic) (*mgo.
 	}
 	_ = coll.EnsureIndex(index)
 
-
 	bulkTransaction := coll.Bulk()
 
-	for _,topic := range topics {
+	for _, topic := range topics {
 		dbWoker.StoreDomain(topic.Domain)
 		bulkTransaction.Remove(bson.M{"name": topic.Name })
 		bulkTransaction.Insert(topic)
 
 	}
 	bulkResult, err := bulkTransaction.Run()
-	return bulkResult,err
+	return bulkResult, err
 }
 
-
-func  (dbWoker *DaemonDatabaseWorker) StoreTopic(topic *models.Topic) error {
+func (dbWoker *DaemonDatabaseWorker) UpdateTopicDomainAndVisibility(topic *models.Topic) error {
 
 	coll := dbWoker.topicCollection()
-	index := mgo.Index{
-		Key:        []string{"name"},
-		Unique:     true,
-		DropDups:   true,
-		Background: true,
-		Sparse:     true,
+	change := mgo.Change{
+		Update: bson.M{"$set":bson.M{"domain": topic.Domain, "visibility" : topic.Visibility}},
+		ReturnNew: true,
 	}
-	_ = coll.EnsureIndex(index)
-	error := coll.Insert(topic)
+	_, error := coll.Find(bson.M{"name": topic.Name}).Apply(change, &topic)
 
 	if error != nil {
 		return error
@@ -193,7 +173,7 @@ func  (dbWoker *DaemonDatabaseWorker) StoreTopic(topic *models.Topic) error {
 	return nil
 }
 
-func (dbWoker *DaemonDatabaseWorker)FindAllTopics() ([]*models.Topic,error) {
+func (dbWoker *DaemonDatabaseWorker)FindAllTopics() ([]*models.Topic, error) {
 
 	coll := dbWoker.topicCollection()
 	var topics []*models.Topic
@@ -203,10 +183,10 @@ func (dbWoker *DaemonDatabaseWorker)FindAllTopics() ([]*models.Topic,error) {
 	return topics, nil
 }
 
-func (dbWoker *DaemonDatabaseWorker) FindTopicsByName(topicNames []string) (map[string]*models.Topic,error) {
+func (dbWoker *DaemonDatabaseWorker) FindTopicsByName(topicNames []string) (map[string]*models.Topic, error) {
 	coll := dbWoker.topicCollection()
 	existingTopics := make(map[string]*models.Topic)
-	for _,name := range topicNames {
+	for _, name := range topicNames {
 		var topic models.Topic
 		if err := coll.Find(bson.M{"name": name }).One(&topic); err != nil {
 			fmt.Println(err)
@@ -217,10 +197,19 @@ func (dbWoker *DaemonDatabaseWorker) FindTopicsByName(topicNames []string) (map[
 	return existingTopics, nil
 }
 
-func (dbWoker *DaemonDatabaseWorker) FindTopicsByDomain(domainName string) ([]*models.Topic,error) {
+func (dbWoker *DaemonDatabaseWorker) FindTopicByName(topicName string) (*models.Topic, error) {
+	coll := dbWoker.topicCollection()
+
+	var topic *models.Topic
+	err := coll.Find(bson.M{"name": topicName }).One(&topic)
+
+	return topic, err
+}
+
+func (dbWoker *DaemonDatabaseWorker) FindTopicsByDomain(domainName string) ([]*models.Topic, error) {
 	coll := dbWoker.topicCollection()
 	topics := []*models.Topic{}
-	 err := coll.Find(bson.M{"domain.name": domainName }).All(&topics)
+	err := coll.Find(bson.M{"domain.name": domainName }).All(&topics)
 	return topics, err
 }
 
@@ -233,7 +222,7 @@ func (dbWoker *DaemonDatabaseWorker) StoreBroker(broker *models.Broker) (error) 
 	return nil
 }
 
-func (dbWoker *DaemonDatabaseWorker) FindBroker() (*models.Broker,error) {
+func (dbWoker *DaemonDatabaseWorker) FindBroker() (*models.Broker, error) {
 	coll := dbWoker.brokerCollection()
 
 	var error error

@@ -34,7 +34,7 @@ func (m MeanAbsoluteDeviation) Calculate(updateStats *UpdateBehavior) float64 {
 	//Reset Array to current average + deviation to avoid memory leak
 	if len(updateStats.UpdateIntervalsInSeconds) == 1000 {
 		updateStats.UpdateIntervalsInSeconds = make([]float64,0,1000)
-		updateStats.UpdateIntervalsInSeconds[0] = updateStats.AverageUpdateIntervalInSeconds + updateStats.UpdateReliability[m.Name()]
+		updateStats.UpdateIntervalsInSeconds[0] = updateStats.AverageUpdateIntervalInSeconds + updateStats.UpdateIntervalDeviation
 	}
 	return meanAbsoluteDeviation
 }

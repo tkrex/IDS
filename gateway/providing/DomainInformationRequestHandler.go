@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"encoding/json"
+	"time"
 )
 
 type DomainInformationRequestHandler struct {
@@ -25,6 +26,14 @@ func (handler *DomainInformationRequestHandler) handleRequest(domainName string)
 	domain := models.NewRealWorldDomain("education")
 	broker := models.NewBroker("localhost","krex.com")
 	topics := []*models.Topic{}
+
+	for i := 0; i < 5; i++ {
+		topic := models.NewTopic("/home/kitchen","{\"temperature\":3}",time.Now())
+		topic.UpdateBehavior.UpdateReliability = 3.0
+		topics = append(topics, topic)
+	}
+
+
 	message := models.NewDomainInformationMessage(domain,broker,topics)
 	domainInformation = append(domainInformation,message)
 	return domainInformation

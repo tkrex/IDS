@@ -31,6 +31,22 @@
     <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
     <![endif]-->
 
+    <style>
+        .box{
+	width:20px;
+	height:20px;
+}
+
+.red{
+	background:#f00;
+}
+.green{
+	background:#0f0;
+}
+.blue{
+	background:#00f;
+}
+    </style>
 </head>
 
 <body>
@@ -91,48 +107,45 @@
                 </div>
             </div>
 
-            <!--<hr>-->
-            <!--<h2> Broker Locations </h2>-->
-            <!--<div id="map-container" class="col-md-12"></div>-->
-            <!--<hr>-->
-            <!-- First Blog Post -->
-
-
-            </div>
-            {{range $element := .}}
-
-            <h2>
-                <a href="#">{{ $element.Broker.IP }}</a>
-            </h2>
-
+        </div>
+    </div>
+    {{range $element := .}}
+    <div class="row">
+        <div class="col-md-6">
             <p> {{$element.Broker.InternetDomain}}</p>
             <p> {{$element.Broker.Geolocation}}</p>
-            <p><span class="glyphicon glyphicon-time"></span> Posted on August 28, 2013 at 10:00 PM</p>
+        </div>
+        <div class="col-md-6">
+            {{range $topic := $element.Topics}}
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="box green" onmouseover="showReliability('good',{{$topic.UpdateBehavior.UpdateReliability}})"> </div>
+                    <p>{{$topic.Name}}</p>
+                    <p>{{$topic.LastUpdateTimeStamp}}</p>
+                   <p>{{$topic.LastPayload}}</p>
+                </div>
+            </div>
             <hr>
-            <hr>
-            <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Dolore, veritatis, tempora, necessitatibus
-                inventore nisi quam quia repellat ut tempore laborum possimus eum dicta id animi corrupti debitis ipsum
-                officiis rerum.</p>
-            <a class="btn btn-primary" href="#">Read More <span class="glyphicon glyphicon-chevron-right"></span></a>
-            <hr>
-            {{ end }}
+
+            {{end}}
         </div>
 
     </div>
-    <!-- /.row -->
+    {{end}}
 
-    <hr>
 
-    <!-- Footer -->
-    <footer>
-        <div class="row">
-            <div class="col-lg-12">
-                <p>Copyright &copy; Your Website 2014</p>
-            </div>
-            <!-- /.col-lg-12 -->
+<hr>
+
+<!-- Footer -->
+<footer>
+    <div class="row">
+        <div class="col-lg-12">
+            <p>Copyright &copy; Your Website 2014</p>
         </div>
-        <!-- /.row -->
-    </footer>
+        <!-- /.col-lg-12 -->
+    </div>
+    <!-- /.row -->
+</footer>
 
 </div>
 <!-- /.container -->
@@ -144,7 +157,11 @@
 <!-- Bootstrap Core JavaScript -->
 <script src="js/bootstrap.min.js"></script>
 <script>
- 
+
+      function showReliability(message,value) {
+       alert("UpdateReliability: " + message +"\n" + "Deviation: " + value + " Seconds")
+      }
+
       function init_map() {
         var var_location = new google.maps.LatLng(45.430817,12.331516);
  
@@ -167,6 +184,7 @@
  
       google.maps.event.addDomListener(window, 'load', init_map);
  
+
 
 </script>
 

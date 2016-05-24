@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en" ng-app="dameonConfigurator">
+<head>
+    <meta charset="UTF-8">
+    <title>My Bookshelf</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css"
+          integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootswatch/3.1.0/cyborg/bootstrap.min.css">
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css">
+</head>
+<!-- putting this at the top to remove the jarring load -->
+<script src="http://code.angularjs.org/1.2.10/angular.min.js"></script>
+<body ng-controller="MainCtl">
+<div class="jumbotron">
+    <h1>My Topics</h1>
+</div>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-sm-3 well">
+            <h3>Broker</h3>
+            <p>IP Address: {{broker.ip}}</p>
+            <p>Internet Domain: {{broker.internetDomain}}</p>
+            <p>Location: {{broker.geolocation.country}}, {{broker.geolocation.region}}, {{broker.geolocation.city}}</p>
+            <p>RealWorldDomains: <div ng-repeat ="domain in broker.realWorldDomains"> {{domain.name}}</div></p>
+
+        </div>
+        <p>{{Topics}}</p>
+        <div class="col-sm-9 well" ng-repeat ="topic in topics">
+            <p>{{topic.name}}</p>
+            <p>Visibility <input type="checkbox" ng-model="topic.visibility" >
+            <p>Last Payload: {{topic.payload}}</p>
+            <p>Last Update : {{topic.lastUpdate}}</p>
+            <p>Deviation: {{topic.deviation}}</p>
+
+            <p>RealWorldDomain: <input type="text" name="input" ng-model="topic.domain.name" required ng-trim="false"></p>
+            <button ng-click="saveTopic(topic)">Save</button>
+
+        </div>
+    </div>
+</div>
+<script src="http://code.angularjs.org/1.2.10/angular-resource.min.js"></script>
+<script>
+	// new dependency: ngResource is included just above
+	var myapp = new angular.module("dameonConfigurator", ["ngResource"]);
+	// inject the $resource dependency here
+	myapp.controller("MainCtl", ["$scope", "$resource", function($scope, $resource){
+		// I designed the backend to play nicely with angularjs so this is all the
+		// setup we need to do all of the ususal operations.
+
+        $scope.saveTopic = function(topic) {
+	        topic.$save(function(){
+	        $scope.list()
+	        })
+	         };
+
+		var Topic = $resource("/topics/:name", {id: '@name'}, {});
+		$scope.list = function(idx){
+			// Notice calls to Book are often given callbacks.
+			Topic.query(function(data){
+				$scope.topics = data;
+			}, function(error){
+				alert(error.data);
+			});
+		};
+		$scope.list();
+		$scope.get = function(idx){
+			// Passing parameters to Book calls will become arguments if
+			// we haven't defined it as part of the path (we did with id)
+			Topic.get({name: $scope.books[idx].name}, function(data){
+				$scope.selected = data;
+				$scope.selected.idx = idx;
+			});
+		};
+
+		$scope.update = function(idx) {
+
+		};
+
+		var Broker =  $resource("/broker", {}, {});
+		$scope.getBroker = function(idx){
+			// Notice calls to Book are often given callbacks.
+			Broker.get({},function(data){
+				$scope.broker = data;
+			}, function(error){
+				alert(error.data);
+			});
+		};
+		$scope.getBroker()
+	}]);
+
+
+</script>
+</body>
+</html>
