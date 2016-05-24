@@ -1,22 +1,19 @@
 package controlling
 
 import (
-    "fmt"
+	"fmt"
 	"github.com/tkrex/IDS/common/models"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
 
-
 const (
-	Host     = "localhost:27017"
+	Host = "localhost:27017"
 	Username = "example"
 	Password = "example"
 	Database = "ControlMessages"
 	DomainControllerCollection = "domainController"
 )
-
-
 
 type ControlMessageDBDelegate struct {
 	session *mgo.Session
@@ -27,7 +24,7 @@ func NewControlMessageDBDelegate() (*ControlMessageDBDelegate, error) {
 	var error error
 	databaseWorker.session, error = mgo.Dial(Host)
 	if error != nil {
-		return nil , error
+		return nil, error
 	}
 	return databaseWorker, error
 }
@@ -40,15 +37,22 @@ func (dbWorker *ControlMessageDBDelegate) domainControllerCollection() *mgo.Coll
 	return dbWorker.session.DB(Database).C(DomainControllerCollection)
 }
 
+func (dbWoker *ControlMessageDBDelegate) StoreDomainController(domainController *models.DomainController) error {
+	coll := dbWoker.domainControllerCollection()
+	_, error := coll.Upsert(bson.M{"domain.name":domainController.Domain.Name}, bson.M{"$set": domainController})
+	return error
+}
 
 func (dbWoker *ControlMessageDBDelegate) StoreDomainControllers(domainControllers []*models.DomainController) error {
+
 	coll := dbWoker.domainControllerCollection()
 	bulk := coll.Bulk()
 	bulk.Unordered()
 	for _, domainController := range domainControllers {
-		bulk.Upsert(bson.M{"domain.name":domainController.Domain.Name},bson.M{"$set": domainController})
+		bulk.Upsert(bson.M{"domain.name":domainController.Domain.Name}, bson.M{"$set": domainController})
 	}
 	_, error := bulk.Run()
+
 	return error
 }
 
@@ -60,14 +64,9 @@ func (dbWoker *ControlMessageDBDelegate) FindDomainControllerForDomain(domain st
 	return domainController
 }
 
-func (worker *ControlMessageDBDelegate) removeDomainControllers(domainControllers []*models.DomainController) error{
+func (worker *ControlMessageDBDelegate) removeDomainController(domainController *models.DomainController) error {
 	coll := worker.domainControllerCollection()
-	bulk := coll.Bulk()
-	bulk.Unordered()
-	for _, domainController := range domainControllers {
-		bulk.Remove(bson.M{"domain.name":domainController.Domain.Name, "ipAddress": domainController.IpAddress})
-	}
-	_, err := bulk.Run()
+	err := coll.Remove(bson.M{"domain.name":domainController.Domain.Name, "ipAddress": domainController.IpAddress})
 	return err
 }
 

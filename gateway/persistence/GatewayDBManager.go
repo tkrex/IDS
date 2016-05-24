@@ -92,15 +92,8 @@ func (worker *GatewayDBWorker) FindAllDomainController() ([]*models.DomainContro
 	return domainControllers, nil
 }
 
-//true: entry was updated
-//false: no new data
-func (worker *GatewayDBWorker) UpdateControllerInformation(domainController *models.DomainController) (bool, error) {
-	info, error := worker.StoreDomainController(domainController)
-	newInformation := info.Updated != 0 || info.Matched == 0
-	return newInformation, error
-}
 
-func (worker *GatewayDBWorker) StoreDomainController(domainController *models.DomainController) (*mgo.ChangeInfo, error) {
+func (worker *GatewayDBWorker) StoreDomainController(domainController *models.DomainController) (bool, error) {
 	coll := worker.domainControllerCollection()
 	index := mgo.Index{
 		Key:        []string{"domain.name"},
@@ -111,18 +104,21 @@ func (worker *GatewayDBWorker) StoreDomainController(domainController *models.Do
 	}
 	_ = coll.EnsureIndex(index)
 	info, err := coll.Upsert(bson.M{"domain.name":domainController.Domain.Name}, bson.M{"$set": domainController})
-	return info, err
+	newInformation := info.Updated != 0 || info.Matched == 0
+	return newInformation, err
 }
 
-func (worker *GatewayDBWorker) RemoveDomainControllers(domainControllers []*models.DomainController) error{
+func (worker *GatewayDBWorker) RemoveDomainControllerForDomain(domain *models.RealWorldDomain) error {
 	coll := worker.domainControllerCollection()
-	bulk := coll.Bulk()
-	bulk.Unordered()
-	for _, domainController := range domainControllers {
-		bulk.Remove(bson.M{"domain.name":domainController.Domain.Name, "ipAddress": domainController.IpAddress})
-	}
-	_, err := bulk.Run()
+	err := coll.Remove(bson.M{"domain.name":domain.Name})
 	return err
+}
+
+func (worker *GatewayDBWorker) FindDomainControllerForDomain(domain *models.RealWorldDomain)  *models.DomainController {
+	coll := worker.domainControllerCollection()
+	var domainController *models.DomainController
+	coll.Find(bson.M{"domain.name":domain.Name}).One(domainController)
+	return domainController
 }
 
 func (worker *GatewayDBWorker) Close() {

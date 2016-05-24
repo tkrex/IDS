@@ -14,9 +14,9 @@ import (
 
 func main() {
 
-	//go startBrokerRegistration()
-	//go startControlMessageProcessing()
-	//go startTopicProcessing()
+	go startBrokerRegistration()
+	go startControlMessageProcessing()
+	go startTopicProcessing()
 	startControlInterface()
 	for {
 		time.Sleep(time.Second)
@@ -25,7 +25,7 @@ func main() {
 
 
 func startTopicProcessing() {
-	brokerAddress := "tcp://localhost:1883"
+	brokerAddress := "localhost"
 	desiredTopic  := "#"
 	subscriberConfig := models.NewMqttClientConfiguration(brokerAddress,desiredTopic,"subscriber")
 	subscriber := subscribing.NewMqttSubscriber(subscriberConfig,true)
@@ -36,7 +36,7 @@ func startTopicProcessing() {
 
 }
 func startControlMessageProcessing() {
-	brokerAddress := "tcp://localhost:1883"
+	brokerAddress := "localhost"
 	desiredTopic  := "ControlMessage"
 	//TODO: figure out client id
 	subscriberConfig := models.NewMqttClientConfiguration(brokerAddress,desiredTopic,"controlMessageSubscriber")

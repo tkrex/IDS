@@ -135,7 +135,7 @@ func (dbWoker *DomainControllerDatabaseWorker) FindDomainInformationByDomainName
 	var domainInformation []*models.DomainInformationMessage
 	var error error
 	coll := dbWoker.domainInformationCollection()
-	if error = coll.Find(bson.M{"domain.name": domainName}).All(&domainInformation); error != nil {
+	if error = coll.Find(bson.M{"domain.name": bson.M{"$regex":"^"+domainName}}).All(&domainInformation); error != nil {
 		fmt.Println(error)
 	}
 	return domainInformation, error

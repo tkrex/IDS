@@ -7,20 +7,19 @@ import (
 	"github.com/tkrex/IDS/common/models"
 	"encoding/json"
 	"fmt"
+	"net"
 )
 
 type ServerMaintenanceWebInterface struct {
-	port                           string
-	providerStarted                sync.WaitGroup
-	providerStopped                sync.WaitGroup
-	incomingControlMessagesChannel chan *models.ControlMessage
+	port                             string
+	providerStarted                  sync.WaitGroup
+	providerStopped                  sync.WaitGroup
 }
 
 
 
 func NewServerMaintenanceWebInterface(port string) *ServerMaintenanceWebInterface {
 	webInterface := new(ServerMaintenanceWebInterface)
-	webInterface.incomingControlMessagesChannel = make(chan *models.ControlMessage,1000)
 	webInterface.providerStarted.Add(1)
 	webInterface.providerStopped.Add(1)
 	go webInterface.run(port)
@@ -29,40 +28,54 @@ func NewServerMaintenanceWebInterface(port string) *ServerMaintenanceWebInterfac
 	return webInterface
 }
 
-func (webInterface *ServerMaintenanceWebInterface) IncomingControlMessagesChannel() chan *models.ControlMessage {
-	return webInterface.incomingControlMessagesChannel
-}
 
 func (webInterface *ServerMaintenanceWebInterface) run(port string) {
-	webInterface.providerStarted.Done()
 	router := mux.NewRouter()
-	router.HandleFunc("/controlling", webInterface.handleControlMessages).Methods("POST","DELETE")
-	http.ListenAndServe(":" + port, router)
+	router.HandleFunc("/domainController/{domain}/new", webInterface.instantiateDomainController).Methods("GET")
+	router.HandleFunc("/domainController/{domain}/delete", webInterface.deleteDomainController).Methods("GET")
+
+
+	listener, err := net.Listen("tcp", ":"+port)
+	if err != nil {
+		panic(err)
+	}
+	webInterface.providerStarted.Done()
+	go http.Serve(listener, router)
+
 }
 
 
 
-func (webInterface ServerMaintenanceWebInterface) handleControlMessages(res http.ResponseWriter, req *http.Request) {
-	fmt.Println("Received control POST request")
-	domainControllerInformation := []*models.DomainController{}
-	decoder := json.NewDecoder(req.Body)
-	error := decoder.Decode(&domainControllerInformation)
-	if error != nil {
-		fmt.Println(error.Error())
-		http.Error(res, error.Error(), http.StatusInternalServerError)
+func (webInterface ServerMaintenanceWebInterface) instantiateDomainController(res http.ResponseWriter, req *http.Request) {
+	parameters := mux.Vars(req)
+	domainName := parameters["domain"]
+	domain := models.NewRealWorldDomain(domainName)
+
+	var messageType = models.DomainControllerChange
+	managementRequest := models.NewDomainControllerManagementRequest(messageType,domain)
+
+	requestHandler := NewDomainControllerManagementRequestHandler()
+	if domainController := requestHandler.handleManagementRequest(managementRequest); domainController != nil {
+		json.NewEncoder(res).Encode(domainController)
 		return
 	}
+	http.Error(res, "Internal Error", http.StatusInternalServerError)
+	return
+}
 
-	controlMessage := new(models.ControlMessage)
-	switch req.Method {
-	case "POST":
-		controlMessage.MessageType = models.DomainControllerUpdate
-	case "DELETE":
-		controlMessage.MessageType = models.DomainControllerDelete
+func (webInterface ServerMaintenanceWebInterface) deleteDomainController(res http.ResponseWriter, req *http.Request) {
+	parameters := mux.Vars(req)
+	domainName := parameters["domain"]
+	domain := models.NewRealWorldDomain(domainName)
+
+	var messageType = models.DomainControllerDelete
+	managementRequest := models.NewDomainControllerManagementRequest(messageType,domain)
+
+	requestHandler := NewDomainControllerManagementRequestHandler()
+	if domainController := requestHandler.handleManagementRequest(managementRequest); domainController != nil {
+		json.NewEncoder(res).Encode(domainController)
+		return
 	}
-
-
-	fmt.Fprint(res, nil)
-	webInterface.incomingControlMessagesChannel <- controlMessage
-
+	http.Error(res, "Internal Error", http.StatusInternalServerError)
+	return
 }

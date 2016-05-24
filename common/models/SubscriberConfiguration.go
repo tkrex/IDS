@@ -9,7 +9,7 @@ type MqttClientConfiguration struct {
 
 func NewMqttClientConfiguration(brokerAddress string, topic string, clientID string) *MqttClientConfiguration {
 	clientConfig := new(MqttClientConfiguration)
-	clientConfig.brokerAddress = brokerAddress
+	clientConfig.brokerAddress = "tcp://"+brokerAddress+":1883"
 	clientConfig.topic = topic
 	clientConfig.clientID = clientID
 	return clientConfig

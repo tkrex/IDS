@@ -11,6 +11,8 @@ import (
 
 func main() {
 
+	parentDomain := nil
+	ownDomain := models.NewRealWorldDomain("default")
 	startDomainInformationProcessing()
 	for {}
 }

@@ -29,7 +29,7 @@ func (handler *DomainInformationRequestHandler) handleRequest(domainName string)
 
 	for i := 0; i < 5; i++ {
 		topic := models.NewTopic("/home/kitchen","{\"temperature\":3}",time.Now())
-		topic.UpdateBehavior.UpdateReliability = 3.0
+		topic.UpdateBehavior.UpdateIntervalDeviation = 3.0
 		topics = append(topics, topic)
 	}
 
@@ -45,7 +45,8 @@ func (handler *DomainInformationRequestHandler) handleRequest(domainName string)
 	defer dbDelegate.Close()
 
 	var destinationDomainController *models.DomainController
-	destinationDomainController = dbDelegate.FindDomainControllerForDomain(domainName)
+	domain = models.NewRealWorldDomain(domainName)
+	destinationDomainController = dbDelegate.FindDomainControllerForDomain(domain.FirstLevelDomain())
 
 	if destinationDomainController == nil {
 		destinationDomainController = dbDelegate.FindDomainControllerForDomain("default")

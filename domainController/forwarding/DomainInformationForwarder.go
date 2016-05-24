@@ -80,7 +80,10 @@ func (forwarder *DomainInformationForwarder) forwardDomainInformation(domain *mo
 	domainInformationDelegate, _ := persistence.NewDomainControllerDatabaseWorker()
 	defer domainInformationDelegate.Close()
 
+
+
 	domainInformation, err := domainInformationDelegate.FindDomainInformationByDomainName(domain.Name)
+
 
 	if err != nil {
 		fmt.Println(err)
@@ -106,7 +109,11 @@ func (forwarder *DomainInformationForwarder) forwardDomainInformation(domain *mo
 		return
 	}
 
-	if domainController := controlMessagesDBDelagte.FindDomainControllerForDomain(domain.Name); domainController != nil {
+
+	//TODO: Get ParentDomain From ENV
+	parentDomain := "default"
+
+	if domainController := controlMessagesDBDelagte.FindDomainControllerForDomain(parentDomain); domainController != nil {
 		serverAddress = domainController.IpAddress
 	} else if rootController := controlMessagesDBDelagte.FindDomainControllerForDomain("default"); rootController != nil {
 		serverAddress = rootController.IpAddress

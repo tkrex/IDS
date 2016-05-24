@@ -60,34 +60,34 @@ func (processor *ControlMessageProcessor) processIncomingControlMessage() bool {
 	}
 
 	if controlMessage != nil {
-		if controlMessage.MessageType == models.DomainControllerUpdate {
-			go processor.storeDomainControllers(controlMessage.DomainControllers)
+		if controlMessage.MessageType == models.DomainControllerChange {
+			go processor.storeDomainController(controlMessage.DomainController)
 		} else if controlMessage.MessageType == models.DomainControllerDelete {
-			go processor.removeDomainControllers(controlMessage.DomainControllers)
+			go processor.removeDomainController(controlMessage.DomainController)
 		}
 	}
 	return open
 }
 
 
-func (processor *ControlMessageProcessor) storeDomainControllers(controllers []*models.DomainController) {
+func (processor *ControlMessageProcessor) storeDomainController(controller *models.DomainController) {
 	dbWorker, err := NewControlMessageDBDelegate()
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 	defer dbWorker.Close()
-	dbWorker.StoreDomainControllers(controllers)
+	dbWorker.StoreDomainController(controller)
 }
 
-func (processor *ControlMessageProcessor) removeDomainControllers(controllers []*models.DomainController) {
+func (processor *ControlMessageProcessor) removeDomainController(controller *models.DomainController) {
 	dbWorker, err := NewControlMessageDBDelegate()
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 	defer dbWorker.Close()
-	dbWorker.removeDomainControllers(controllers)
+	dbWorker.removeDomainController(controller)
 }
 
 func (processor *ControlMessageProcessor)  Close() {
