@@ -143,8 +143,14 @@ func (forwarder *DomainInformationForwarder) forwardDomainInformation(domain *mo
 		return
 	}
 
-	publisherConfig := models.NewMqttClientConfiguration(serverAddress, ForwardTopic, domainInformation.Broker.ID)
-	publisher := publishing.NewMqttPublisher(publisherConfig)
-	publisher.Publish(json)
-	publisher.Close()
+
+	domainControllerPublisherConfig := models.NewMqttClientConfiguration(serverAddress,"1883","tcp", ForwardTopic, domainInformation.Broker.ID)
+	domainControllerPublisher := publishing.NewMqttPublisher(domainControllerPublisherConfig,false)
+	domainControllerPublisher.Publish(json)
+	domainControllerPublisher.Close()
+
+	brokerPublisherConfig := models.NewMqttClientConfiguration("localhost","1883","ws", "IDSStatistics/"+domain.Name, domainInformation.Broker.ID)
+	brokerPublisher := publishing.NewMqttPublisher(brokerPublisherConfig,true)
+	brokerPublisher.Publish(json)
+	brokerPublisher.Close()
 }

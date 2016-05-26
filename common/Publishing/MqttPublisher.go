@@ -12,14 +12,16 @@ type MqttPublisher struct {
 	state                 int64
 	client                mqtt.Client
 	config *models.MqttClientConfiguration
+	retained bool
 
 	publisherStarted       sync.WaitGroup
 	publisherStopped       sync.WaitGroup
 }
 
-func NewMqttPublisher(config *models.MqttClientConfiguration) *MqttPublisher {
+func NewMqttPublisher(config *models.MqttClientConfiguration, retained bool) *MqttPublisher {
 	publisher := new(MqttPublisher)
 	publisher.config = config
+	publisher.retained = retained
 	publisher.publisherStarted.Add(1)
 	publisher.publisherStopped.Add(1)
 	go publisher.run()
@@ -32,6 +34,7 @@ func (publisher *MqttPublisher) run() {
 
 	opts := mqtt.NewClientOptions().AddBroker(publisher.config.BrokerAddress())
 	opts.SetClientID(publisher.config.ClientID())
+	opts.WillRetained = publisher.retained
 	publisher.client = mqtt.NewClient(opts)
 
 	if token := publisher.client.Connect(); token.Wait() && token.Error() != nil {
