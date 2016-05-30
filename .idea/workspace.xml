@@ -2,44 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="7f5c48a5-0023-407f-b044-2d5403c5be43" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/gateway/frontend/html/brokerDetails.html" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/gateway/frontend/html/queryResults.html" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/gateway/frontend/index.html" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/gateway/frontend/js/IDSGateway.js" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/gateway/templates/domainInformation.html" afterPath="" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/IDSDaemon.go" afterPath="$PROJECT_DIR$/daemon/cmd/daemon/IDSDaemon.go" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/gateway/templates/LICENSE" afterPath="$PROJECT_DIR$/gateway/frontend/LICENSE" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/gateway/templates/README.md" afterPath="$PROJECT_DIR$/gateway/frontend/README.md" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/gateway/templates/css/blog-home.css" afterPath="$PROJECT_DIR$/gateway/frontend/css/blog-home.css" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/gateway/templates/css/bootstrap.css" afterPath="$PROJECT_DIR$/gateway/frontend/css/bootstrap.css" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/gateway/templates/css/bootstrap.min.css" afterPath="$PROJECT_DIR$/gateway/frontend/css/bootstrap.min.css" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/gateway/templates/fonts/glyphicons-halflings-regular.eot" afterPath="$PROJECT_DIR$/gateway/frontend/fonts/glyphicons-halflings-regular.eot" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/gateway/templates/fonts/glyphicons-halflings-regular.svg" afterPath="$PROJECT_DIR$/gateway/frontend/fonts/glyphicons-halflings-regular.svg" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/gateway/templates/fonts/glyphicons-halflings-regular.ttf" afterPath="$PROJECT_DIR$/gateway/frontend/fonts/glyphicons-halflings-regular.ttf" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/gateway/templates/fonts/glyphicons-halflings-regular.woff" afterPath="$PROJECT_DIR$/gateway/frontend/fonts/glyphicons-halflings-regular.woff" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/gateway/templates/fonts/glyphicons-halflings-regular.woff2" afterPath="$PROJECT_DIR$/gateway/frontend/fonts/glyphicons-halflings-regular.woff2" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/gateway/templates/js/bootstrap.js" afterPath="$PROJECT_DIR$/gateway/frontend/js/bootstrap.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/gateway/templates/js/bootstrap.min.js" afterPath="$PROJECT_DIR$/gateway/frontend/js/bootstrap.min.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/gateway/templates/js/jquery.js" afterPath="$PROJECT_DIR$/gateway/frontend/js/jquery.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/gateway/templates/js/paho.javascript-1.0.1/CONTRIBUTING.md" afterPath="$PROJECT_DIR$/gateway/frontend/js/paho.javascript-1.0.1/CONTRIBUTING.md" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/gateway/templates/js/paho.javascript-1.0.1/about.html" afterPath="$PROJECT_DIR$/gateway/frontend/js/paho.javascript-1.0.1/about.html" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/gateway/templates/js/paho.javascript-1.0.1/edl-v10" afterPath="$PROJECT_DIR$/gateway/frontend/js/paho.javascript-1.0.1/edl-v10" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/gateway/templates/js/paho.javascript-1.0.1/epl-v10" afterPath="$PROJECT_DIR$/gateway/frontend/js/paho.javascript-1.0.1/epl-v10" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/gateway/templates/js/paho.javascript-1.0.1/mqttws31-min.js" afterPath="$PROJECT_DIR$/gateway/frontend/js/paho.javascript-1.0.1/mqttws31-min.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/gateway/templates/js/paho.javascript-1.0.1/mqttws31.js" afterPath="$PROJECT_DIR$/gateway/frontend/js/paho.javascript-1.0.1/mqttws31.js" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/IDSDomainController.go" afterPath="$PROJECT_DIR$/domainController/cmd/IDSDomainController/IDSDomainController.go" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/IDSGateway.go" afterPath="$PROJECT_DIR$/gateway/cmd/IDSGateway/IDSGateway.go" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/IDSDomainController.go" afterPath="$PROJECT_DIR$/IDSDomainController.go" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/IDSGateway.go" afterPath="$PROJECT_DIR$/IDSGateway.go" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/common/models/DomainInformationMessage.go" afterPath="$PROJECT_DIR$/common/models/DomainInformationMessage.go" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/daemon/forwarding/DomainInformationForwarder.go" afterPath="$PROJECT_DIR$/daemon/forwarding/DomainInformationForwarder.go" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/daemon/registration/BrokerRegistrationWorker.go" afterPath="$PROJECT_DIR$/daemon/registration/BrokerRegistrationWorker.go" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/domainController/persistence/DomainControllerDatabaseWorker.go" afterPath="$PROJECT_DIR$/domainController/persistence/DomainControllerDatabaseWorker.go" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/domainController/processing/DomainInformationProcessor.go" afterPath="$PROJECT_DIR$/domainController/processing/DomainInformationProcessor.go" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/domainController/providing/DomainInformationRESTProvider.go" afterPath="$PROJECT_DIR$/domainController/providing/DomainInformationRESTProvider.go" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/gateway/controlling/DomainControllerManagementRequestHandler.go" afterPath="$PROJECT_DIR$/gateway/controlling/DomainControllerManagementRequestHandler.go" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/gateway/controlling/ServerMaintenanceWebInterface.go" afterPath="$PROJECT_DIR$/gateway/controlling/ServerMaintenanceWebInterface.go" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/gateway/providing/DomainInformationRequestHandler.go" afterPath="$PROJECT_DIR$/gateway/providing/DomainInformationRequestHandler.go" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/gateway/providing/IDSGatewayWebInterface.go" afterPath="$PROJECT_DIR$/gateway/providing/IDSGatewayWebInterface.go" />
     </list>
     <ignored path="IDS.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -87,7 +52,7 @@
       <file leaf-file-name="DomainControllerDatabaseWorker.go" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/domainController/persistence/DomainControllerDatabaseWorker.go">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="2340">
+            <state relative-caret-position="2415">
               <caret line="161" column="0" selection-start-line="161" selection-start-column="0" selection-end-line="161" selection-end-column="0" />
               <folding>
                 <element signature="e#21#119#0" expanded="true" />
@@ -270,7 +235,6 @@
     <panes>
       <pane id="Scope" />
       <pane id="Scratches" />
-      <pane id="PackagesPane" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -299,7 +263,21 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="daemon" />
+              <option name="myItemId" value="gateway" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="IDS" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="IDS" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="domainController" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -316,17 +294,10 @@
               <option name="myItemId" value="daemon" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="cmd" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="daemon" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
           </PATH>
         </subPane>
       </pane>
+      <pane id="PackagesPane" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -341,19 +312,19 @@
     <property name="DefaultHtmlFileTemplate" value="HTML File" />
   </component>
   <component name="RecentsManager">
-    <key name="MoveFile.RECENT_KEYS">
-      <recent name="$PROJECT_DIR$/daemon/cmd/daemon" />
-      <recent name="$PROJECT_DIR$/daemon/cmd" />
-      <recent name="$PROJECT_DIR$/gateway/frontend" />
-      <recent name="$PROJECT_DIR$/gateway/frontend/html" />
-      <recent name="$PROJECT_DIR$/gateway/templates/js" />
-    </key>
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/clusterController" />
       <recent name="$PROJECT_DIR$/domainController/providing" />
       <recent name="$PROJECT_DIR$/daemon/layers" />
       <recent name="$PROJECT_DIR$" />
       <recent name="$PROJECT_DIR$/domainController" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/gateway/cmd/IDSGateway" />
+      <recent name="$PROJECT_DIR$/domainController/cmd/IDSDomainController" />
+      <recent name="$PROJECT_DIR$/gateway/cmd" />
+      <recent name="$PROJECT_DIR$/domainController/cmd" />
+      <recent name="$PROJECT_DIR$/daemon/cmd/daemon" />
     </key>
   </component>
   <component name="RunManager" selected="Go Single File.go run IDSGateway.go">
@@ -757,7 +728,6 @@
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
           <url>file://$PROJECT_DIR$/domainController/providing/DomainInformationRESTProvider.go</url>
           <line>2</line>
-          <properties />
           <option name="timeStamp" value="14" />
         </line-breakpoint>
       </breakpoints>
@@ -912,7 +882,7 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/IDSDomainController.go">
+    <entry file="file://$PROJECT_DIR$/domainController/cmd/IDSDomainController/IDSDomainController.go">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="270">
           <caret line="24" column="42" selection-start-line="24" selection-start-column="42" selection-end-line="24" selection-end-column="42" />
@@ -1004,7 +974,7 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/IDSGateway.go">
+    <entry file="file://$PROJECT_DIR$/gateway/cmd/IDSGateway/IDSGateway.go">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="90">
           <caret line="11" column="30" selection-start-line="11" selection-start-column="30" selection-end-line="11" selection-end-column="30" />
@@ -1022,7 +992,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="198">
           <caret line="1447" column="5" selection-start-line="1447" selection-start-column="5" selection-end-line="1447" selection-end-column="5" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -1038,7 +1007,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="675">
           <caret line="45" column="6" selection-start-line="45" selection-start-column="6" selection-end-line="45" selection-end-column="6" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -1046,7 +1014,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="375">
           <caret line="25" column="29" selection-start-line="25" selection-start-column="29" selection-end-line="25" selection-end-column="29" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -1060,7 +1027,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/domainController/persistence/DomainControllerDatabaseWorker.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2340">
+        <state relative-caret-position="2415">
           <caret line="161" column="0" selection-start-line="161" selection-start-column="0" selection-end-line="161" selection-end-column="0" />
           <folding>
             <element signature="e#21#119#0" expanded="true" />
@@ -1124,14 +1091,7 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/daemon/cmd/daemon.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="11" selection-start-line="0" selection-start-column="11" selection-end-line="0" selection-end-column="11" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://$PROJECT_DIR$/daemon/cmd/daemon.go" />
   </component>
   <component name="masterDetails">
     <states>
