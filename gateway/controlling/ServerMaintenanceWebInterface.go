@@ -56,7 +56,7 @@ func (webInterface ServerMaintenanceWebInterface) instantiateDomainController(re
 
 	requestHandler := NewDomainControllerManagementRequestHandler()
 	if domainController := requestHandler.handleManagementRequest(managementRequest); domainController != nil {
-		json.NewEncoder(res).Encode(domainController)
+		json.NewEncoder(res).Encode(&domainController)
 		return
 	}
 	http.Error(res, "Internal Error", http.StatusInternalServerError)

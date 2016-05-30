@@ -1,5 +1,7 @@
 package models
 
+import "fmt"
+
 type DomainInformationMessage struct {
 	RealWorldDomain *RealWorldDomain `json:"domain" bson:"domain"`
 	ForwardPriority int `json:"forwardPriority"`
@@ -13,4 +15,8 @@ func NewDomainInformationMessage(domain *RealWorldDomain, broker *Broker, topics
 	message.Topics = topics
 	message.Broker = broker
 	return message
+}
+
+func (message *DomainInformationMessage) String() string {
+	return fmt.Sprintf("Broker: %s, Domain: %s, Topics: %s, ForwardPriority: %d",message.Broker,message.RealWorldDomain,message.Topics,message.ForwardPriority)
 }

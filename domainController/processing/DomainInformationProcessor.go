@@ -72,27 +72,25 @@ func (processor *DomainInformationProcessor) ProcessDomainInformationMessages() 
 }
 
 func (processor *DomainInformationProcessor) processDomainInformationMessage(topic *models.RawTopicMessage) {
-	var domainInformationMessages []*models.DomainInformationMessage
-	if err := json.Unmarshal(topic.Payload, &domainInformationMessages); err != nil {
+	var domainInformationMessage *models.DomainInformationMessage
+	if err := json.Unmarshal(topic.Payload, &domainInformationMessage); err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	go processor.storeDomainInformation(domainInformationMessages)
+	go processor.storeDomainInformation(domainInformationMessage)
 
-	for _, message := range domainInformationMessages {
-		processor.newDomainInformationCounter[message.RealWorldDomain.Name] += message.ForwardPriority
-		if processor.newDomainInformationCounter[message.RealWorldDomain.Name] > ForwardThreshold {
-			processor.forwardingSignalChannel <- message.RealWorldDomain
+		processor.newDomainInformationCounter[domainInformationMessage.RealWorldDomain.Name] += domainInformationMessage.ForwardPriority
+		if processor.newDomainInformationCounter[domainInformationMessage.RealWorldDomain.Name] > ForwardThreshold {
+			processor.forwardingSignalChannel <- domainInformationMessage.RealWorldDomain
 		}
-	}
 }
 
-func (processor *DomainInformationProcessor) storeDomainInformation(information []*models.DomainInformationMessage) {
+func (processor *DomainInformationProcessor) storeDomainInformation(information *models.DomainInformationMessage) {
 	dbDelegate, _ := persistence.NewDomainControllerDatabaseWorker()
 	if dbDelegate == nil {
 		return
 	}
 	defer dbDelegate.Close()
-	dbDelegate.StoreDomainInformation(information)
+	dbDelegate.StoreDomainInformationMessage(information)
 }

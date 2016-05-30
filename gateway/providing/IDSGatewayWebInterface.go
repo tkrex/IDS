@@ -9,7 +9,6 @@ import (
 	"github.com/tkrex/IDS/common/models"
 	"github.com/tkrex/IDS/gateway/persistence"
 	"github.com/tkrex/IDS/gateway/registration"
-	"html/template"
 )
 
 type IDSGatewayWebInterface struct {
@@ -33,8 +32,11 @@ func (webInterface *IDSGatewayWebInterface) run(port string) {
 	 webInterface.providerStarted.Done()
 
 	router := mux.NewRouter()
-	router.HandleFunc("/domains/{domainName}", webInterface.handleDomainInformation).Methods("GET")
+	fs := http.Dir("./gateway/frontend/")
+	fileHandler := http.FileServer(fs)
+	router.HandleFunc("/rest/domainInformation/{domainName}", webInterface.handleDomainInformation).Methods("GET")
 	router.HandleFunc("/rest/brokers", webInterface.handleBrokers).Methods("GET", "POST")
+	router.PathPrefix("/").Handler(http.StripPrefix("/", fileHandler))
 
 
 	http.ListenAndServe(":" + port, router)
@@ -44,40 +46,24 @@ func (webInterface *IDSGatewayWebInterface) handleDomainInformation(res http.Res
 	//res.Header().Set("Content-Type", "application/json")
 	fmt.Println("domain Information Request Received")
 
+
+
 	requestParameters := mux.Vars(req)
-	domainName := requestParameters["domain"]
+	domainName := requestParameters["domainName"]
 	requestHandler := NewDomainInformationRequestHandler()
 	domainInformation := requestHandler.handleRequest(domainName)
 	if domainInformation == nil {
 		http.Error(res, "Error", http.StatusInternalServerError)
 		return
 	}
+	outgoingJSON, error := json.Marshal(domainInformation)
 
-	t := template.New("domainInformation.html")
-	var parseError error
-
-
-	t, parseError = t.ParseFiles("gateway/templates/domainInformation.html")
-	if parseError != nil {
-		http.Error(res, parseError.Error(), http.StatusInternalServerError)
+	if error != nil {
+		fmt.Println(error.Error())
+		http.Error(res, "Error", http.StatusInternalServerError)
 		return
 	}
-	executeError := t.Execute(res,domainInformation)
-	if executeError != nil {
-		http.Error(res, executeError.Error(), http.StatusInternalServerError)
-		return
-	}
-
-
-
-	//outgoingJSON, error := json.Marshal(domainInformation)
-	//
-	//if error != nil {
-	//	fmt.Println(error.Error())
-	//	http.Error(res, "Error", http.StatusInternalServerError)
-	//	return
-	//}
-	//fmt.Fprint(res, string(outgoingJSON))
+	fmt.Fprint(res, string(outgoingJSON))
 }
 
 func (webInterface *IDSGatewayWebInterface) handleBrokers(res http.ResponseWriter, req *http.Request) {

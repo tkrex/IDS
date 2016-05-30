@@ -133,9 +133,10 @@ func (forwarder *DomainInformationForwarder) forwardDomainInformation(domain *mo
 	defer controlMessagesDBDelagte.Close()
 	if domainController := controlMessagesDBDelagte.FindDomainControllerForDomain(domain.Name); domainController != nil {
 		serverAddress = domainController.IpAddress
-		fmt.Println("Sending information to %s DomainController: %s",domainController.Domain.Name,domainController.IpAddress)
+		fmt.Println("Sending information to  DomainController: ",domainController.Domain.Name,domainController.IpAddress)
 	} else if rootController := controlMessagesDBDelagte.FindDomainControllerForDomain("default"); rootController != nil {
 		serverAddress = rootController.IpAddress
+		fmt.Println("Sending information to Default DomainController: ", rootController.IpAddress)
 	}
 
 	if serverAddress == "" {
@@ -149,8 +150,8 @@ func (forwarder *DomainInformationForwarder) forwardDomainInformation(domain *mo
 	domainControllerPublisher.Publish(json)
 	domainControllerPublisher.Close()
 
-	brokerPublisherConfig := models.NewMqttClientConfiguration("localhost","1883","ws", "IDSStatistics/"+domain.Name, domainInformation.Broker.ID)
-	brokerPublisher := publishing.NewMqttPublisher(brokerPublisherConfig,true)
-	brokerPublisher.Publish(json)
-	brokerPublisher.Close()
+	//brokerPublisherConfig := models.NewMqttClientConfiguration("localhost","1883","ws", "IDSStatistics/"+domain.Name, domainInformation.Broker.ID)
+	//brokerPublisher := publishing.NewMqttPublisher(brokerPublisherConfig,true)
+	//brokerPublisher.Publish(json)
+	//brokerPublisher.Close()
 }

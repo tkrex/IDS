@@ -1,7 +1,6 @@
 package main
 
 import (
-
 	"time"
 	"github.com/tkrex/IDS/common/models"
 	"github.com/tkrex/IDS/common/subscribing"
@@ -27,7 +26,7 @@ func main() {
 func startTopicProcessing() {
 	brokerAddress := "localhost"
 	desiredTopic  := "#"
-	subscriberConfig := models.NewMqttClientConfiguration(brokerAddress,desiredTopic,"subscriber")
+	subscriberConfig := models.NewMqttClientConfiguration(brokerAddress,"1883","tcp",desiredTopic,"subscriber")
 	subscriber := subscribing.NewMqttSubscriber(subscriberConfig,true)
 	topicProcessor := processing.NewTopicProcessor(subscriber.IncomingTopicsChannel())
 
@@ -39,7 +38,7 @@ func startControlMessageProcessing() {
 	brokerAddress := "localhost"
 	desiredTopic  := "ControlMessage"
 	//TODO: figure out client id
-	subscriberConfig := models.NewMqttClientConfiguration(brokerAddress,desiredTopic,"controlMessageSubscriber")
+	subscriberConfig := models.NewMqttClientConfiguration(brokerAddress,"1883","tcp",desiredTopic,"controlMessageSubscriber")
 	subscriber := subscribing.NewMqttSubscriber(subscriberConfig,true)
 	_ = controlling.NewControlMessageProcessor(subscriber.IncomingTopicsChannel())
 

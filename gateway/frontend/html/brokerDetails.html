@@ -1,0 +1,9 @@
+<h2>Broker Details for {{domainInformation.broker.ip}}</h2>
+<div class="row">
+    <div ng-repeat="topic in domainInformation.topics">
+        <p>{{topic.name}}</p>
+        <p>Last Payload: {{topic.payload}}</p>
+        <p>Last Update : {{topic.lastUpdate}}</p>
+        <p>Deviation: {{topic.deviation}}</p>
+    </div>
+</div>

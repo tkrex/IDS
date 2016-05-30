@@ -17,7 +17,7 @@ type DomainInformationRESTProvider struct {
 
 }
 
-func NewIDSGatewayWebInterface(port string) *DomainInformationRESTProvider {
+func NewDomainInformationRESTProvider(port string) *DomainInformationRESTProvider {
 	provider := new(DomainInformationRESTProvider)
 	provider.providerStarted.Add(1)
 	provider.providerStopped.Add(1)
@@ -31,9 +31,35 @@ func (provider *DomainInformationRESTProvider) run(port string) {
 	 provider.providerStarted.Done()
 
 	router := mux.NewRouter()
-	router.HandleFunc("/domainInformation/{domain}", provider.handleDomainInformation).Methods("GET")
+	router.HandleFunc("/domainController/domainInformation/{domain}", provider.handleDomainInformation).Methods("GET")
+	router.HandleFunc("/domainController/brokers/{domain}", provider.handleBrokers).Methods("GET")
 	http.ListenAndServe(":" + port, router)
 }
+
+func (webInterface *DomainInformationRESTProvider) handleBrokers(res http.ResponseWriter, req *http.Request) {
+	res.Header().Set("Content-Type", "application/json")
+	fmt.Println("domain Information Request Received")
+
+	requestParameters := mux.Vars(req)
+	domainName := requestParameters["domain"]
+
+
+	dbDelegate, err := persistence.NewDomainControllerDatabaseWorker()
+
+	if err != nil {
+		http.Error(res, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer dbDelegate.Close()
+	brokers, err := dbDelegate.FindBrokersForDomain(domainName)
+	fmt.Println(brokers)
+	if err != nil {
+		http.Error(res, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(res).Encode(brokers)
+}
+
 
 func (webInterface *DomainInformationRESTProvider) handleDomainInformation(res http.ResponseWriter, req *http.Request) {
 	res.Header().Set("Content-Type", "application/json")
@@ -49,21 +75,15 @@ func (webInterface *DomainInformationRESTProvider) handleDomainInformation(res h
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	defer dbDelegate.Close()
 	domainInformation, err := dbDelegate.FindDomainInformationByDomainName(domainName)
+	fmt.Println(domainInformation)
 	if err != nil {
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-
-	outgoingJSON, error := json.Marshal(domainInformation)
-
-	if error != nil {
-		fmt.Println(error.Error())
-		http.Error(res, error.Error(), http.StatusInternalServerError)
-		return
-	}
-	fmt.Fprint(res, string(outgoingJSON))
+	json.NewEncoder(res).Encode(domainInformation)
 }
 
 

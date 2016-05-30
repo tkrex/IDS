@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"encoding/json"
-	"time"
 )
 
 type DomainInformationRequestHandler struct {
@@ -20,23 +19,23 @@ func NewDomainInformationRequestHandler() *DomainInformationRequestHandler {
 
 
 func (handler *DomainInformationRequestHandler) handleRequest(domainName string) []*models.DomainInformationMessage {
-	domainInformation := []*models.DomainInformationMessage{}
+	//domainInformation := []*models.DomainInformationMessage{}
 
-	//DEBUG CODE
-	domain := models.NewRealWorldDomain("education")
-	broker := models.NewBroker("localhost","krex.com")
-	topics := []*models.Topic{}
-
-	for i := 0; i < 5; i++ {
-		topic := models.NewTopic("/home/kitchen","{\"temperature\":3}",time.Now())
-		topic.UpdateBehavior.UpdateIntervalDeviation = 3.0
-		topics = append(topics, topic)
-	}
-
-
-	message := models.NewDomainInformationMessage(domain,broker,topics)
-	domainInformation = append(domainInformation,message)
-	return domainInformation
+	////DEBUG CODE
+	//domain := models.NewRealWorldDomain("education")
+	//broker := models.NewBroker("localhost","krex.com")
+	//topics := []*models.Topic{}
+	//
+	//for i := 0; i < 5; i++ {
+	//	topic := models.NewTopic("/home/kitchen","{\"temperature\":3}",time.Now())
+	//	topic.UpdateBehavior.UpdateIntervalDeviation = 3.0
+	//	topics = append(topics, topic)
+	//}
+	//
+	//
+	//message := models.NewDomainInformationMessage(domain,broker,topics)
+	//domainInformation = append(domainInformation,message)
+	//return domainInformation
 
 	dbDelegate, err := controlling.NewControlMessageDBDelegate()
 	if err != nil {
@@ -45,7 +44,7 @@ func (handler *DomainInformationRequestHandler) handleRequest(domainName string)
 	defer dbDelegate.Close()
 
 	var destinationDomainController *models.DomainController
-	domain = models.NewRealWorldDomain(domainName)
+	domain := models.NewRealWorldDomain(domainName)
 	destinationDomainController = dbDelegate.FindDomainControllerForDomain(domain.FirstLevelDomain())
 
 	if destinationDomainController == nil {
@@ -60,7 +59,8 @@ func (handler *DomainInformationRequestHandler) handleRequest(domainName string)
 
 
 func (handler *DomainInformationRequestHandler) requestDomainInformationFromDomainController(domainName string, domainController *models.DomainController) []*models.DomainInformationMessage {
-	requestUrl := "http://" + domainController.IpAddress + "/domainInformation/" + domainName
+	requestUrl := "http://" + domainController.IpAddress + ":8080/domainController/domainInformation/" + domainName
+	fmt.Println("Forwarding Request to ",requestUrl)
 	client := http.DefaultClient
 	response, err := client.Get(requestUrl)
 	if err != nil {

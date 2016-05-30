@@ -9,7 +9,7 @@ import (
 
 func main() {
 
-	providing.NewIDSGatewayWebInterface("8080")
+	providing.NewIDSGatewayWebInterface("8001")
 
 	_ = controlling.NewServerMaintenanceWebInterface("8000")
 	worker := common.NewDomainControllerRegistrationWorker()

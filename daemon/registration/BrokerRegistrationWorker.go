@@ -113,7 +113,7 @@ func (worker *BrokerRegistrationWorker) sendRegistrationRequest() bool {
 
 	jsonString, _ := json.Marshal(&worker.broker)
 
-	req, err := http.NewRequest("POST", "http://localhost:8080/rest/brokers", bytes.NewBuffer(jsonString))
+	req, err := http.NewRequest("POST", "http://localhost:8001/rest/brokers", bytes.NewBuffer(jsonString))
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}

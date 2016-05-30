@@ -5,24 +5,26 @@ import (
 	"github.com/tkrex/IDS/common/models"
 	"github.com/tkrex/IDS/common/subscribing"
 	"github.com/tkrex/IDS/domainController/processing"
+	"github.com/tkrex/IDS/domainController/providing"
 )
 
 
 
 func main() {
 
-	parentDomain := nil
-	ownDomain := models.NewRealWorldDomain("default")
 	startDomainInformationProcessing()
+	_ = providing.NewDomainInformationRESTProvider("8080")
 	for {}
 }
 
 
 func startDomainInformationProcessing() {
 	//producer layer
-	brokerAddress := "tcp://localhost:1883"
+	brokerAddress := "localhost"
+	port := "1883"
+	var protocol models.MqttProtocol  = "tcp"
 	desiredTopic  := "DomainInformation"
-	subscriberConfig := models.NewMqttClientConfiguration(brokerAddress,desiredTopic,"domainController")
+	subscriberConfig := models.NewMqttClientConfiguration(brokerAddress,port,protocol,desiredTopic,"domainController")
 	subscriber := subscribing.NewMqttSubscriber(subscriberConfig,false)
 	//processing layer
 	_ = processing.NewDomainInformationProcessor(subscriber.IncomingTopicsChannel())

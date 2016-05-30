@@ -64,8 +64,8 @@ func (worker *DomainControllerManagementRequestHandler) forwardControlMessage(co
 		return
 	}
 
-	publishConfig := models.NewMqttClientConfiguration("localhost", "ControlMessage", "gateway")
-	publisher := publishing.NewMqttPublisher(publishConfig)
+	publishConfig := models.NewMqttClientConfiguration("localhost","1883","tcp", "ControlMessage", "gateway")
+	publisher := publishing.NewMqttPublisher(publishConfig,false)
 	defer publisher.Close()
 	publisher.Publish(json)
 
