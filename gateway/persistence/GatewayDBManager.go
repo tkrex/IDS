@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	Host = "localhost:27017"
+	Host = "database:27017"
 	Username = "example"
 	Password = "example"
 	Database = "IDSGateway"
