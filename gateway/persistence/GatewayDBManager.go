@@ -29,6 +29,7 @@ func NewGatewayDBWorker() *GatewayDBWorker {
 	if err != nil {
 		return nil
 	}
+	fmt.Println("Connected to Database: ",Host)
 	worker.session = session
 	return worker
 }

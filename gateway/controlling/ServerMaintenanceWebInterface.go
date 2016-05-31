@@ -12,14 +12,16 @@ import (
 
 type ServerMaintenanceWebInterface struct {
 	port                             string
+	managementBrokerAddress		string
 	providerStarted                  sync.WaitGroup
 	providerStopped                  sync.WaitGroup
 }
 
 
 
-func NewServerMaintenanceWebInterface(port string) *ServerMaintenanceWebInterface {
+func NewServerMaintenanceWebInterface(port string, managementBrokerAddress string) *ServerMaintenanceWebInterface {
 	webInterface := new(ServerMaintenanceWebInterface)
+	webInterface.managementBrokerAddress = managementBrokerAddress
 	webInterface.providerStarted.Add(1)
 	webInterface.providerStopped.Add(1)
 	go webInterface.run(port)
@@ -54,7 +56,7 @@ func (webInterface ServerMaintenanceWebInterface) instantiateDomainController(re
 	var messageType = models.DomainControllerChange
 	managementRequest := models.NewDomainControllerManagementRequest(messageType,domain)
 
-	requestHandler := NewDomainControllerManagementRequestHandler()
+	requestHandler := NewDomainControllerManagementRequestHandler(webInterface.managementBrokerAddress)
 	if domainController := requestHandler.handleManagementRequest(managementRequest); domainController != nil {
 		json.NewEncoder(res).Encode(&domainController)
 		return
@@ -71,7 +73,7 @@ func (webInterface ServerMaintenanceWebInterface) deleteDomainController(res htt
 	var messageType = models.DomainControllerDelete
 	managementRequest := models.NewDomainControllerManagementRequest(messageType,domain)
 
-	requestHandler := NewDomainControllerManagementRequestHandler()
+	requestHandler := NewDomainControllerManagementRequestHandler(webInterface.managementBrokerAddress)
 	if domainController := requestHandler.handleManagementRequest(managementRequest); domainController != nil {
 		json.NewEncoder(res).Encode(domainController)
 		return

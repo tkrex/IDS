@@ -9,12 +9,15 @@ import (
 )
 
 type DomainControllerRegistrationWorker struct {
+	managementServerAddress string
 
 }
 
 
-func NewDomainControllerRegistrationWorker() *DomainControllerRegistrationWorker {
-	return new(DomainControllerRegistrationWorker)
+func NewDomainControllerRegistrationWorker(managementServerAddress string) *DomainControllerRegistrationWorker {
+	worker := new(DomainControllerRegistrationWorker)
+	worker.managementServerAddress = managementServerAddress
+	return worker
 }
 
 func (worker *DomainControllerRegistrationWorker) RequestNewDomainControllerForDomain(domain *models.RealWorldDomain) {
@@ -36,9 +39,7 @@ func (worker *DomainControllerRegistrationWorker) RequestDomainControllerDeletio
 }
 
 func  (worker *DomainControllerRegistrationWorker) sendManagementRequest(requestType models.ControlMessageType,domain *models.RealWorldDomain) (*models.DomainController, error) {
-	//TODO: Get Gateway Address
-
-	registrationURL := "http://localhost:8000/domainController/"+domain.Name
+	registrationURL := worker.managementServerAddress+"/domainController/"+domain.Name
 
 	switch requestType {
 	case models.DomainControllerChange:
