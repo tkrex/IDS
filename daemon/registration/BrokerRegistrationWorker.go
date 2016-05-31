@@ -19,7 +19,6 @@ const RegisterInterval = time.Second * 10
 
 type BrokerRegistrationWorker struct {
 	registrationServerAddress string
-	broker         *models.Broker
 	registerTicker *time.Ticker
 	workerStarted  sync.WaitGroup
 	workerStopped  sync.WaitGroup
@@ -28,7 +27,6 @@ type BrokerRegistrationWorker struct {
 
 func NewBrokerRegistrationWorker(registrationServerAddress string) *BrokerRegistrationWorker {
 	worker := new(BrokerRegistrationWorker)
-	worker.broker = new(models.Broker)
 	worker.registrationServerAddress = registrationServerAddress
 	worker.workerStarted.Add(1)
 	worker.workerStopped.Add(1)
@@ -51,10 +49,12 @@ func (worker *BrokerRegistrationWorker) registerBroker() {
 		return
 	}
 	//TODO: Get IP address from Docker ENV
-	worker.broker.IP = os.Getenv("BROKER_URI")
-	worker.findBrokerDomainName()
-	worker.findBrokerRealWorldDomains()
-	worker.findBrokerGeolocation()
+
+	broker := models.NewBroker()
+	broker.IP = os.Getenv("BROKER_URI")
+	worker.findDomainNameForBroker(broker)
+	worker.findRealWorldDomainsForBroker(broker)
+	worker.findGeolocationForBroker(broker)
 
 	worker.registerTicker = time.NewTicker(RegisterInterval)
 	go func() {
@@ -66,7 +66,7 @@ func (worker *BrokerRegistrationWorker) registerBroker() {
 				worker.registerTicker.Stop()
 				break
 			}
-			registrationSuccess = worker.sendRegistrationRequest()
+			registrationSuccess = worker.sendRegistrationRequestForBroker(broker)
 		}
 	}()
 }
@@ -82,39 +82,39 @@ func (worker *BrokerRegistrationWorker) isBrokerRegistered() bool {
 	return isBrokerRegistered
 }
 
-func (worker *BrokerRegistrationWorker) findBrokerDomainName() {
-	name, err := net.LookupAddr(worker.broker.IP)
+func (worker *BrokerRegistrationWorker) findDomainNameForBroker(broker *models.Broker) {
+	name, err := net.LookupAddr(broker.IP)
 	if err != nil {
-		worker.broker.InternetDomain = ""
+		broker.InternetDomain = ""
 		return
 	}
-	worker.broker.InternetDomain = name[0]
+	broker.InternetDomain = name[0]
 }
 
-func (worker *BrokerRegistrationWorker) findBrokerRealWorldDomains() {
+func (worker *BrokerRegistrationWorker) findRealWorldDomainsForBroker(broker *models.Broker) {
 	categorizer := NewWebsiteCategorizationWorker()
 	categories,_ := categorizer.RequestCategoriesForWebsite("www.in.tum.de")
-	worker.broker.RealWorldDomains = make([]*models.RealWorldDomain,len(categories))
+	broker.RealWorldDomains = make([]*models.RealWorldDomain,len(categories))
 	for index,category := range categories {
 		domain := models.NewRealWorldDomain(category)
-		worker.broker.RealWorldDomains[index] = domain
+		broker.RealWorldDomains[index] = domain
 	}
 }
 
-func (worker *BrokerRegistrationWorker) findBrokerGeolocation() {
+func (worker *BrokerRegistrationWorker) findGeolocationForBroker(broker *models.Broker) {
 	geolocationFetcher := NewGeoLocationFetcher()
-	location, err := geolocationFetcher.SendGeoLocationRequest(worker.broker.IP)
+	location, err := geolocationFetcher.SendGeoLocationRequest(broker.IP)
 	if err != nil {
-		worker.broker.Geolocation = new(models.Geolocation)
+		broker.Geolocation = new(models.Geolocation)
 		return
 	}
-	worker.broker.Geolocation = location
+	broker.Geolocation = location
 }
 
-func (worker *BrokerRegistrationWorker) sendRegistrationRequest() bool {
+func (worker *BrokerRegistrationWorker) sendRegistrationRequestForBroker(broker *models.Broker) bool {
 	fmt.Println("Sending Broker Registration Request")
 
-	jsonString, _ := json.Marshal(&worker.broker)
+	jsonString, _ := json.Marshal(&broker)
 
 	req, err := http.NewRequest("POST", worker.registrationServerAddress+"/rest/brokers", bytes.NewBuffer(jsonString))
 	req.Header.Set("Content-Type", "application/json")
