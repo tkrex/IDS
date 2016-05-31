@@ -27,6 +27,7 @@ func NewDaemonDatabaseWorker() (*DaemonDatabaseWorker, error) {
 	var error error
 	databaseWorker.session, error = openSession()
 	if error != nil {
+		fmt.Println("DATABASE: ",error)
 		return nil, error
 	}
 	return databaseWorker, error
