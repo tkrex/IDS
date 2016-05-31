@@ -39,6 +39,7 @@ func (dbWoker *DaemonDatabaseWorker)Close() {
 
 func openSession() (*mgo.Session, error) {
 	host := os.Getenv("MONGODB_URI")
+	fmt.Println("DIAL IN TO HOST: ", host)
 	session, err := mgo.Dial(host)
 	return session, err
 }
