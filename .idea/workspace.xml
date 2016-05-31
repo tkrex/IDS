@@ -3,12 +3,8 @@
   <component name="ChangeListManager">
     <list default="true" id="7f5c48a5-0023-407f-b044-2d5403c5be43" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/common/DomainControllerRegistrationWorker.go" afterPath="$PROJECT_DIR$/common/DomainControllerRegistrationWorker.go" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/domainController/cmd/IDSDomainController/IDSDomainController.go" afterPath="$PROJECT_DIR$/domainController/cmd/IDSDomainController/IDSDomainController.go" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/gateway/cmd/IDSGateway/IDSGateway.go" afterPath="$PROJECT_DIR$/gateway/cmd/IDSGateway/IDSGateway.go" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/gateway/controlling/DomainControllerManagementRequestHandler.go" afterPath="$PROJECT_DIR$/gateway/controlling/DomainControllerManagementRequestHandler.go" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/gateway/controlling/ServerMaintenanceWebInterface.go" afterPath="$PROJECT_DIR$/gateway/controlling/ServerMaintenanceWebInterface.go" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/gateway/persistence/GatewayDBManager.go" afterPath="$PROJECT_DIR$/gateway/persistence/GatewayDBManager.go" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/daemon/cmd/daemon/IDSDaemon.go" afterPath="$PROJECT_DIR$/daemon/cmd/daemon/IDSDaemon.go" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/daemon/registration/BrokerRegistrationWorker.go" afterPath="$PROJECT_DIR$/daemon/registration/BrokerRegistrationWorker.go" />
     </list>
     <ignored path="IDS.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -33,23 +29,33 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="IDSDaemon.go" pinned="false" current-in-tab="false">
+      <file leaf-file-name="IDSDaemon.go" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/daemon/cmd/daemon/IDSDaemon.go">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="250">
-              <caret line="36" column="0" selection-start-line="36" selection-start-column="0" selection-end-line="44" selection-end-column="1" />
+            <state relative-caret-position="-35">
+              <caret line="17" column="10" selection-start-line="17" selection-start-column="10" selection-end-line="17" selection-end-column="10" />
               <folding>
-                <element signature="e#14#329#0" expanded="true" />
+                <element signature="e#14#335#0" expanded="true" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="IDSDomainController.go" pinned="false" current-in-tab="true">
+      <file leaf-file-name="BrokerRegistrationWorker.go" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/daemon/registration/BrokerRegistrationWorker.go">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="-440">
+              <caret line="97" column="33" selection-start-line="97" selection-start-column="33" selection-end-line="97" selection-end-column="33" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="IDSDomainController.go" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/domainController/cmd/IDSDomainController/IDSDomainController.go">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="60">
-              <caret line="16" column="0" selection-start-line="16" selection-start-column="0" selection-end-line="16" selection-end-column="0" />
+            <state relative-caret-position="90">
+              <caret line="18" column="42" selection-start-line="18" selection-start-column="42" selection-end-line="18" selection-end-column="42" />
               <folding />
             </state>
           </provider>
@@ -63,16 +69,6 @@
               <folding>
                 <element signature="e#19#226#0" expanded="true" />
               </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="DomainInformationRequestHandler.go" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/gateway/providing/DomainInformationRequestHandler.go">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="690">
-              <caret line="53" column="47" selection-start-line="53" selection-start-column="47" selection-end-line="53" selection-end-column="47" />
-              <folding />
             </state>
           </provider>
         </entry>
@@ -158,7 +154,6 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/JSONTest.go" />
         <option value="$PROJECT_DIR$/DaemonDatabseTest.go" />
         <option value="$PROJECT_DIR$/common/models/Topic.go" />
         <option value="$PROJECT_DIR$/common/models/UpdateReliabilityStrategies.go" />
@@ -189,7 +184,6 @@
         <option value="$PROJECT_DIR$/common/models/SubscriberConfiguration.go" />
         <option value="$PROJECT_DIR$/IDSDaemon.go" />
         <option value="$PROJECT_DIR$/IDSGateway.go" />
-        <option value="$PROJECT_DIR$/daemon/registration/BrokerRegistrationWorker.go" />
         <option value="$PROJECT_DIR$/daemon/forwarding/DomainInformationForwarder.go" />
         <option value="$PROJECT_DIR$/domainController/processing/DomainInformationProcessor.go" />
         <option value="$PROJECT_DIR$/common/models/DomainInformationMessage.go" />
@@ -209,6 +203,8 @@
         <option value="$PROJECT_DIR$/gateway/cmd/IDSGateway/IDSGateway.go" />
         <option value="$PROJECT_DIR$/common/DomainControllerRegistrationWorker.go" />
         <option value="$PROJECT_DIR$/domainController/cmd/IDSDomainController/IDSDomainController.go" />
+        <option value="$PROJECT_DIR$/daemon/registration/BrokerRegistrationWorker.go" />
+        <option value="$PROJECT_DIR$/daemon/cmd/daemon/IDSDaemon.go" />
       </list>
     </option>
   </component>
@@ -278,7 +274,7 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="domainController" />
+              <option name="myItemId" value="daemon" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -292,7 +288,7 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="domainController" />
+              <option name="myItemId" value="daemon" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
@@ -300,7 +296,7 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="IDSDomainController" />
+              <option name="myItemId" value="daemon" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -969,13 +965,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/daemon/registration/BrokerRegistrationWorker.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="360">
-          <caret line="127" column="40" selection-start-line="127" selection-start-column="40" selection-end-line="127" selection-end-column="40" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/gateway/frontend/index.html">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="675">
@@ -1092,16 +1081,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/daemon/cmd/daemon/IDSDaemon.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="250">
-          <caret line="36" column="0" selection-start-line="36" selection-start-column="0" selection-end-line="44" selection-end-column="1" />
-          <folding>
-            <element signature="e#14#329#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/common/DomainControllerRegistrationWorker.go">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="90">
@@ -1112,9 +1091,27 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/domainController/cmd/IDSDomainController/IDSDomainController.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="60">
-          <caret line="16" column="0" selection-start-line="16" selection-start-column="0" selection-end-line="16" selection-end-column="0" />
+        <state relative-caret-position="90">
+          <caret line="18" column="42" selection-start-line="18" selection-start-column="42" selection-end-line="18" selection-end-column="42" />
           <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/daemon/registration/BrokerRegistrationWorker.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-440">
+          <caret line="97" column="33" selection-start-line="97" selection-start-column="33" selection-end-line="97" selection-end-column="33" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/daemon/cmd/daemon/IDSDaemon.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-35">
+          <caret line="17" column="10" selection-start-line="17" selection-start-column="10" selection-end-line="17" selection-end-column="10" />
+          <folding>
+            <element signature="e#14#335#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>

@@ -9,12 +9,13 @@ import (
 	"github.com/tkrex/IDS/common/controlling"
 	"github.com/tkrex/IDS/daemon/registration"
 	"github.com/tkrex/IDS/daemon/configuration"
+	"os"
 )
 
 func main() {
 
-	go startBrokerRegistration()
-	go startControlMessageProcessing()
+	//go startBrokerRegistration()
+	//go startControlMessageProcessing()
 	go startTopicProcessing()
 	startControlInterface()
 	for {
@@ -24,7 +25,7 @@ func main() {
 
 
 func startTopicProcessing() {
-	brokerAddress := "localhost"
+	brokerAddress := os.Getenv("BROKER_URI")
 	desiredTopic  := "#"
 	subscriberConfig := models.NewMqttClientConfiguration(brokerAddress,"1883","tcp",desiredTopic,"subscriber")
 	subscriber := subscribing.NewMqttSubscriber(subscriberConfig,true)
@@ -35,17 +36,16 @@ func startTopicProcessing() {
 
 }
 func startControlMessageProcessing() {
-	brokerAddress := "localhost"
+	brokerAddress := os.Getenv("MANAGEMENT_BROKER_URL")
 	desiredTopic  := "ControlMessage"
 	//TODO: figure out client id
 	subscriberConfig := models.NewMqttClientConfiguration(brokerAddress,"1883","tcp",desiredTopic,"controlMessageSubscriber")
 	subscriber := subscribing.NewMqttSubscriber(subscriberConfig,true)
 	_ = controlling.NewControlMessageProcessor(subscriber.IncomingTopicsChannel())
-
 }
 
 func startBrokerRegistration() {
-	_ = registration.NewBrokerRegistrationWorker()
+	_ = registration.NewBrokerRegistrationWorker(os.Getenv("MANAGEMENT_INTERFACE_URL"))
 }
 
 func startControlInterface () {

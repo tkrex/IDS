@@ -12,11 +12,13 @@ import (
 	"sync"
 	"github.com/tkrex/IDS/daemon/persistence"
 	"github.com/tkrex/IDS/common/controlling"
+	"os"
 )
 
 const RegisterInterval = time.Second * 10
 
 type BrokerRegistrationWorker struct {
+	registrationServerAddress string
 	broker         *models.Broker
 	registerTicker *time.Ticker
 	workerStarted  sync.WaitGroup
@@ -24,11 +26,12 @@ type BrokerRegistrationWorker struct {
 	dbDelegate     *persistence.DaemonDatabaseWorker
 }
 
-func NewBrokerRegistrationWorker() *BrokerRegistrationWorker {
+func NewBrokerRegistrationWorker(registrationServerAddress string) *BrokerRegistrationWorker {
 	worker := new(BrokerRegistrationWorker)
 	worker.broker = new(models.Broker)
+	worker.registrationServerAddress = registrationServerAddress
 	worker.workerStarted.Add(1)
-	worker.workerStopped.Add(2)
+	worker.workerStopped.Add(1)
 	go worker.registerBroker()
 	worker.workerStarted.Wait()
 	return worker
@@ -48,7 +51,7 @@ func (worker *BrokerRegistrationWorker) registerBroker() {
 		return
 	}
 	//TODO: Get IP address from Docker ENV
-	worker.broker.IP = "66.220.158.68"
+	worker.broker.IP = os.Getenv("BROKER_URI")
 	worker.findBrokerDomainName()
 	worker.findBrokerRealWorldDomains()
 	worker.findBrokerGeolocation()
@@ -113,7 +116,7 @@ func (worker *BrokerRegistrationWorker) sendRegistrationRequest() bool {
 
 	jsonString, _ := json.Marshal(&worker.broker)
 
-	req, err := http.NewRequest("POST", "http://localhost:8001/rest/brokers", bytes.NewBuffer(jsonString))
+	req, err := http.NewRequest("POST", worker.registrationServerAddress+"/rest/brokers", bytes.NewBuffer(jsonString))
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
