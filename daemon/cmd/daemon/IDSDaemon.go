@@ -10,6 +10,7 @@ import (
 	"github.com/tkrex/IDS/daemon/registration"
 	"github.com/tkrex/IDS/daemon/configuration"
 	"os"
+	"fmt"
 )
 
 func main() {
@@ -26,6 +27,7 @@ func main() {
 
 func startTopicProcessing() {
 	brokerAddress := os.Getenv("BROKER_URI")
+	fmt.Println("Broker URL", brokerAddress)
 	desiredTopic  := "#"
 	subscriberConfig := models.NewMqttClientConfiguration(brokerAddress,"1883","tcp",desiredTopic,"subscriber")
 	subscriber := subscribing.NewMqttSubscriber(subscriberConfig,true)
