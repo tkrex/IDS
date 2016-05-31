@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"github.com/tkrex/IDS/daemon/persistence"
 	"encoding/json"
+	"os"
 )
 
 type ConfigurationInterface struct {
@@ -30,9 +31,11 @@ func NewConfigurationInterface(port string) *ConfigurationInterface {
 
 func (webInterface *ConfigurationInterface) run(port string) {
 	webInterface.providerStarted.Done()
-
-	fs := http.Dir("./daemon/frontend/")
+	goPath := os.Getenv("GOPATH")
+	htmlPath := goPath+"/src/github.com/tkrex/IDS/daemon/frontend/"
+	fs := http.Dir(htmlPath)
 	fileHandler := http.FileServer(fs)
+
 
 	router := mux.NewRouter()
 	router.Handle("/", http.RedirectHandler("/static/", 302))
