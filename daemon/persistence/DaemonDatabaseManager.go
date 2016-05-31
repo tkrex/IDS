@@ -27,7 +27,7 @@ func NewDaemonDatabaseWorker() (*DaemonDatabaseWorker, error) {
 	var error error
 	databaseWorker.session, error = openSession()
 	if error != nil {
-		fmt.Println("DATABASE: ",error)
+		fmt.Println("DATABASE: ", error)
 		return nil, error
 	}
 	return databaseWorker, error
@@ -177,7 +177,7 @@ func (dbWoker *DaemonDatabaseWorker) UpdateTopicDomainAndVisibility(topic *model
 	return nil
 }
 
-func (dbWoker *DaemonDatabaseWorker)FindAllTopics() ([]*models.Topic, error) {
+func (dbWoker *DaemonDatabaseWorker) FindAllTopics() ([]*models.Topic, error) {
 
 	coll := dbWoker.topicCollection()
 	var topics []*models.Topic
@@ -185,6 +185,15 @@ func (dbWoker *DaemonDatabaseWorker)FindAllTopics() ([]*models.Topic, error) {
 		fmt.Println(err)
 	}
 	return topics, nil
+}
+
+func (dbWoker *DaemonDatabaseWorker) CountTopics() int {
+	coll := dbWoker.topicCollection()
+	count, err := coll.Find(nil).Count()
+	if err != nil {
+		count = 0
+	}
+	return count
 }
 
 func (dbWoker *DaemonDatabaseWorker) FindTopicsByName(topicNames []string) (map[string]*models.Topic, error) {

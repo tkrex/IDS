@@ -76,7 +76,7 @@ func (processor *TopicProcessor) run() {
 	defer processor.databaseDelegate.Close()
 	processor.processorStarted.Done()
 	for closed := atomic.LoadInt64(&processor.state) == 1; !closed; closed = atomic.LoadInt64(&processor.state) == 1 {
-		open := processor.ProcessIncomingTopics()
+		open := processor.checkIncomingTopic()
 		if !open {
 			processor.Close()
 			break
@@ -85,14 +85,14 @@ func (processor *TopicProcessor) run() {
 	processor.processorStopped.Done()
 }
 
-func (processor *TopicProcessor) ProcessIncomingTopics() bool {
+func (processor *TopicProcessor) checkIncomingTopic() bool {
 	rawTopic, ok := <-processor.incomingTopicChannel
 	if rawTopic != nil {
 		if !containsDataJSON(rawTopic.Payload) {
 			fmt.Println("Drop Topic since it does not contain JSON")
 			return ok
 		}
-		processor.processIncomingTopic(rawTopic)
+		processor.collectIncomingTopic(rawTopic)
 
 	}
 	return ok
@@ -106,23 +106,31 @@ func containsDataJSON(data []byte ) bool {
 	return true
 }
 
-func (processor *TopicProcessor) processIncomingTopic(rawTopic *models.RawTopicMessage) {
+func (processor *TopicProcessor) collectIncomingTopic(rawTopic *models.RawTopicMessage) {
 	processor.topicUpdates = append(processor.topicUpdates, rawTopic)
 	if len(processor.topicUpdates) == BulkUpdateThreshold {
-		updates := make([]*models.RawTopicMessage, len(processor.topicUpdates))
-		copy(updates, processor.topicUpdates)
-		processor.topicUpdates = make([]*models.RawTopicMessage, 0, BulkUpdateThreshold)
-		fmt.Println("Bulk Update")
-		sortedUpdates := processor.sortTopicUpdatesByName(updates)
-		fetchRequest := make([]string, 0, len(sortedUpdates))
-		for name, _ := range sortedUpdates {
-			fetchRequest = append(fetchRequest, name)
-		}
-		existingTopics, _ := processor.databaseDelegate.FindTopicsByName(fetchRequest)
-		fmt.Printf("Number of Existing Topics: %d", len(existingTopics))
-		processor.processSortedTopics(existingTopics, sortedUpdates)
+		processor.processIncomingTopics()
+		processor.updateBrokerStatistics()
+		processor.checkForInformationForwarding()
+
 	}
 }
+
+func (processor *TopicProcessor) processIncomingTopics() {
+	updates := make([]*models.RawTopicMessage, len(processor.topicUpdates))
+	copy(updates, processor.topicUpdates)
+	processor.topicUpdates = make([]*models.RawTopicMessage, 0, BulkUpdateThreshold)
+	fmt.Println("Bulk Update")
+	sortedUpdates := processor.sortTopicUpdatesByName(updates)
+	topicNames := make([]string, 0, len(sortedUpdates))
+	for name, _ := range sortedUpdates {
+		topicNames = append(topicNames, name)
+	}
+	existingTopics, _ := processor.databaseDelegate.FindTopicsByName(topicNames)
+	fmt.Printf("Number of Existing Topics: %d", len(existingTopics))
+	processor.mergeExistingTopicsWithUpdates(existingTopics, sortedUpdates)
+}
+
 
 func (processor *TopicProcessor) sortTopicUpdatesByName(topicUpdates []*models.RawTopicMessage) map[string][]*models.RawTopicMessage {
 	sortedTopics := make(map[string][]*models.RawTopicMessage)
@@ -137,7 +145,7 @@ func (processor *TopicProcessor) sortTopicUpdatesByName(topicUpdates []*models.R
 	return sortedTopics
 }
 
-func (processor *TopicProcessor) processSortedTopics(existingTopics map[string]*models.Topic, sortedTopics map[string][]*models.RawTopicMessage) {
+func (processor *TopicProcessor) mergeExistingTopicsWithUpdates(existingTopics map[string]*models.Topic, sortedTopics map[string][]*models.RawTopicMessage) {
 	resultingTopicUpdates := make([]*models.Topic, 0, len(sortedTopics))
 	processor.newTopicsCounter += (len(sortedTopics) - len(existingTopics))
 
@@ -163,11 +171,9 @@ func (processor *TopicProcessor) processSortedTopics(existingTopics map[string]*
 		fmt.Println("could not update topics")
 		return
 	}
-
-	go processor.triggerDomainInformationUpdate()
 }
 
-func (processor *TopicProcessor) triggerDomainInformationUpdate() {
+func (processor *TopicProcessor) checkForInformationForwarding() {
 	if processor.newTopicsCounter >= TopicForwardThreshold {
 		fmt.Println("Trigger Forwarding")
 		processor.forwardingSignalChannel <- 1
@@ -250,6 +256,19 @@ func getKeysFromJSONString(jsonString string) []string {
 	return jsonKeys
 }
 
+func (processor *TopicProcessor) updateBrokerStatistics(numberOfNewTopics int) {
+	broker, err := processor.databaseDelegate.FindBroker()
+	if err != nil {
+		fmt.Println("TOPIC PROCESSOR: ",err)
+		return
+	}
+	numberOfTopics := processor.databaseDelegate.CountTopics()
+	broker.Statitics.NumberOfTopics = numberOfTopics
+	secondsSinceLastStatisticUpdate := time.Now().Sub(broker.Statitics.LastStatisticUpdate)
+	incomingTopicFrequency := BulkUpdateThreshold / secondsSinceLastStatisticUpdate
+	broker.Statitics.ReceivedTopicsPerSeconds = incomingTopicFrequency
+}
+
 func (processor *TopicProcessor) calculateUpdateBehavior(topic *models.Topic, newUpdateInterval int) {
 	updateBehavior := topic.UpdateBehavior
 	if updateBehavior.NumberOfUpdates == 0 {
@@ -269,5 +288,3 @@ func (processor *TopicProcessor) calculateUpdateBehavior(topic *models.Topic, ne
 	updateBehavior.NumberOfUpdates++
 	updateBehavior.UpdateIntervalDeviation = processor.topicReliabilityStrategy.Calculate(updateBehavior)
 }
-
-
