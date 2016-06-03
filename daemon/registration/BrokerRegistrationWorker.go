@@ -94,10 +94,10 @@ func (worker *BrokerRegistrationWorker) findDomainNameForBroker(broker *models.B
 func (worker *BrokerRegistrationWorker) findRealWorldDomainsForBroker(broker *models.Broker) {
 	categorizer := NewWebsiteCategorizationWorker()
 	categories,_ := categorizer.RequestCategoriesForWebsite("www.in.tum.de")
-	broker.RealWorldDomains = make([]*models.RealWorldDomain,len(categories))
+	broker.RealWorldDomain = make([]*models.RealWorldDomain,len(categories))
 	for index,category := range categories {
 		domain := models.NewRealWorldDomain(category)
-		broker.RealWorldDomains[index] = domain
+		broker.RealWorldDomain[index] = domain
 	}
 }
 

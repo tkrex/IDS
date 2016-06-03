@@ -1,0 +1,16 @@
+<h2>Results for {{queryDomain}}</h2>
+
+<div class="row">
+    <div class="col-md-12">
+
+        <div class="list-group" ng-repeat="broker in results">
+            <a href="" ng-click="onBrokerSelect(broker)" class="list-group-item">
+                <span class="badge">{{broker.statistics.numberOfTopics}}</span>
+                <h4 class="list-group-item-heading">{{broker.ip}}</h4>
+                <p class="list-group-item-text">{{broker.geolocation.country}},
+                    {{broker.geolocation.region}} </p>
+            </a>
+
+        </div>
+    </div>
+    </div>

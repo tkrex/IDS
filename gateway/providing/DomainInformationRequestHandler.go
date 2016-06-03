@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"encoding/json"
+	"time"
 )
 
 type DomainInformationRequestHandler struct {
@@ -19,23 +20,28 @@ func NewDomainInformationRequestHandler() *DomainInformationRequestHandler {
 
 
 func (handler *DomainInformationRequestHandler) handleRequest(domainName string) []*models.DomainInformationMessage {
-	//domainInformation := []*models.DomainInformationMessage{}
+	domainInformation := []*models.DomainInformationMessage{}
 
-	////DEBUG CODE
-	//domain := models.NewRealWorldDomain("education")
-	//broker := models.NewBroker("localhost","krex.com")
-	//topics := []*models.Topic{}
-	//
-	//for i := 0; i < 5; i++ {
-	//	topic := models.NewTopic("/home/kitchen","{\"temperature\":3}",time.Now())
-	//	topic.UpdateBehavior.UpdateIntervalDeviation = 3.0
-	//	topics = append(topics, topic)
-	//}
-	//
-	//
-	//message := models.NewDomainInformationMessage(domain,broker,topics)
-	//domainInformation = append(domainInformation,message)
-	//return domainInformation
+	//DEBUG CODE
+	domain := models.NewRealWorldDomain("education")
+	broker := models.NewBroker()
+	broker.ID = "testID"
+	broker.IP = "localhost"
+	broker.RealWorldDomain = models.NewRealWorldDomain("education")
+	broker.Geolocation = models.NewGeolocation("germany","bavaria","munich",11.6309,48.2499)
+
+	topics := []*models.Topic{}
+
+	for i := 0; i < 5; i++ {
+		topic := models.NewTopic("/home/kitchen","{\"temperature\":3}",time.Now())
+		topic.UpdateBehavior.UpdateIntervalDeviation = 3.0
+		topics = append(topics, topic)
+	}
+
+
+	message := models.NewDomainInformationMessage(domain,broker,topics)
+	domainInformation = append(domainInformation,message)
+	return domainInformation
 
 	dbDelegate, err := controlling.NewControlMessageDBDelegate()
 	if err != nil {
@@ -44,7 +50,7 @@ func (handler *DomainInformationRequestHandler) handleRequest(domainName string)
 	defer dbDelegate.Close()
 
 	var destinationDomainController *models.DomainController
-	domain := models.NewRealWorldDomain(domainName)
+	domain = models.NewRealWorldDomain(domainName)
 	destinationDomainController = dbDelegate.FindDomainControllerForDomain(domain.FirstLevelDomain())
 
 	if destinationDomainController == nil {

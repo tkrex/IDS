@@ -1,0 +1,49 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="utf-8">
+    <style>
+            .angular-google-map-container { height: 300px; }
+
+    </style>
+</head>
+
+<body>
+<h2>Broker Details for {{selectedInformation.broker.ip}}</h2>
+
+<div class="container">
+    <div class="row">
+        <div class="col-sm-4 well">
+            <h3>Broker</h3>
+            <p>IP Address: {{details.broker.ip}}</p>
+            <p>Internet Domain: {{details.broker.internetDomain}}</p>
+            <ui-gmap-google-map center='map.center' zoom='map.zoom'>
+                <ui-gmap-marker coords="marker.location" idkey="marker.id"></ui-gmap-marker>
+            </ui-gmap-google-map>
+            <p>Location: {{details.broker.geolocation.country}}, {{details.broker.geolocation.region}}, {{details.broker.geolocation.city}}</p>
+            <p>RealWorldDomain: {{details.realWorldDomain.domain.name}}</p>
+
+
+        </div>
+
+        <div class="col-sm-1 "></div>
+        <div class="col-sm-7 well">
+            <div ng-repeat ="topic in details.topics">
+                <p>{{topic.name}}</p>
+                <p>Last Payload: {{topic.payload}}</p>
+                <p>Last Update : {{topic.lastUpdate}}</p>
+                <p>Deviation: {{topic.deviation}}</p>
+            </div>
+        </div>
+    </div>
+
+
+</div>
+
+</body>
+</html>
+
+
+

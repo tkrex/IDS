@@ -5,14 +5,12 @@ import (
 	"github.com/tkrex/IDS/gateway/controlling"
 	"github.com/tkrex/IDS/common"
 	"github.com/tkrex/IDS/common/models"
-	"os"
-	"fmt"
 )
 
 func main() {
 
 
-	managementServerAddress := "localhost"
+	managementServerAddress := "http://localhost"
 
 	providing.NewIDSGatewayWebInterface("8000")
 	managementBrokerAddress := "localhost"

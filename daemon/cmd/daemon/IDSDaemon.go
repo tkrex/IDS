@@ -15,7 +15,8 @@ import (
 
 func main() {
 
-	//go startBrokerRegistration()
+	startBrokerRegistration()
+
 	//go startControlMessageProcessing()
 	go startTopicProcessing()
 	startControlInterface()
@@ -41,7 +42,7 @@ func startControlMessageProcessing() {
 	brokerAddress := os.Getenv("MANAGEMENT_BROKER_URL")
 	desiredTopic  := "ControlMessage"
 	//TODO: figure out client id
-	subscriberConfig := models.NewMqttClientConfiguration(brokerAddress,"1883","tcp",desiredTopic,"controlMessageSubscriber")
+	subscriberConfig := models.NewMqttClientConfiguration(brokerAddress,"1883","ws",desiredTopic,"controlMessageSubscriber")
 	subscriber := subscribing.NewMqttSubscriber(subscriberConfig,true)
 	_ = controlling.NewControlMessageProcessor(subscriber.IncomingTopicsChannel())
 }

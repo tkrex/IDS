@@ -151,7 +151,7 @@ func (processor *TopicProcessor) mergeExistingTopicsWithUpdates(existingTopics m
 
 	var brokerDomain *models.RealWorldDomain
 	broker, _ := processor.databaseDelegate.FindBroker()
-	brokerDomain = broker.RealWorldDomains[0]
+	brokerDomain = broker.RealWorldDomain[0]
 
 	for name, topicArray := range sortedTopics {
 		var resultingTopic *models.Topic
