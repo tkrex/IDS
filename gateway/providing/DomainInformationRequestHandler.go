@@ -2,7 +2,6 @@ package providing
 
 import (
 	"net/http"
-	"github.com/tkrex/IDS/common/controlling"
 	"github.com/tkrex/IDS/common/models"
 	"fmt"
 	"io/ioutil"
@@ -38,34 +37,23 @@ func (handler *DomainInformationRequestHandler) handleRequest(domainName string)
 		topics = append(topics, topic)
 	}
 
-
 	message := models.NewDomainInformationMessage(domain,broker,topics)
 	domainInformation = append(domainInformation,message)
 	return domainInformation
 
-	dbDelegate, err := controlling.NewControlMessageDBDelegate()
-	if err != nil {
-		return nil
-	}
-	defer dbDelegate.Close()
 
-	var destinationDomainController *models.DomainController
 	domain = models.NewRealWorldDomain(domainName)
-	destinationDomainController = dbDelegate.FindDomainControllerForDomain(domain.FirstLevelDomain())
+	destinationController := NewControllerForwardingManager().DomainControllerForDomain(domain)
 
-	if destinationDomainController == nil {
-		destinationDomainController = dbDelegate.FindDomainControllerForDomain("default")
-	}
-
-	if destinationDomainController != nil {
-		return handler.requestDomainInformationFromDomainController(domainName,destinationDomainController)
+	if destinationController != nil {
+		return handler.requestDomainInformationFromDomainController(domainName,destinationController)
 	}
 	return nil
 }
 
 
 func (handler *DomainInformationRequestHandler) requestDomainInformationFromDomainController(domainName string, domainController *models.DomainController) []*models.DomainInformationMessage {
-	requestUrl := "http://" + domainController.IpAddress + ":8080/domainController/domainInformation/" + domainName
+	requestUrl := domainController.RestEndpoint.String() + "/domainController/domainInformation/" + domainName
 	fmt.Println("Forwarding Request to ",requestUrl)
 	client := http.DefaultClient
 	response, err := client.Get(requestUrl)

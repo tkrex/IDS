@@ -64,7 +64,7 @@ func (handler *DomainInformationForBrokerRequestHandler) handleRequest(brokerId 
 
 //TODO: Add Endpoint at DomainController
 func (handler *DomainInformationForBrokerRequestHandler) forwardRequestToDomainController(domainName string, domainController *models.DomainController) *models.DomainInformationMessage {
-	requestUrl := "http://" + domainController.IpAddress + ":8080/domainController/domainInformation/" + domainName
+	requestUrl := domainController.RestEndpoint.String() + "/domainController/domainInformation/" + domainName
 	fmt.Println("Forwarding Request to ",requestUrl)
 	client := http.DefaultClient
 	response, err := client.Get(requestUrl)
