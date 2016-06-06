@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"errors"
 	"github.com/tkrex/IDS/gateway/persistence"
+	"github.com/tkrex/IDS/common/controlling"
 )
 
 type BrokerRegistrationHandler struct {
@@ -26,12 +27,14 @@ func (handler *BrokerRegistrationHandler) RegisterBroker(broker *models.Broker) 
 
 	var domainControllers []*models.DomainController
 	var err error
+	controlMessageDBDelegate,_  := controlling.NewControlMessageDBDelegate()
+
 	dbWorker := persistence.NewGatewayDBWorker()
 	if dbWorker == nil {
 		return nil,errors.New("Can't connect with database")
 	}
 	defer dbWorker.Close()
-	if domainControllers, err = dbWorker.FindAllDomainController(); err != nil {
+	if domainControllers, err = controlMessageDBDelegate.FindAllDomainController(); err != nil {
 		return nil, err
 	}
 	fmt.Println(domainControllers)

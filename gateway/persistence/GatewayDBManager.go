@@ -9,12 +9,11 @@ import (
 )
 
 const (
-	Host = "database:27017"
+	Host = "localhost:27017"
 	Username = "example"
 	Password = "example"
 	Database = "IDSGateway"
 	BrokerCollection = "brokers"
-	DomainControllerCollection = "domainControllers"
 	DomainInformationCollection = "domainInformation"
 )
 
@@ -38,9 +37,6 @@ func (worker *GatewayDBWorker) brokerCollection() *mgo.Collection {
 	return worker.session.DB(Database).C(BrokerCollection)
 }
 
-func (worker *GatewayDBWorker) domainControllerCollection() *mgo.Collection {
-	return worker.session.DB(Database).C(DomainControllerCollection)
-}
 
 func (worker *GatewayDBWorker) StoreBroker(broker *models.Broker) (error) {
 	coll := worker.brokerCollection()
@@ -82,45 +78,7 @@ func (worker *GatewayDBWorker) FindBrokerByIP(brokerIP int) (*models.Broker, err
 	return broker, error
 }
 
-func (worker *GatewayDBWorker) FindAllDomainController() ([]*models.DomainController, error) {
-	var domainControllers []*models.DomainController
 
-	coll := worker.domainControllerCollection()
-
-	if error := coll.Find(nil).All(&domainControllers); error != nil && error != mgo.ErrNotFound {
-		return domainControllers, error
-	}
-	return domainControllers, nil
-}
-
-
-func (worker *GatewayDBWorker) StoreDomainController(domainController *models.DomainController) (bool, error) {
-	coll := worker.domainControllerCollection()
-	index := mgo.Index{
-		Key:        []string{"domain.name"},
-		Unique:     true,
-		DropDups:   true,
-		Background: true,
-		Sparse:     true,
-	}
-	_ = coll.EnsureIndex(index)
-	info, err := coll.Upsert(bson.M{"domain.name":domainController.Domain.Name}, bson.M{"$set": domainController})
-	newInformation := info.Updated != 0 || info.Matched == 0
-	return newInformation, err
-}
-
-func (worker *GatewayDBWorker) RemoveDomainControllerForDomain(domain *models.RealWorldDomain) error {
-	coll := worker.domainControllerCollection()
-	err := coll.Remove(bson.M{"domain.name":domain.Name})
-	return err
-}
-
-func (worker *GatewayDBWorker) FindDomainControllerForDomain(domain *models.RealWorldDomain)  *models.DomainController {
-	coll := worker.domainControllerCollection()
-	var domainController *models.DomainController
-	coll.Find(bson.M{"domain.name":domain.Name}).One(domainController)
-	return domainController
-}
 
 func (worker *GatewayDBWorker) Close() {
 	worker.session.Close()

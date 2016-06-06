@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"encoding/json"
 	"github.com/tkrex/IDS/common/publishing"
-	"github.com/tkrex/IDS/gateway/persistence"
+	"github.com/tkrex/IDS/common/controlling"
+	"net/url"
 )
 
 type DomainControllerManagementRequestHandler struct {
@@ -19,7 +20,7 @@ func NewDomainControllerManagementRequestHandler(managementBrokerAddress string)
 }
 
 func (handler *DomainControllerManagementRequestHandler) handleManagementRequest(request *models.DomainControllerManagementRequest) *models.DomainController {
-	 dbWorker := persistence.NewGatewayDBWorker()
+	 dbWorker,_ := controlling.NewControlMessageDBDelegate()
 	if dbWorker == nil {
 		fmt.Println("Can't connect to database")
 		return nil
@@ -28,7 +29,7 @@ func (handler *DomainControllerManagementRequestHandler) handleManagementRequest
 
 	var changedDomainController  *models.DomainController
 	if request.RequestType == models.DomainControllerDelete {
-		if domainController := dbWorker.FindDomainControllerForDomain(request.Domain); domainController != nil {
+		if domainController := dbWorker.FindDomainControllerForDomain(request.Domain.Name); domainController != nil {
 			dbWorker.RemoveDomainControllerForDomain(request.Domain)
 			changedDomainController = domainController
 		}
@@ -52,7 +53,10 @@ func (handler *DomainControllerManagementRequestHandler) handleManagementRequest
 
 func (handler *DomainControllerManagementRequestHandler) startNewDomainControllerInstance(domain *models.RealWorldDomain) *models.DomainController {
 	//TODO: start new docker instance
-	domainController := models.NewDomainController("localhost",domain)
+
+	restEndpoint,_ := url.Parse("http://localhost:8000/rest")
+	brokerAddress,_ := url.Parse("ws://localhost:11883")
+	domainController := models.NewDomainController(restEndpoint,brokerAddress,domain)
 	return domainController
 }
 

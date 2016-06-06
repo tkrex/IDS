@@ -87,7 +87,7 @@ func (processor *ControlMessageProcessor) removeDomainController(controller *mod
 		return
 	}
 	defer dbWorker.Close()
-	dbWorker.removeDomainController(controller)
+	dbWorker.RemoveDomainControllerForDomain(controller.Domain)
 }
 
 func (processor *ControlMessageProcessor)  Close() {

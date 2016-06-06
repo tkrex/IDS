@@ -1,7 +1,6 @@
 package controlling
 
 import (
-	"fmt"
 	"github.com/tkrex/IDS/common/models"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -37,37 +36,44 @@ func (dbWorker *ControlMessageDBDelegate) domainControllerCollection() *mgo.Coll
 	return dbWorker.session.DB(Database).C(DomainControllerCollection)
 }
 
-func (dbWoker *ControlMessageDBDelegate) StoreDomainController(domainController *models.DomainController) error {
-	coll := dbWoker.domainControllerCollection()
-	_, error := coll.Upsert(bson.M{"domain.name":domainController.Domain.Name}, bson.M{"$set": domainController})
-	return error
-}
+func (worker *ControlMessageDBDelegate) FindAllDomainController() ([]*models.DomainController, error) {
+	var domainControllers []*models.DomainController
 
-func (dbWoker *ControlMessageDBDelegate) StoreDomainControllers(domainControllers []*models.DomainController) error {
-
-	coll := dbWoker.domainControllerCollection()
-	bulk := coll.Bulk()
-	bulk.Unordered()
-	for _, domainController := range domainControllers {
-		bulk.Upsert(bson.M{"domain.name":domainController.Domain.Name}, bson.M{"$set": domainController})
-	}
-	_, error := bulk.Run()
-
-	return error
-}
-
-func (dbWoker *ControlMessageDBDelegate) FindDomainControllerForDomain(domain string) *models.DomainController {
-	coll := dbWoker.domainControllerCollection()
-	var domainController *models.DomainController
-	error := coll.Find(bson.M{"domain.name":domain}).One(&domainController)
-	fmt.Println(error)
-	return domainController
-}
-
-func (worker *ControlMessageDBDelegate) removeDomainController(domainController *models.DomainController) error {
 	coll := worker.domainControllerCollection()
-	err := coll.Remove(bson.M{"domain.name":domainController.Domain.Name, "ipAddress": domainController.IpAddress})
+
+	if error := coll.Find(nil).All(&domainControllers); error != nil && error != mgo.ErrNotFound {
+		return domainControllers, error
+	}
+	return domainControllers, nil
+}
+
+
+func (worker *ControlMessageDBDelegate) StoreDomainController(domainController *models.DomainController) (bool, error) {
+	coll := worker.domainControllerCollection()
+	index := mgo.Index{
+		Key:        []string{"domain.name"},
+		Unique:     true,
+		DropDups:   true,
+		Background: true,
+		Sparse:     true,
+	}
+	_ = coll.EnsureIndex(index)
+	info, err := coll.Upsert(bson.M{"domain.name":domainController.Domain.Name}, bson.M{"$set": domainController})
+	newInformation := info.Updated != 0 || info.Matched == 0
+	return newInformation, err
+}
+
+func (worker *ControlMessageDBDelegate) RemoveDomainControllerForDomain(domain *models.RealWorldDomain) error {
+	coll := worker.domainControllerCollection()
+	err := coll.Remove(bson.M{"domain.name":domain.Name})
 	return err
+}
+
+func (worker *ControlMessageDBDelegate) FindDomainControllerForDomain(domainName string)  *models.DomainController {
+	coll := worker.domainControllerCollection()
+	var domainController *models.DomainController
+	coll.Find(bson.M{"domain.name":domainName}).One(domainController)
+	return domainController
 }
 
 
