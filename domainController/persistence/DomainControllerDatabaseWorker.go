@@ -159,6 +159,16 @@ func (dbWoker *DomainControllerDatabaseWorker) FindDomainInformationByDomainName
 	return domainInformation, error
 }
 
+func (dbWoker *DomainControllerDatabaseWorker) FindDomainInformationForBroker(brokerId string) ([]*models.DomainInformationMessage, error) {
+	var domainInformation []*models.DomainInformationMessage
+	var error error
+	coll := dbWoker.domainInformationCollection()
+	if error = coll.Find(bson.M{"broker.id": brokerId }).All(&domainInformation); error != nil {
+		fmt.Println(error)
+	}
+	return domainInformation, error
+}
+
 
 
 func (dbWoker *DomainControllerDatabaseWorker) FindBrokersForDomain(domainName string) ([]*models.Broker,error) {

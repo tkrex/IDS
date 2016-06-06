@@ -31,12 +31,14 @@ func (provider *DomainInformationRESTProvider) run(port string) {
 	 provider.providerStarted.Done()
 
 	router := mux.NewRouter()
-	router.HandleFunc("/domainController/domainInformation/{domain}", provider.handleDomainInformation).Methods("GET")
-	router.HandleFunc("/domainController/brokers/{domain}", provider.handleBrokers).Methods("GET")
+	router.HandleFunc("/rest/domainController/domainInformation/{domain}", provider.handleDomainInformation).Methods("GET")
+	router.HandleFunc("/rest/domainController/brokers/{domain}", provider.getBrokersForDomain).Methods("GET")
+	router.HandleFunc("/rest/brokers/{brokerId}/domainInformation", provider.getDomainInformationForBroker).Methods("GET")
+
 	http.ListenAndServe(":" + port, router)
 }
 
-func (webInterface *DomainInformationRESTProvider) handleBrokers(res http.ResponseWriter, req *http.Request) {
+func (webInterface *DomainInformationRESTProvider) getBrokersForDomain(res http.ResponseWriter, req *http.Request) {
 	res.Header().Set("Content-Type", "application/json")
 	fmt.Println("domain Information Request Received")
 
@@ -60,6 +62,31 @@ func (webInterface *DomainInformationRESTProvider) handleBrokers(res http.Respon
 	json.NewEncoder(res).Encode(brokers)
 }
 
+
+func (webInterface *DomainInformationRESTProvider) getDomainInformationForBroker(res http.ResponseWriter, req *http.Request) {
+	res.Header().Set("Content-Type", "application/json")
+	fmt.Println("domain Information Request Received")
+
+	requestParameters := mux.Vars(req)
+	brokerId := requestParameters["brokerId"]
+
+
+	dbDelegate, err := persistence.NewDomainControllerDatabaseWorker()
+
+	if err != nil {
+		http.Error(res, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer dbDelegate.Close()
+	domainInformation, err := dbDelegate.FindDomainInformationForBroker(brokerId)
+	fmt.Println(domainInformation)
+	if err != nil {
+		http.Error(res, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(res).Encode(domainInformation)
+}
 
 func (webInterface *DomainInformationRESTProvider) handleDomainInformation(res http.ResponseWriter, req *http.Request) {
 	res.Header().Set("Content-Type", "application/json")
