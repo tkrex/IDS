@@ -34,6 +34,7 @@ func (webInterface *IDSGatewayWebInterface) run(port string) {
 	fileHandler := http.FileServer(fs)
 	router.HandleFunc("/rest/domainInformation/{domainName}", webInterface.handleDomainInformation).Methods("GET")
 	router.HandleFunc("/rest/brokers/{brokerId}/domainInformation", webInterface.getDomainInformationForBroker).Methods("GET")
+	router.HandleFunc("/rest/domainControllers/{domainName}", webInterface.getDomainControllerForDomain).Methods("GET")
 	router.HandleFunc("/rest/brokers/{domainName}", webInterface.getBrokers).Methods("GET")
 	router.HandleFunc("/rest/brokers", webInterface.addBroker).Methods("POST")
 	router.PathPrefix("/").Handler(http.StripPrefix("/", fileHandler))
@@ -63,6 +64,23 @@ func (webInterface *IDSGatewayWebInterface) handleDomainInformation(res http.Res
 	fmt.Fprint(res, string(outgoingJSON))
 }
 
+func (webInterface *IDSGatewayWebInterface) getDomainControllerForDomain(res http.ResponseWriter, req *http.Request) {
+	fmt.Println("domain controller Request Received")
+
+	requestParameters := mux.Vars(req)
+	domainName := requestParameters["domainName"]
+	if domainName == "" {
+		http.Error(res, "Error", http.StatusInternalServerError)
+		return
+	}
+	domain := models.NewRealWorldDomain(domainName)
+	domainController := NewControllerForwardingManager().DomainControllerForDomain(domain)
+	if domainController != nil {
+		json.NewEncoder(res).Encode(domainController)
+		return
+	}
+	http.Error(res,"No DomainController Found",http.StatusNoContent)
+}
 
 func (webInterface *IDSGatewayWebInterface) getDomainInformationForBroker(res http.ResponseWriter, req *http.Request) {
 	//res.Header().Set("Content-Type", "application/json")
