@@ -10,7 +10,7 @@ type Broker struct {
 	IP              string `json:"ip"`
 	InternetDomain  string `json:"internetDomain"`
 	Geolocation     *Geolocation `json:"geolocation"`
-	RealWorldDomain *RealWorldDomain `json:"realWorldDomains"`
+	RealWorldDomain *RealWorldDomain `json:"realWorldDomain"`
 	Statitics       *BrokerStatistic `json:"statitics"`
 }
 
