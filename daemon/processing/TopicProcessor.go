@@ -151,7 +151,7 @@ func (processor *TopicProcessor) mergeExistingTopicsWithUpdates(existingTopics m
 
 	var brokerDomain *models.RealWorldDomain
 	broker, _ := processor.databaseDelegate.FindBroker()
-	brokerDomain = broker.RealWorldDomain[0]
+	brokerDomain = broker.RealWorldDomain
 
 	for name, topicArray := range sortedTopics {
 		var resultingTopic *models.Topic
@@ -256,7 +256,7 @@ func getKeysFromJSONString(jsonString string) []string {
 	return jsonKeys
 }
 
-func (processor *TopicProcessor) updateBrokerStatistics(numberOfNewTopics int) {
+func (processor *TopicProcessor) updateBrokerStatistics() {
 	broker, err := processor.databaseDelegate.FindBroker()
 	if err != nil {
 		fmt.Println("TOPIC PROCESSOR: ",err)
@@ -265,7 +265,7 @@ func (processor *TopicProcessor) updateBrokerStatistics(numberOfNewTopics int) {
 	numberOfTopics := processor.databaseDelegate.CountTopics()
 	broker.Statitics.NumberOfTopics = numberOfTopics
 	secondsSinceLastStatisticUpdate := time.Now().Sub(broker.Statitics.LastStatisticUpdate)
-	incomingTopicFrequency := BulkUpdateThreshold / secondsSinceLastStatisticUpdate
+	incomingTopicFrequency := BulkUpdateThreshold / secondsSinceLastStatisticUpdate.Seconds()
 	broker.Statitics.ReceivedTopicsPerSeconds = incomingTopicFrequency
 }
 

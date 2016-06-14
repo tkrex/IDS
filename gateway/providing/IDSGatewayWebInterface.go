@@ -8,6 +8,7 @@ import (
 	"sync"
 	"github.com/tkrex/IDS/common/models"
 	"github.com/tkrex/IDS/gateway/registration"
+	"github.com/tkrex/IDS/common/routing"
 )
 
 type IDSGatewayWebInterface struct {
@@ -74,7 +75,7 @@ func (webInterface *IDSGatewayWebInterface) getDomainControllerForDomain(res htt
 		return
 	}
 	domain := models.NewRealWorldDomain(domainName)
-	domainController := NewControllerForwardingManager().DomainControllerForDomain(domain)
+	domainController := routing.NewRoutingManager().DomainControllerForDomain(domain)
 	if domainController != nil {
 		fmt.Println("Responding with Domain Controller: ",domainController)
 		json.NewEncoder(res).Encode(domainController)

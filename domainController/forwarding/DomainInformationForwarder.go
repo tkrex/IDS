@@ -6,10 +6,9 @@ import (
 	"fmt"
 	"time"
 	"github.com/tkrex/IDS/common/models"
-	"github.com/tkrex/IDS/common/controlling"
 	"github.com/tkrex/IDS/domainController/persistence"
 	"github.com/tkrex/IDS/common/publishing"
-	"github.com/tkrex/IDS/gateway/providing"
+	"github.com/tkrex/IDS/common/routing"
 )
 
 type DomainInformationForwarder struct {
@@ -22,7 +21,6 @@ type DomainInformationForwarder struct {
 
 const (
 	ForwardInterval = 1 * time.Minute
-	ForwardTopic = "DomainInformation"
 )
 
 func NewDomainInformationForwarder(forwardSignalChannel chan *models.RealWorldDomain) *DomainInformationForwarder {
@@ -81,10 +79,7 @@ func (forwarder *DomainInformationForwarder) forwardDomainInformation(domain *mo
 	domainInformationDelegate, _ := persistence.NewDomainControllerDatabaseWorker()
 	defer domainInformationDelegate.Close()
 
-
-
 	domainInformation, err := domainInformationDelegate.FindDomainInformationByDomainName(domain.Name)
-
 
 	if err != nil {
 		fmt.Println(err)
@@ -93,29 +88,31 @@ func (forwarder *DomainInformationForwarder) forwardDomainInformation(domain *mo
 
 	if len(domainInformation) == 0 {
 		domainInformationDelegate.RemoveDomain(domain)
-		delete(forwarder.updateFlags,domain.Name)
-		return
-	}
-
-	json, err := json.Marshal(domainInformation)
-	if err != nil {
-		fmt.Printf("Marshalling Error: %s", err)
+		delete(forwarder.updateFlags, domain.Name)
 		return
 	}
 
 	//TODO: Get ParentDomain From ENV
 	parentDomain := models.NewRealWorldDomain("default")
 
-	routingManager := providing.NewControllerForwardingManager()
+	routingManager := routing.NewRoutingManager()
 	domainController := routingManager.DomainControllerForDomain(parentDomain)
 	if domainController == nil {
 		fmt.Println("FORWARDER: No target controller found")
 		return
 	}
-
 	//TODO: Come up with DomainController ID
-	publisherConfig := models.NewMqttClientConfiguration(domainController.BrokerAddress, ForwardTopic, "DomainControllerID")
-	publisher :=  publishing.NewMqttPublisher(publisherConfig,false)
-	publisher.Publish(json)
-	publisher.Close()
+
+	publisherConfig := models.NewMqttClientConfiguration(domainController.BrokerAddress, "DomainControllerID")
+	publisher := publishing.NewMqttPublisher(publisherConfig, false)
+	defer publisher.Close()
+
+	for _, information := range domainInformation {
+		json, err := json.Marshal(information)
+		if err != nil {
+			fmt.Printf("Marshalling Error: %s", err)
+			return
+		}
+		publisher.Publish(json, information.Broker.ID)
+	}
 }

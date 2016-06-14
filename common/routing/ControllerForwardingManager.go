@@ -1,4 +1,4 @@
-package providing
+package routing
 
 import (
 	"github.com/tkrex/IDS/common/models"
@@ -6,16 +6,16 @@ import (
 	"fmt"
 )
 
-type ControllerForwardingManager struct {
+type RoutingManager struct {
 
 }
 
-func NewControllerForwardingManager() *ControllerForwardingManager {
-	forwardManager := new(ControllerForwardingManager)
-	return forwardManager
+func NewRoutingManager() *RoutingManager {
+	routingManager := new(RoutingManager)
+	return routingManager
 }
 
-func (forwardingManager * ControllerForwardingManager) DomainControllerForDomain(domain *models.RealWorldDomain) *models.DomainController {
+func (routingForwarder *RoutingManager) DomainControllerForDomain(domain *models.RealWorldDomain) *models.DomainController {
 	dbDelegate, _ := controlling.NewControlMessageDBDelegate()
 	if dbDelegate == nil {
 		fmt.Println("Can't Connect to Database")

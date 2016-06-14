@@ -7,9 +7,8 @@ import (
 	"fmt"
 	"time"
 	"github.com/tkrex/IDS/daemon/persistence"
-	"github.com/tkrex/IDS/common/controlling"
 	"github.com/tkrex/IDS/common/publishing"
-	"github.com/tkrex/IDS/gateway/providing"
+	"github.com/tkrex/IDS/common/routing"
 )
 
 type DomainInformationForwarder struct {
@@ -125,16 +124,15 @@ func (forwarder *DomainInformationForwarder) forwardDomainInformation(domain *mo
 		return
 	}
 
-	routingManager := providing.NewControllerForwardingManager()
+	routingManager := routing.NewRoutingManager()
 	domainController := routingManager.DomainControllerForDomain(domain)
 	if domainController == nil {
 		fmt.Println("Forwarder: No Target Controller Found")
 		return
 	}
 
-	domainControllerPublisherConfig := models.NewMqttClientConfiguration(domainController.BrokerAddress, domainInformation.Broker.ID, domainInformation.Broker.ID)
+	domainControllerPublisherConfig := models.NewMqttClientConfiguration(domainController.BrokerAddress, domainInformation.Broker.ID)
 	domainControllerPublisher := publishing.NewMqttPublisher(domainControllerPublisherConfig,false)
-	domainControllerPublisher.Publish(json)
+	domainControllerPublisher.Publish(json,domainInformation.Broker.ID)
 	domainControllerPublisher.Close()
-
 }

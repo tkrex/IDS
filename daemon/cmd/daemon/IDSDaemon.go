@@ -11,6 +11,7 @@ import (
 	"github.com/tkrex/IDS/daemon/configuration"
 	"os"
 	"fmt"
+	"net/url"
 )
 
 func main() {
@@ -27,11 +28,12 @@ func main() {
 
 
 func startTopicProcessing() {
-	brokerAddress := os.Getenv("BROKER_URI")
+	brokerAddressString := os.Getenv("BROKER_URI")
+	brokerAddress, _ := url.Parse(brokerAddressString)
 	fmt.Println("Broker URL", brokerAddress)
 	desiredTopic  := "#"
-	subscriberConfig := models.NewMqttClientConfiguration(brokerAddress,"1883","tcp",desiredTopic,"subscriber")
-	subscriber := subscribing.NewMqttSubscriber(subscriberConfig,true)
+	subscriberConfig := models.NewMqttClientConfiguration(brokerAddress,"subscriber")
+	subscriber := subscribing.NewMqttSubscriber(subscriberConfig,desiredTopic,false)
 	topicProcessor := processing.NewTopicProcessor(subscriber.IncomingTopicsChannel())
 
 
@@ -39,11 +41,13 @@ func startTopicProcessing() {
 
 }
 func startControlMessageProcessing() {
-	brokerAddress := os.Getenv("MANAGEMENT_BROKER_URL")
+	brokerAddressString := os.Getenv("MANAGEMENT_BROKER_URL")
+	brokerAddress, _ := url.Parse(brokerAddressString)
+
 	desiredTopic  := "ControlMessage"
 	//TODO: figure out client id
-	subscriberConfig := models.NewMqttClientConfiguration(brokerAddress,"1883","ws",desiredTopic,"controlMessageSubscriber")
-	subscriber := subscribing.NewMqttSubscriber(subscriberConfig,true)
+	subscriberConfig := models.NewMqttClientConfiguration(brokerAddress,"controlMessageSubscriber")
+	subscriber := subscribing.NewMqttSubscriber(subscriberConfig,desiredTopic,false)
 	_ = controlling.NewControlMessageProcessor(subscriber.IncomingTopicsChannel())
 }
 

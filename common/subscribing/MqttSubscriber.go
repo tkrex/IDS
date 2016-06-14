@@ -14,6 +14,7 @@ type  MqttSubscriber struct {
   state                 int64
   incomingTopicsChannel chan *models.RawTopicMessage
   client                MQTT.Client
+  topic string
 
   producerStarted       sync.WaitGroup
   producerStopped       sync.WaitGroup
@@ -26,11 +27,12 @@ type  MqttSubscriber struct {
 
 
 
-func NewMqttSubscriber(subscriberConfig *models.MqttClientConfiguration, isDaemon bool) *MqttSubscriber {
+func NewMqttSubscriber(subscriberConfig *models.MqttClientConfiguration, topic string, isDaemon bool) *MqttSubscriber {
   subscriber := new(MqttSubscriber)
   subscriber.incomingTopicsChannel = make(chan *models.RawTopicMessage,100)
   subscriber.config = subscriberConfig
   subscriber.isDaemon = isDaemon
+  subscriber.topic = topic
   subscriber.producerStarted.Add(1)
   subscriber.producerStopped.Add(1)
   opts := MQTT.NewClientOptions().AddBroker(subscriber.config.BrokerAddress())
@@ -66,7 +68,7 @@ func (subscriber *MqttSubscriber) run() {
   fmt.Println("Connected to Mqtt Cient")
   //subscribe to the topic /go-mqtt/sample and request messages to be delivered
   //at a maximum qos of zero, wait for the receipt to confirm the subscription
-  if token := subscriber.client.Subscribe(subscriber.config.Topic(), 0, nil); token.Wait() && token.Error() != nil {
+  if token := subscriber.client.Subscribe(subscriber.topic, 0, nil); token.Wait() && token.Error() != nil {
     fmt.Println(token.Error())
     subscriber.Close()
   }
@@ -77,7 +79,7 @@ func (subscriber *MqttSubscriber) stopCollectingTopics() {
   defer subscriber.producerStopped.Done()
 
   fmt.Println("Unsubscribing")
-  if token :=  subscriber.client.Unsubscribe(subscriber.config.Topic()); token.Wait() && token.Error() != nil {
+  if token :=  subscriber.client.Unsubscribe(subscriber.topic); token.Wait() && token.Error() != nil {
     fmt.Println(token.Error())
     os.Exit(1)
   }

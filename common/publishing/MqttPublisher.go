@@ -32,8 +32,8 @@ func (publisher *MqttPublisher) connect() {
 	}
 }
 
-func (publisher *MqttPublisher) Publish(data []byte) error  {
-	if token := publisher.client.Publish(publisher.config.Topic(), 2, false, data); token.Wait() && token.Error() != nil {
+func (publisher *MqttPublisher) Publish(data []byte, topic string) error  {
+	if token := publisher.client.Publish(topic, 2, false, data); token.Wait() && token.Error() != nil {
 		return token.Error()
 	}
 	fmt.Println("Published to Domain Controller")

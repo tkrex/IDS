@@ -48,6 +48,6 @@ func (fetcher *GeoLocationFetcher) SendGeoLocationRequest(address string) (*mode
 	}
 	location := Location{}
 	json.Unmarshal([]byte(string(contents)), &location)
-	geolocation := models.NewGeolocation(location.CountryName,location.RegionName, location.City)
+	geolocation := models.NewGeolocation(location.CountryName,location.RegionName, location.City,location.Longitude,location.Latitude)
 	return geolocation,nil
 }

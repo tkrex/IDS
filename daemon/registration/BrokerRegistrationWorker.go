@@ -19,10 +19,10 @@ const RegisterInterval = time.Second * 10
 
 type BrokerRegistrationWorker struct {
 	registrationServerAddress string
-	registerTicker *time.Ticker
-	workerStarted  sync.WaitGroup
-	workerStopped  sync.WaitGroup
-	dbDelegate     *persistence.DaemonDatabaseWorker
+	registerTicker            *time.Ticker
+	workerStarted             sync.WaitGroup
+	workerStopped             sync.WaitGroup
+	dbDelegate                *persistence.DaemonDatabaseWorker
 }
 
 func NewBrokerRegistrationWorker(registrationServerAddress string) *BrokerRegistrationWorker {
@@ -93,12 +93,9 @@ func (worker *BrokerRegistrationWorker) findDomainNameForBroker(broker *models.B
 
 func (worker *BrokerRegistrationWorker) findRealWorldDomainsForBroker(broker *models.Broker) {
 	categorizer := NewWebsiteCategorizationWorker()
-	categories,_ := categorizer.RequestCategoriesForWebsite("www.in.tum.de")
-	broker.RealWorldDomain = make([]*models.RealWorldDomain,len(categories))
-	for index,category := range categories {
-		domain := models.NewRealWorldDomain(category)
-		broker.RealWorldDomain[index] = domain
-	}
+	categories, _ := categorizer.RequestCategoriesForWebsite("www.in.tum.de")
+	domain := models.NewRealWorldDomain(categories[0])
+	broker.RealWorldDomain = domain
 }
 
 func (worker *BrokerRegistrationWorker) findGeolocationForBroker(broker *models.Broker) {
@@ -116,7 +113,7 @@ func (worker *BrokerRegistrationWorker) sendRegistrationRequestForBroker(broker 
 
 	jsonString, _ := json.Marshal(&broker)
 
-	req, err := http.NewRequest("POST", worker.registrationServerAddress+"/rest/brokers", bytes.NewBuffer(jsonString))
+	req, err := http.NewRequest("POST", worker.registrationServerAddress + "/rest/brokers", bytes.NewBuffer(jsonString))
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
@@ -152,10 +149,13 @@ func (worker *BrokerRegistrationWorker) sendRegistrationRequestForBroker(broker 
 		return false
 	}
 	defer controllingDBDelegate.Close()
-	err = controllingDBDelegate.StoreDomainControllers(response.DomainControllers)
-	if err != nil {
-		fmt.Println(err)
-		return false
+	for _, domainController := range response.DomainControllers {
+
+		_,err = controllingDBDelegate.StoreDomainController(domainController)
+		if err != nil {
+			fmt.Println(err)
+			return false
+		}
 	}
 	return true
 }

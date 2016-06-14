@@ -64,6 +64,7 @@ func (worker *ControlMessageDBDelegate) StoreDomainController(domainController *
 	return newInformation, err
 }
 
+
 func (worker *ControlMessageDBDelegate) RemoveDomainControllerForDomain(domain *models.RealWorldDomain) error {
 	coll := worker.domainControllerCollection()
 	err := coll.Remove(bson.M{"domain.name":domain.Name})
