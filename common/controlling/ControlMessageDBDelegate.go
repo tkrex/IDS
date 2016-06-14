@@ -4,6 +4,7 @@ import (
 	"github.com/tkrex/IDS/common/models"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
+	"fmt"
 )
 
 const (
@@ -72,7 +73,9 @@ func (worker *ControlMessageDBDelegate) RemoveDomainControllerForDomain(domain *
 func (worker *ControlMessageDBDelegate) FindDomainControllerForDomain(domainName string)  *models.DomainController {
 	coll := worker.domainControllerCollection()
 	var domainController *models.DomainController
-	coll.Find(bson.M{"domain.name":domainName}).One(domainController)
+	if err := coll.Find(bson.M{"domain.name":domainName}).One(&domainController); err != nil {
+		fmt.Println(err)
+	}
 	return domainController
 }
 

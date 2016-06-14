@@ -31,7 +31,7 @@ func (provider *DomainInformationRESTProvider) run(port string) {
 	 provider.providerStarted.Done()
 
 	router := mux.NewRouter()
-	router.HandleFunc("/rest/domainController/domainInformation/{domain}", provider.handleDomainInformation).Methods("GET")
+	router.HandleFunc("/rest/domainInformation/{domain}&{location}", provider.handleDomainInformation).Methods("GET")
 	router.HandleFunc("/rest/domainController/brokers/{domain}", provider.getBrokersForDomain).Methods("GET")
 	router.HandleFunc("/rest/brokers/{brokerId}/domainInformation", provider.getDomainInformationForBroker).Methods("GET")
 

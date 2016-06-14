@@ -9,6 +9,7 @@ import (
 	"github.com/tkrex/IDS/common/controlling"
 	"github.com/tkrex/IDS/domainController/persistence"
 	"github.com/tkrex/IDS/common/publishing"
+	"github.com/tkrex/IDS/gateway/providing"
 )
 
 type DomainInformationForwarder struct {
@@ -101,32 +102,20 @@ func (forwarder *DomainInformationForwarder) forwardDomainInformation(domain *mo
 		fmt.Printf("Marshalling Error: %s", err)
 		return
 	}
-	serverAddress := ""
-
-	controlMessagesDBDelagte, err := controlling.NewControlMessageDBDelegate()
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
 
 	//TODO: Get ParentDomain From ENV
-	parentDomain := "default"
+	parentDomain := models.NewRealWorldDomain("default")
 
-	if domainController := controlMessagesDBDelagte.FindDomainControllerForDomain(parentDomain); domainController != nil {
-		serverAddress = domainController.IpAddress
-	} else if rootController := controlMessagesDBDelagte.FindDomainControllerForDomain("default"); rootController != nil {
-		serverAddress = rootController.IpAddress
-	}
-
-	if serverAddress == "" {
-		fmt.Println("No Domain Controller found for forwarding")
+	routingManager := providing.NewControllerForwardingManager()
+	domainController := routingManager.DomainControllerForDomain(parentDomain)
+	if domainController == nil {
+		fmt.Println("FORWARDER: No target controller found")
 		return
 	}
 
-	//TODO: Come up with DomainConroller ID
-	publisherConfig := models.NewMqttClientConfiguration(serverAddress, ForwardTopic, "DomainControllerID")
-	publisher :=  publishing.NewMqttPublisher(publisherConfig)
+	//TODO: Come up with DomainController ID
+	publisherConfig := models.NewMqttClientConfiguration(domainController.BrokerAddress, ForwardTopic, "DomainControllerID")
+	publisher :=  publishing.NewMqttPublisher(publisherConfig,false)
 	publisher.Publish(json)
 	publisher.Close()
 }

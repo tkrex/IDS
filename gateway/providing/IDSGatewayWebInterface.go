@@ -45,9 +45,9 @@ func (webInterface *IDSGatewayWebInterface) run(port string) {
 func (webInterface *IDSGatewayWebInterface) handleDomainInformation(res http.ResponseWriter, req *http.Request) {
 	//res.Header().Set("Content-Type", "application/json")
 	fmt.Println("domain Information Request Received")
-
 	requestParameters := mux.Vars(req)
 	domainName := requestParameters["domainName"]
+
 	requestHandler := NewDomainInformationRequestHandler()
 	domainInformation := requestHandler.handleRequest(domainName)
 	if domainInformation == nil {
@@ -76,6 +76,7 @@ func (webInterface *IDSGatewayWebInterface) getDomainControllerForDomain(res htt
 	domain := models.NewRealWorldDomain(domainName)
 	domainController := NewControllerForwardingManager().DomainControllerForDomain(domain)
 	if domainController != nil {
+		fmt.Println("Responding with Domain Controller: ",domainController)
 		json.NewEncoder(res).Encode(domainController)
 		return
 	}
@@ -109,6 +110,14 @@ func (webInterface *IDSGatewayWebInterface) getBrokers(res http.ResponseWriter, 
 	fmt.Println("Received Broker Request")
 	requestParameters := mux.Vars(req)
 	domainName := requestParameters["domainName"]
+
+	req.ParseForm()
+	fmt.Println(req.Form)
+	country := req.FormValue("country")
+	region := req.FormValue("region")
+	city := req.FormValue("city")
+	location := models.NewGeolocation(country,region,city,0,0)
+	fmt.Println(location)
 	requestHandler := NewBrokerRequestHandler()
 	brokers := requestHandler.handleRequest(domainName)
 

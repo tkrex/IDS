@@ -9,6 +9,7 @@ import (
 	"github.com/tkrex/IDS/daemon/persistence"
 	"github.com/tkrex/IDS/common/controlling"
 	"github.com/tkrex/IDS/common/publishing"
+	"github.com/tkrex/IDS/gateway/providing"
 )
 
 type DomainInformationForwarder struct {
@@ -20,7 +21,6 @@ type DomainInformationForwarder struct {
 
 const (
 	ForwardInterval = 5 * time.Minute
-	ForwardTopic = "DomainInformation"
 )
 
 func NewDomainInformationForwarder(forwardSignalChannel chan int) *DomainInformationForwarder {
@@ -124,34 +124,17 @@ func (forwarder *DomainInformationForwarder) forwardDomainInformation(domain *mo
 		fmt.Printf("Marshalling Error: %s", err)
 		return
 	}
-	serverAddress := ""
-	controlMessagesDBDelagte, err := controlling.NewControlMessageDBDelegate()
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	defer controlMessagesDBDelagte.Close()
-	if domainController := controlMessagesDBDelagte.FindDomainControllerForDomain(domain.Name); domainController != nil {
-		serverAddress = domainController.IpAddress
-		fmt.Println("Sending information to  DomainController: ",domainController.Domain.Name,domainController.IpAddress)
-	} else if rootController := controlMessagesDBDelagte.FindDomainControllerForDomain("default"); rootController != nil {
-		serverAddress = rootController.IpAddress
-		fmt.Println("Sending information to Default DomainController: ", rootController.IpAddress)
-	}
 
-	if serverAddress == "" {
-		fmt.Println("No Domain Controller found for forwarding")
+	routingManager := providing.NewControllerForwardingManager()
+	domainController := routingManager.DomainControllerForDomain(domain)
+	if domainController == nil {
+		fmt.Println("Forwarder: No Target Controller Found")
 		return
 	}
 
-
-	domainControllerPublisherConfig := models.NewMqttClientConfiguration(serverAddress,"1883","tcp", ForwardTopic, domainInformation.Broker.ID)
+	domainControllerPublisherConfig := models.NewMqttClientConfiguration(domainController.BrokerAddress, domainInformation.Broker.ID, domainInformation.Broker.ID)
 	domainControllerPublisher := publishing.NewMqttPublisher(domainControllerPublisherConfig,false)
 	domainControllerPublisher.Publish(json)
 	domainControllerPublisher.Close()
 
-	//brokerPublisherConfig := models.NewMqttClientConfiguration("localhost","1883","ws", "IDSStatistics/"+domain.Name, domainInformation.Broker.ID)
-	//brokerPublisher := publishing.NewMqttPublisher(brokerPublisherConfig,true)
-	//brokerPublisher.Publish(json)
-	//brokerPublisher.Close()
 }

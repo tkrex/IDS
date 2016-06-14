@@ -1,8 +1,9 @@
 package models
 
+import "net/url"
 
 type MqttClientConfiguration struct {
-	brokerAddress string
+	brokerAddress url.URL
 	topic 		string
 	clientID 	string
 }
@@ -14,16 +15,16 @@ const (
 	Websocket MqttProtocol ="ws"
 )
 
-func NewMqttClientConfiguration(brokerAddress string,port string, protocol MqttProtocol, topic string, clientID string) *MqttClientConfiguration {
+func NewMqttClientConfiguration(brokerAddress url.URL, topic string, clientID string) *MqttClientConfiguration {
 	clientConfig := new(MqttClientConfiguration)
-	clientConfig.brokerAddress = string(protocol)+"://"+brokerAddress+":"+port
+	clientConfig.brokerAddress = brokerAddress
 	clientConfig.topic = topic
 	clientConfig.clientID = clientID
 	return clientConfig
 }
 
 func (config *MqttClientConfiguration) BrokerAddress() string {
-	return config.brokerAddress
+	return config.brokerAddress.String()
 }
 
 func (config *MqttClientConfiguration) Topic() string {

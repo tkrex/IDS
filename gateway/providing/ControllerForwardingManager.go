@@ -3,6 +3,7 @@ package providing
 import (
 	"github.com/tkrex/IDS/common/models"
 	"github.com/tkrex/IDS/common/controlling"
+	"fmt"
 )
 
 type ControllerForwardingManager struct {
@@ -17,6 +18,7 @@ func NewControllerForwardingManager() *ControllerForwardingManager {
 func (forwardingManager * ControllerForwardingManager) DomainControllerForDomain(domain *models.RealWorldDomain) *models.DomainController {
 	dbDelegate, _ := controlling.NewControlMessageDBDelegate()
 	if dbDelegate == nil {
+		fmt.Println("Can't Connect to Database")
 		return nil
 	}
 
@@ -27,5 +29,6 @@ func (forwardingManager * ControllerForwardingManager) DomainControllerForDomain
 	if destinationDomainController == nil {
 		destinationDomainController = dbDelegate.FindDomainControllerForDomain("default")
 	}
+	fmt.Println(destinationDomainController)
 	return destinationDomainController
 }

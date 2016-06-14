@@ -8,14 +8,14 @@ import (
 )
 
 func main() {
-
-
-	managementServerAddress := "http://localhost"
-
-	providing.NewIDSGatewayWebInterface("8000")
 	managementBrokerAddress := "localhost"
 
 	_ = controlling.NewServerMaintenanceWebInterface("8080",managementBrokerAddress)
+	managementServerAddress := "http://localhost:8080"
+
+	providing.NewIDSGatewayWebInterface("8000")
+
+
 
 	worker := common.NewDomainControllerRegistrationWorker(managementServerAddress)
 	worker.RequestNewDomainControllerForDomain(models.NewRealWorldDomain("default"))
