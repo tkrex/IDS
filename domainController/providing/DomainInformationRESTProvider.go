@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/tkrex/IDS/domainController/persistence"
+	"github.com/tkrex/IDS/common/models"
 )
 
 type DomainInformationRESTProvider struct {
@@ -31,9 +32,9 @@ func (provider *DomainInformationRESTProvider) run(port string) {
 	 provider.providerStarted.Done()
 
 	router := mux.NewRouter()
-	router.HandleFunc("/rest/domainInformation/{domain}&{location}", provider.handleDomainInformation).Methods("GET")
-	router.HandleFunc("/rest/domainController/brokers/{domain}", provider.getBrokersForDomain).Methods("GET")
-	router.HandleFunc("/rest/brokers/{brokerId}/domainInformation", provider.getDomainInformationForBroker).Methods("GET")
+	router.HandleFunc("/rest/domainInformation/{domain}", provider.handleDomainInformation).Methods("GET")
+	router.HandleFunc("/rest/brokers/{domain}", provider.getBrokersForDomain).Methods("GET")
+	router.HandleFunc("/rest/brokers/{brokerId}/{domain}", provider.getDomainInformationForBroker).Methods("GET")
 
 	http.ListenAndServe(":" + port, router)
 }
@@ -44,17 +45,12 @@ func (webInterface *DomainInformationRESTProvider) getBrokersForDomain(res http.
 
 	requestParameters := mux.Vars(req)
 	domainName := requestParameters["domain"]
+	req.ParseForm()
+	country := req.FormValue("country")
+	name := req.FormValue("name")
 
-
-	dbDelegate, err := persistence.NewDomainControllerDatabaseWorker()
-
-	if err != nil {
-		http.Error(res, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	defer dbDelegate.Close()
-	brokers, err := dbDelegate.FindBrokersForDomain(domainName)
-	fmt.Println(brokers)
+	informationRequest := models.NewDomainInformationRequest(domainName,country,name)
+	brokers, err := NewBrokerRequestHandler().handleRequest(informationRequest)
 	if err != nil {
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
@@ -68,17 +64,16 @@ func (webInterface *DomainInformationRESTProvider) getDomainInformationForBroker
 	fmt.Println("domain Information Request Received")
 
 	requestParameters := mux.Vars(req)
+	domainName := requestParameters["domain"]
 	brokerId := requestParameters["brokerId"]
+	req.ParseForm()
+	country := req.FormValue("country")
+	name := req.FormValue("name")
+	informationRequest := models.NewDomainInformationRequest(domainName,country,name)
 
 
-	dbDelegate, err := persistence.NewDomainControllerDatabaseWorker()
 
-	if err != nil {
-		http.Error(res, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	defer dbDelegate.Close()
-	domainInformation, err := dbDelegate.FindDomainInformationForBroker(brokerId)
+	domainInformation, err := NewDomainInformationForBrokerRequestHandler().handleRequest(informationRequest,brokerId)
 	fmt.Println(domainInformation)
 	if err != nil {
 		http.Error(res, err.Error(), http.StatusInternalServerError)
@@ -94,22 +89,16 @@ func (webInterface *DomainInformationRESTProvider) handleDomainInformation(res h
 
 	requestParameters := mux.Vars(req)
 	domainName := requestParameters["domain"]
+	country := req.FormValue("country")
+	name := req.FormValue("name")
+	informationRequest := models.NewDomainInformationRequest(domainName,country,name)
 
-
-	dbDelegate, err := persistence.NewDomainControllerDatabaseWorker()
-
-	if err != nil {
-		http.Error(res, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	defer dbDelegate.Close()
-	domainInformation, err := dbDelegate.FindDomainInformationByDomainName(domainName)
+	domainInformation, err := NewDomainInformationRequestHandler().handleRequest(informationRequest)
 	fmt.Println(domainInformation)
 	if err != nil {
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
 	json.NewEncoder(res).Encode(domainInformation)
 }
 

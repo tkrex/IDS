@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"encoding/json"
 	"time"
+	"github.com/tkrex/IDS/common/routing"
 )
 
 type DomainInformationForBrokerRequestHandler struct {
@@ -19,66 +20,33 @@ func NewDomainInformationForBrokerRequestHandler() *DomainInformationForBrokerRe
 }
 
 
-func (handler *DomainInformationForBrokerRequestHandler) handleRequest(brokerId string) *models.DomainInformationMessage {
-
-	//DEBUG CODE
-	domain := models.NewRealWorldDomain("education")
-	broker := models.NewBroker()
-	broker.ID = "testID"
-	broker.IP = "localhost"
-	broker.RealWorldDomain = models.NewRealWorldDomain("education")
-	broker.Geolocation = models.NewGeolocation("germany","bavaria","munich",11.6309,48.2499)
-
-	topics := []*models.Topic{}
-
-	for i := 0; i < 5; i++ {
-		topic := models.NewTopic("/home/kitchen","{\"temperature\":3}",time.Now())
-		topic.UpdateBehavior.UpdateIntervalDeviation = 3.0
-		topics = append(topics, topic)
-	}
-
-
-	message := models.NewDomainInformationMessage(domain,broker,topics)
-	return message
-
-	dbDelegate, err := controlling.NewControlMessageDBDelegate()
-	if err != nil {
-		return nil
-	}
-	defer dbDelegate.Close()
-
-	var destinationDomainController *models.DomainController
-	domain = models.NewRealWorldDomain(brokerId)
-	destinationDomainController = dbDelegate.FindDomainControllerForDomain(domain.FirstLevelDomain())
-
+func (handler *DomainInformationForBrokerRequestHandler) handleRequest(brokerId string, informationRequest *models.DomainInformationRequest) (*models.DomainInformationMessage,error) {
+	destinationDomainController := routing.NewRoutingManager().DomainControllerForDomain(informationRequest.Domain())
 	if destinationDomainController == nil {
-		destinationDomainController = dbDelegate.FindDomainControllerForDomain("default")
+		return nil, error("No target controller found")
 	}
-
-	if destinationDomainController != nil {
-		return handler.forwardRequestToDomainController(brokerId,destinationDomainController)
-	}
-	return nil
+	return handler.forwardRequestToDomainController(brokerId,informationRequest,destinationDomainController)
 }
 
-
-//TODO: Add Endpoint at DomainController
-func (handler *DomainInformationForBrokerRequestHandler) forwardRequestToDomainController(domainName string, domainController *models.DomainController) *models.DomainInformationMessage {
-	requestUrl := domainController.RestEndpoint.String() + "/domainController/domainInformation/" + domainName
+func (handler *DomainInformationForBrokerRequestHandler) forwardRequestToDomainController(brokerId string, informationRequest *models.DomainInformationRequest,domainController *models.DomainController) (*models.DomainInformationMessage,error) {
+	requestUrl := domainController.RestEndpoint.String() + "/brokers/" + brokerId + "/" + informationRequest.Domain()
 	fmt.Println("Forwarding Request to ",requestUrl)
 	client := http.DefaultClient
-	response, err := client.Get(requestUrl)
+	request,_ := http.NewRequest("GET",requestUrl,nil)
+	request.FormValue("country") = informationRequest.Country()
+	request.FormValue("name") = informationRequest.Name()
+	response, err := client.Do(request)
 	if err != nil {
 		fmt.Printf("%s", err)
-		return nil
+		return nil, err
 	}
 	defer response.Body.Close()
 	contents, err := ioutil.ReadAll(response.Body)
 	if err != nil {
 		fmt.Printf("%s", err)
-		return nil
+		return nil, err
 	}
 	var domainInformation *models.DomainInformationMessage
 	json.Unmarshal([]byte(string(contents)), &domainInformation)
-	return domainInformation
+	return domainInformation, nil
 }

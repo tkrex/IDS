@@ -19,7 +19,7 @@ func NewDomainInformationRequestHandler() *DomainInformationRequestHandler {
 }
 
 
-func (handler *DomainInformationRequestHandler) handleRequest(domainName string) []*models.DomainInformationMessage {
+func (handler *DomainInformationRequestHandler) handleRequest(informationRequest *models.DomainInformationRequest) []*models.DomainInformationMessage {
 	domainInformation := []*models.DomainInformationMessage{}
 
 	//DEBUG CODE
@@ -43,21 +43,25 @@ func (handler *DomainInformationRequestHandler) handleRequest(domainName string)
 	return domainInformation
 
 
-	domain = models.NewRealWorldDomain(domainName)
+	domain = models.NewRealWorldDomain(informationRequest.Domain())
 	destinationController := routing.NewRoutingManager().DomainControllerForDomain(domain)
 
 	if destinationController != nil {
-		return handler.requestDomainInformationFromDomainController(domainName,destinationController)
+		return handler.requestDomainInformationFromDomainController(informationRequest,destinationController)
 	}
 	return nil
 }
 
 
-func (handler *DomainInformationRequestHandler) requestDomainInformationFromDomainController(domainName string, domainController *models.DomainController) []*models.DomainInformationMessage {
-	requestUrl := domainController.RestEndpoint.String() + "/domainController/domainInformation/" + domainName
+func (handler *DomainInformationRequestHandler) requestDomainInformationFromDomainController(informationRequest *models.DomainInformationRequest, domainController *models.DomainController) []*models.DomainInformationMessage {
+	requestUrl := domainController.RestEndpoint.String() + "/domainController/domainInformation/" + informationRequest.Domain()
+
 	fmt.Println("Forwarding Request to ",requestUrl)
 	client := http.DefaultClient
-	response, err := client.Get(requestUrl)
+	request,_ := http.NewRequest("GET",requestUrl,nil)
+	request.FormValue("country") = informationRequest.Country()
+	request.FormValue("name") = informationRequest.Name()
+	response, err := client.Do(request)
 	if err != nil {
 		fmt.Printf("%s", err)
 		return nil

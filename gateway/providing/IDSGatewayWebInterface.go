@@ -33,8 +33,8 @@ func (webInterface *IDSGatewayWebInterface) run(port string) {
 	router := mux.NewRouter()
 	fs := http.Dir("./gateway/frontend/")
 	fileHandler := http.FileServer(fs)
-	router.HandleFunc("/rest/domainInformation/{domainName}", webInterface.handleDomainInformation).Methods("GET")
-	router.HandleFunc("/rest/brokers/{brokerId}/domainInformation", webInterface.getDomainInformationForBroker).Methods("GET")
+	router.HandleFunc("/rest/domainInformation/{domain}", webInterface.handleDomainInformation).Methods("GET")
+	router.HandleFunc("/rest/brokers/{brokerId}/{domain}", webInterface.getDomainInformationForBroker).Methods("GET")
 	router.HandleFunc("/rest/domainControllers/{domainName}", webInterface.getDomainControllerForDomain).Methods("GET")
 	router.HandleFunc("/rest/brokers/{domainName}", webInterface.getBrokers).Methods("GET")
 	router.HandleFunc("/rest/brokers", webInterface.addBroker).Methods("POST")
@@ -47,10 +47,15 @@ func (webInterface *IDSGatewayWebInterface) handleDomainInformation(res http.Res
 	//res.Header().Set("Content-Type", "application/json")
 	fmt.Println("domain Information Request Received")
 	requestParameters := mux.Vars(req)
-	domainName := requestParameters["domainName"]
+	domainName := requestParameters["domain"]
+	req.ParseForm()
+	country := req.FormValue("country")
+	name := req.FormValue("name")
+
+	informationRequest := models.NewDomainInformationRequest(domainName,country,name)
 
 	requestHandler := NewDomainInformationRequestHandler()
-	domainInformation := requestHandler.handleRequest(domainName)
+	domainInformation := requestHandler.handleRequest(informationRequest)
 	if domainInformation == nil {
 		http.Error(res, "Error", http.StatusInternalServerError)
 		return
@@ -90,17 +95,23 @@ func (webInterface *IDSGatewayWebInterface) getDomainInformationForBroker(res ht
 
 	requestParameters := mux.Vars(req)
 	brokerId := requestParameters["brokerId"]
-	requestHandler := NewDomainInformationForBrokerRequestHandler()
-	domainInformation := requestHandler.handleRequest(brokerId)
-	if domainInformation == nil {
-		http.Error(res, "Error", http.StatusInternalServerError)
+	domainName := requestParameters["domain"]
+	req.ParseForm()
+	country := req.FormValue("country")
+	name := req.FormValue("name")
+
+	informationRequest := models.NewDomainInformationRequest(domainName,country,name)
+
+	domainInformation, err := NewDomainInformationForBrokerRequestHandler().handleRequest(brokerId,informationRequest)
+	if err != nil {
+		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	outgoingJSON, error := json.Marshal(domainInformation)
 
 	if error != nil {
 		fmt.Println(error.Error())
-		http.Error(res, "Error", http.StatusInternalServerError)
+		http.Error(res, error.Error(), http.StatusInternalServerError)
 		return
 	}
 	fmt.Fprint(res, string(outgoingJSON))
@@ -113,14 +124,11 @@ func (webInterface *IDSGatewayWebInterface) getBrokers(res http.ResponseWriter, 
 	domainName := requestParameters["domainName"]
 
 	req.ParseForm()
-	fmt.Println(req.Form)
 	country := req.FormValue("country")
-	region := req.FormValue("region")
-	city := req.FormValue("city")
-	location := models.NewGeolocation(country,region,city,0,0)
-	fmt.Println(location)
-	requestHandler := NewBrokerRequestHandler()
-	brokers := requestHandler.handleRequest(domainName)
+	name := req.FormValue("name")
+
+	informationRequest := models.NewDomainInformationRequest(domainName,country,name)
+	brokers,err := NewBrokerRequestHandler().handleRequest(informationRequest)
 
 	if brokers == nil {
 		http.Error(res, "Error", http.StatusInternalServerError)

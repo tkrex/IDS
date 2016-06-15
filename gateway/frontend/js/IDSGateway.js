@@ -72,12 +72,11 @@ var sampleApp = angular.module('gatewayApp', ["ui.router","ngResource",'uiGmapgo
                     $state.go("details",{"brokerId": broker.id})
                     }
 
-    var Brokers = $resource("rest/brokers/:domainName", {domainName: '@domainName'}, {search: {method:"GET", params: {domainName: "@domainName", country: "country",region: "region",city:"city"}, isArray: true}});
+    var Brokers = $resource("rest/brokers/:domainName", {domainName: '@domainName'}, {search: {method:"GET", params: {domainName: "@domainName", country: "country"}, isArray: true}});
      $scope.get = function(domainName,location){
-                        console.lo
             			// Passing parameters to Book calls will become arguments if
             			// we haven't defined it as part of the path (we did with id)
-                			Brokers.search({domainName:domainName,country:location.country,region:location.region, city: location.city}, function(data){
+                			Brokers.search({domainName:domainName,country:location.country}, function(data){
             				$scope.results = data;
             				console.log(data);
             			});
