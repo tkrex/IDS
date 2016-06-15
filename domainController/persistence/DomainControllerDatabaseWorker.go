@@ -154,7 +154,7 @@ func (dbWoker *DomainControllerDatabaseWorker) FindDomainInformationForRequest(i
 	coll := dbWoker.domainInformationCollection()
 	regex := bson.M{"$regex":bson.RegEx{"^" + informationRequest.Domain(), "m"}}
 	fmt.Println(regex)
-	if error = coll.Find(bson.M{"domain.name": regex, "broker.geolocation.country" : informationRequest.Country() }).All(&domainInformation); error != nil {
+	if error = coll.Find(bson.M{"domain.name": regex, "broker.geolocation.country" : informationRequest.Location().Country }).All(&domainInformation); error != nil {
 		fmt.Println(error)
 	}
 	return domainInformation, error
@@ -166,7 +166,7 @@ func (dbWoker *DomainControllerDatabaseWorker) FindDomainInformationForBroker(in
 	regex := bson.M{"$regex":bson.RegEx{"^" + informationRequest.Domain(), "m"}}
 
 	coll := dbWoker.domainInformationCollection()
-	if error = coll.Find(bson.M{"domain.name": regex, "broker.id": brokerId, "broker.geolocation.country" : informationRequest.Country() }).All(&domainInformation); error != nil {
+	if error = coll.Find(bson.M{"domain.name": regex, "broker.id": brokerId, "broker.geolocation.country" : informationRequest.Location().Country }).All(&domainInformation); error != nil {
 		fmt.Println(error)
 	}
 	return domainInformation, error
@@ -192,7 +192,7 @@ func (dbWoker *DomainControllerDatabaseWorker) FindBrokersForInformationRequest(
 	var domainInformation []*models.DomainInformationMessage
 	var error error
 	regex := bson.M{"$regex":bson.RegEx{"^" + informationRequest.Domain(), "m"}}
-	if error := coll.Find(bson.M{"domain.name": regex, "broker.geolocation.country":informationRequest.Country()}).Select(bson.M{"broker":1}).All(&domainInformation); error != nil {
+	if error := coll.Find(bson.M{"domain.name": regex, "broker.geolocation.country":informationRequest.Location().Country}).Select(bson.M{"broker":1}).All(&domainInformation); error != nil {
 		fmt.Printf("Query Error: %s", error.Error())
 		return nil,error
 	}

@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"io/ioutil"
 	"encoding/json"
+	"errors"
+	"net/url"
 )
 
 type BrokerRequestHandler struct {
@@ -31,7 +33,7 @@ func (handler *BrokerRequestHandler) handleRequest(informationRequest *models.Do
 	broker.Geolocation = models.NewGeolocation("germany","bavaria","munich",11.6309,48.2499)
 	broker.Statitics.NumberOfTopics = 20
 	brokers := []*models.Broker{broker}
-	return brokers
+	return brokers, nil
 
 	dbDelegate, err := controlling.NewControlMessageDBDelegate()
 	if err != nil {
@@ -50,16 +52,19 @@ func (handler *BrokerRequestHandler) handleRequest(informationRequest *models.Do
 	if destinationDomainController != nil {
 		return handler.requestBrokersFromDomainController(informationRequest,destinationDomainController)
 	}
-	return nil, error("No target controller found")
+	return nil, errors.New("No target controller found")
 }
 
 func (handler *BrokerRequestHandler) requestBrokersFromDomainController(informationRequest *models.DomainInformationRequest, domainController *models.DomainController) ([]*models.Broker,error) {
-	requestUrl := domainController.RestEndpoint + "/brokers/" + informationRequest.Domain()
+	requestUrlString := domainController.RestEndpoint.String() + "/brokers/" + informationRequest.Domain()
+	requestUrl,_ := url.Parse(requestUrlString)
+	query := requestUrl.Query()
+	//query.Set("location",informationRequest.Location())
+	query.Set("name",informationRequest.Name())
+
 	fmt.Println("Forwarding Request to ",requestUrl)
 	client := http.DefaultClient
-	request,_ := http.NewRequest("GET",requestUrl,nil)
-	request.FormValue("country") = informationRequest.Country()
-	request.FormValue("name") = informationRequest.Name()
+	request,_ := http.NewRequest("GET",requestUrl.String(),nil)
 	response, err := client.Do(request)
 	if err != nil {
 		fmt.Printf("%s", err)

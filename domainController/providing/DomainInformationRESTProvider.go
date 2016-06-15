@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"encoding/json"
 	"sync"
-
-	"github.com/tkrex/IDS/domainController/persistence"
 	"github.com/tkrex/IDS/common/models"
 )
 
@@ -46,10 +44,10 @@ func (webInterface *DomainInformationRESTProvider) getBrokersForDomain(res http.
 	requestParameters := mux.Vars(req)
 	domainName := requestParameters["domain"]
 	req.ParseForm()
-	country := req.FormValue("country")
+	location := req.FormValue("location")
 	name := req.FormValue("name")
 
-	informationRequest := models.NewDomainInformationRequest(domainName,country,name)
+	informationRequest := models.NewDomainInformationRequest(domainName, location,name)
 	brokers, err := NewBrokerRequestHandler().handleRequest(informationRequest)
 	if err != nil {
 		http.Error(res, err.Error(), http.StatusInternalServerError)
@@ -67,9 +65,9 @@ func (webInterface *DomainInformationRESTProvider) getDomainInformationForBroker
 	domainName := requestParameters["domain"]
 	brokerId := requestParameters["brokerId"]
 	req.ParseForm()
-	country := req.FormValue("country")
+	location := req.FormValue("location")
 	name := req.FormValue("name")
-	informationRequest := models.NewDomainInformationRequest(domainName,country,name)
+	informationRequest := models.NewDomainInformationRequest(domainName,location,name)
 
 
 
@@ -89,9 +87,9 @@ func (webInterface *DomainInformationRESTProvider) handleDomainInformation(res h
 
 	requestParameters := mux.Vars(req)
 	domainName := requestParameters["domain"]
-	country := req.FormValue("country")
+	location := req.FormValue("location")
 	name := req.FormValue("name")
-	informationRequest := models.NewDomainInformationRequest(domainName,country,name)
+	informationRequest := models.NewDomainInformationRequest(domainName,location,name)
 
 	domainInformation, err := NewDomainInformationRequestHandler().handleRequest(informationRequest)
 	fmt.Println(domainInformation)

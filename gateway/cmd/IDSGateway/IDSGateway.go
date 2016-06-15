@@ -5,10 +5,12 @@ import (
 	"github.com/tkrex/IDS/gateway/controlling"
 	"github.com/tkrex/IDS/common"
 	"github.com/tkrex/IDS/common/models"
+	"net/url"
 )
 
 func main() {
-	managementBrokerAddress := "localhost"
+	managementBrokerAddress,_ := url.Parse("ws://localhost:11883")
+
 
 	_ = controlling.NewServerMaintenanceWebInterface("8080",managementBrokerAddress)
 	managementServerAddress := "http://localhost:8080"

@@ -1,13 +1,9 @@
 package providing
 
 import (
-	"net/http"
 	"github.com/tkrex/IDS/common/models"
 	"fmt"
-	"io/ioutil"
-	"encoding/json"
 	"time"
-	"github.com/tkrex/IDS/common/routing"
 	"github.com/tkrex/IDS/domainController/persistence"
 )
 
@@ -41,7 +37,7 @@ func (handler *DomainInformationRequestHandler) handleRequest(informationRequest
 
 	message := models.NewDomainInformationMessage(domain,broker,topics)
 	demo = append(demo,message)
-	return demo
+	return demo, nil
 
 	dbDelegate,err := persistence.NewDomainControllerDatabaseWorker()
 	if err != nil {

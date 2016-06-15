@@ -2,21 +2,21 @@ package models
 
 type DomainInformationRequest struct {
 	domain    string
-	country   string
+	location  *Geolocation
 	topicName string
 }
 
 
-func NewDomainInformationRequest(domain, country, topicName string) *DomainInformationRequest {
+func NewDomainInformationRequest(domain string, location *Geolocation, topicName string) *DomainInformationRequest {
 	request := new(DomainInformationRequest)
 	request.domain = domain
-	request.country = country
+	request.location = location
 	request.topicName = topicName
 	return request
 }
 
-func (request *DomainInformationRequest) Country() string {
-	return request.country
+func (request *DomainInformationRequest) Location() *Geolocation {
+	return request.location
 }
 
 func (request *DomainInformationRequest) Domain() string {

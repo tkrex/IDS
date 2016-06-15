@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"time"
 	"github.com/tkrex/IDS/common/routing"
+	"net/url"
 )
 
 type DomainInformationRequestHandler struct {
@@ -54,13 +55,15 @@ func (handler *DomainInformationRequestHandler) handleRequest(informationRequest
 
 
 func (handler *DomainInformationRequestHandler) requestDomainInformationFromDomainController(informationRequest *models.DomainInformationRequest, domainController *models.DomainController) []*models.DomainInformationMessage {
-	requestUrl := domainController.RestEndpoint.String() + "/domainController/domainInformation/" + informationRequest.Domain()
+	requestUrlString := domainController.RestEndpoint.String() + "/domainController/domainInformation/" + informationRequest.Domain()
+	requestUrl,_ := url.Parse(requestUrlString)
+	query := requestUrl.Query()
+//	query.Set("country",informationRequest.Location())
+	query.Set("name",informationRequest.Name())
 
 	fmt.Println("Forwarding Request to ",requestUrl)
 	client := http.DefaultClient
-	request,_ := http.NewRequest("GET",requestUrl,nil)
-	request.FormValue("country") = informationRequest.Country()
-	request.FormValue("name") = informationRequest.Name()
+	request,_ := http.NewRequest("GET",requestUrl.String(),nil)
 	response, err := client.Do(request)
 	if err != nil {
 		fmt.Printf("%s", err)

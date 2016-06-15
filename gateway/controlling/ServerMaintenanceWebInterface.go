@@ -8,18 +8,19 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"net/url"
 )
 
 type ServerMaintenanceWebInterface struct {
 	port                             string
-	managementBrokerAddress		string
+	managementBrokerAddress		*url.URL
 	providerStarted                  sync.WaitGroup
 	providerStopped                  sync.WaitGroup
 }
 
 
 
-func NewServerMaintenanceWebInterface(port string, managementBrokerAddress string) *ServerMaintenanceWebInterface {
+func NewServerMaintenanceWebInterface(port string, managementBrokerAddress *url.URL) *ServerMaintenanceWebInterface {
 	webInterface := new(ServerMaintenanceWebInterface)
 	webInterface.managementBrokerAddress = managementBrokerAddress
 	webInterface.providerStarted.Add(1)

@@ -14,7 +14,7 @@ func NewDomainInformationForBrokerRequestHandler() *DomainInformationForBrokerRe
 	return new(DomainInformationForBrokerRequestHandler)
 }
 
-func (handler *DomainInformationForBrokerRequestHandler) handleRequest(informationRequest *models.DomainInformationRequest, brokerId string) (*models.DomainInformationMessage, error) {
+func (handler *DomainInformationForBrokerRequestHandler) handleRequest(informationRequest *models.DomainInformationRequest, brokerId string) ([]*models.DomainInformationMessage, error) {
 
 	dbDelegate, err := persistence.NewDomainControllerDatabaseWorker()
 	if err != nil {

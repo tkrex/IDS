@@ -7,12 +7,6 @@ type MqttClientConfiguration struct {
 	clientID 	string
 }
 
-type MqttProtocol string
-
-const (
-	TCP MqttProtocol = "tcp"
-	Websocket MqttProtocol ="ws"
-)
 
 func NewMqttClientConfiguration(brokerAddress *url.URL, clientID string) *MqttClientConfiguration {
 	clientConfig := new(MqttClientConfiguration)

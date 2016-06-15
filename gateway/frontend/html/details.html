@@ -20,7 +20,7 @@
             <p>IP Address: {{details.broker.ip}}</p>
             <p>Internet Domain: {{details.broker.internetDomain}}</p>
             <ui-gmap-google-map center='map.center' zoom='map.zoom'>
-                <ui-gmap-marker coords="marker.location" idkey="marker.id"></ui-gmap-marker>
+                <ui-gmap-marker coords="marker.coords" idkey="marker.idkey"></ui-gmap-marker>
             </ui-gmap-google-map>
             <p>Location: {{details.broker.geolocation.country}}, {{details.broker.geolocation.region}}, {{details.broker.geolocation.city}}</p>
             <p>RealWorldDomain: {{details.realWorldDomain.domain.name}}</p>

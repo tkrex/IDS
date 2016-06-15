@@ -49,10 +49,13 @@ func (webInterface *IDSGatewayWebInterface) handleDomainInformation(res http.Res
 	requestParameters := mux.Vars(req)
 	domainName := requestParameters["domain"]
 	req.ParseForm()
-	country := req.FormValue("country")
+	location := req.FormValue("location")
+	parsedLocation := new(models.Geolocation)
+	json.Unmarshal([]byte(location),parsedLocation)
+
 	name := req.FormValue("name")
 
-	informationRequest := models.NewDomainInformationRequest(domainName,country,name)
+	informationRequest := models.NewDomainInformationRequest(domainName, parsedLocation,name)
 
 	requestHandler := NewDomainInformationRequestHandler()
 	domainInformation := requestHandler.handleRequest(informationRequest)
@@ -97,10 +100,12 @@ func (webInterface *IDSGatewayWebInterface) getDomainInformationForBroker(res ht
 	brokerId := requestParameters["brokerId"]
 	domainName := requestParameters["domain"]
 	req.ParseForm()
-	country := req.FormValue("country")
+	location := req.FormValue("location")
+	parsedLocation := new(models.Geolocation)
+	json.Unmarshal([]byte(location),parsedLocation)
 	name := req.FormValue("name")
 
-	informationRequest := models.NewDomainInformationRequest(domainName,country,name)
+	informationRequest := models.NewDomainInformationRequest(domainName, parsedLocation,name)
 
 	domainInformation, err := NewDomainInformationForBrokerRequestHandler().handleRequest(brokerId,informationRequest)
 	if err != nil {
@@ -124,21 +129,24 @@ func (webInterface *IDSGatewayWebInterface) getBrokers(res http.ResponseWriter, 
 	domainName := requestParameters["domainName"]
 
 	req.ParseForm()
-	country := req.FormValue("country")
+	location := req.FormValue("location")
+	parsedLocation := new(models.Geolocation)
+	json.Unmarshal([]byte(location),parsedLocation)
+	fmt.Println(parsedLocation)
 	name := req.FormValue("name")
 
-	informationRequest := models.NewDomainInformationRequest(domainName,country,name)
+	informationRequest := models.NewDomainInformationRequest(domainName,parsedLocation,name)
 	brokers,err := NewBrokerRequestHandler().handleRequest(informationRequest)
 
-	if brokers == nil {
-		http.Error(res, "Error", http.StatusInternalServerError)
+	if err != nil {
+		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	outgoingJSON, error := json.Marshal(brokers)
 
 	if error != nil {
 		fmt.Println(error.Error())
-		http.Error(res, "Error", http.StatusInternalServerError)
+		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	fmt.Fprint(res, string(outgoingJSON))

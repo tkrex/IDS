@@ -9,7 +9,7 @@ var sampleApp = angular.module('gatewayApp', ["ui.router","ngResource",'uiGmapgo
     $stateProvider
 
         .state("results", {
-                url: "/results/:domainName",
+                url: "/results/:domainName?country&city",
                 templateUrl: "/html/overview.html",
                 controller: "ResultController",
                 params : {
@@ -18,7 +18,7 @@ var sampleApp = angular.module('gatewayApp', ["ui.router","ngResource",'uiGmapgo
                 })
 
         .state("details", {
-                url: "/details/:brokerId",
+                url: "/details/:brokerId/:domain?country&city",
                 templateUrl: "/html/details.html",
                 controller: "ResultDetailsController"})
       });
@@ -29,7 +29,7 @@ var sampleApp = angular.module('gatewayApp', ["ui.router","ngResource",'uiGmapgo
             if ($scope.query.location != null) {
             var parsedLocation = parseLocation($scope.query.location);
             }
-            $state.go("results",{"domainName": $scope.query.domain, "location":parsedLocation,"name": $scope.query.name});
+            $state.go("results",{"domainName": $scope.query.domain, "country":parsedLocation.country,"city":parsedLocation.city,"name": $scope.query.name});
           }
 
 
@@ -64,44 +64,52 @@ var sampleApp = angular.module('gatewayApp', ["ui.router","ngResource",'uiGmapgo
   sampleApp.controller('ResultController', ["$scope",'$state','$stateParams','$resource' ,function($scope, $state,$stateParams,$resource){
         console.log("ResultController loaded")
         $scope.queryDomain = $stateParams.domainName;
-        $scope.location = $stateParams.location;
-        console.log($scope.location)
-        console.log( $scope.queryDomain)
+        var location = {}
+        location.country = $stateParams.country;
+        location.city = $stateParams.city;
+        $scope.location = location;
+        $scope.name = $stateParams.name;
+
         $scope.onBrokerSelect = function(broker) {
                     console.log(broker)
-                    $state.go("details",{"brokerId": broker.id})
+                    $state.go("details",{"brokerId": broker.id,"domain":$scope.queryDomain,"country":$scope.location.country,"city":$scope.location.city,"name":$scope.name})
                     }
 
     var Brokers = $resource("rest/brokers/:domainName", {domainName: '@domainName'}, {search: {method:"GET", params: {domainName: "@domainName", country: "country"}, isArray: true}});
-     $scope.get = function(domainName,location){
+     $scope.get = function(domainName,location,name){
             			// Passing parameters to Book calls will become arguments if
             			// we haven't defined it as part of the path (we did with id)
-                			Brokers.search({domainName:domainName,country:location.country}, function(data){
+                			Brokers.search({domainName:domainName,location:location,name:name}, function(data){
             				$scope.results = data;
             				console.log(data);
             			});
             		};
-     $scope.get($scope.queryDomain,$scope.location);
+     $scope.get($scope.queryDomain,$scope.location,$scope.name);
   }]);
 
   sampleApp.controller('ResultDetailsController', ["$scope",'$state','$stateParams','$resource' ,function($scope, $state,$stateParams,$resource){
-            var selectedBrokerId = $stateParams.brokerId;
+initializeMap();
+    var selectedBrokerId = $stateParams.brokerId;
+     var domain = $stateParams.domain;
+     var name = $stateParams.name;
+           var location = {}
+             location.country = $stateParams.country;
+             location.city = $stateParams.city;
 
 
 
-            var DomainInformation = $resource("rest/brokers/:brokerId/domainInformation", {brokerId: '@brokerId'}, {search: {method:"GET", params: {brokerId: "@brokerId"}, isArray: false}});
-                 $scope.getDomainInformation = function(brokerId){
+            var DomainInformation = $resource("rest/brokers/:brokerId/:domain", {brokerId: '@brokerId', domain: "@domain"}, {search: {method:"GET", params: {brokerId: "@brokerId",domain: "domain"}, isArray: false}});
+                 $scope.getDomainInformation = function(brokerId,domain,location,name){
                         			// Passing parameters to Book calls will become arguments if
                         			// we haven't defined it as part of the path (we did with id)
-                            			DomainInformation.search({brokerId:brokerId}, function(data){
+                            			DomainInformation.search({brokerId:brokerId,domain:domain,location:location,name:name}, function(data){
                         				$scope.details = data;
                         				$scope.broker = data.broker;
-                        				$scope.getDomainController($scope.broker.realWorldDomain.name);
-                        				console.log(data);
-                                        showMapForBrokerLocation(data.broker.geolocation);
+                        				$scope.getDomainController(domain);
+                                       showMapForBrokerLocation(data.broker.geolocation);
                         			});
                         		};
-                 $scope.getDomainInformation(selectedBrokerId);
+                 $scope.getDomainInformation(selectedBrokerId,domain,location,name);
 
                  var DomainController = $resource("rest/domainControllers/:domainName", {domainName: '@domainName'}, {search: {method:"GET", params: {domainName: "@domainName"}, isArray: false}});
                                   $scope.getDomainController = function(domainName){
@@ -116,13 +124,20 @@ var sampleApp = angular.module('gatewayApp', ["ui.router","ngResource",'uiGmapgo
 
 
                  function showMapForBrokerLocation(geolocation) {
-                               console.log(geolocation)
                                var brokerLongitude = geolocation.longitude;
                                 var brokerLatitude = geolocation.latitude;
                                 var brokerLocation = new google.maps.LatLng(brokerLatitude,brokerLongitude);
-                                 $scope.marker = {"id": 1,"location": brokerLocation};
-                                 $scope.map = { center: brokerLocation, zoom: 10 };
+                                console.log("Broker Location: "+brokerLocation)
+                                 $scope.marker = {idkey: 1,coords: brokerLocation};
+                                 $scope.map = {center: {latitude: brokerLatitude, longitude: brokerLongitude}, zoom: 10, refresh: true };
                   };
+
+                  function initializeMap() {
+                      $scope.map = {center: {latitude: -33.865143, longitude: 151.209900}, zoom: 10, refresh: "true"};
+                      $scope.marker = {idkey: 1,coords:{latitude: -33.865143, longitude: 151.209900}};
+
+
+                  }
 
                  function subscribeBrokerInformation() {
                          // Create a client instance

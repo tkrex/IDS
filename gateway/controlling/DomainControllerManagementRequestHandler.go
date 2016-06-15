@@ -10,10 +10,10 @@ import (
 )
 
 type DomainControllerManagementRequestHandler struct {
-	managementBrokerAddress string
+	managementBrokerAddress *url.URL
 }
 
-func NewDomainControllerManagementRequestHandler(managementBrokerAddress string) *DomainControllerManagementRequestHandler {
+func NewDomainControllerManagementRequestHandler(managementBrokerAddress *url.URL) *DomainControllerManagementRequestHandler {
 	worker := new(DomainControllerManagementRequestHandler)
 	worker.managementBrokerAddress = managementBrokerAddress
 	return worker
@@ -69,10 +69,10 @@ func (worker *DomainControllerManagementRequestHandler) forwardControlMessage(co
 		return
 	}
 
-	publishConfig := models.NewMqttClientConfiguration(worker.managementBrokerAddress,"1883","tcp", "ControlMessage", "gateway")
+	publishConfig := models.NewMqttClientConfiguration(worker.managementBrokerAddress, "gateway")
 	publisher := publishing.NewMqttPublisher(publishConfig,false)
 	defer publisher.Close()
-	publisher.Publish(json)
+	publisher.Publish(json,"ControlMessage")
 }
 
 
