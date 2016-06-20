@@ -10,14 +10,16 @@ import (
 	"fmt"
 	"github.com/tkrex/IDS/common/controlling"
 	"net/url"
+	"github.com/tkrex/IDS/domainController"
+	"github.com/tkrex/IDS/domainController/configuration"
 )
 
 
 
 func main() {
 
+	initDomainControllerConfiguration()
 	go startDomainInformationProcessing()
-	go startControlMessageProcessing()
 	_ = providing.NewDomainInformationRESTProvider("8080")
 	for {}
 }
@@ -40,17 +42,17 @@ func startDomainInformationProcessing() {
 	_ = processing.NewDomainInformationProcessor(subscriber.IncomingTopicsChannel())
 }
 
-func startControlMessageProcessing() {
-	brokerAddressString := os.Getenv("MANAGEMENT_BROKER_URL")
-	if brokerAddressString == "" {
-		brokerAddressString = "ws://localhost:11883"
+func initDomainControllerConfiguration () {
+	parentDomain := os.Getenv("PARENT_DOMAIN")
+	if parentDomain == "" {
+		parentDomain = models.NewRealWorldDomain("default")
 	}
-	brokerAddress, _ := url.Parse(brokerAddressString)
 
-	desiredTopic  := "ControlMessage"
-	//TODO: figure out client id
-	subscriberConfig := models.NewMqttClientConfiguration(brokerAddress,"controlMessageSubscriber")
-	subscriber := subscribing.NewMqttSubscriber(subscriberConfig,desiredTopic,true)
-	_ = controlling.NewControlMessageProcessor(subscriber.IncomingTopicsChannel())
+	controllerID := os.Getenv("CONTROLLER_ID")
+	if controllerID == "" {
+		controllerID = "controllerID"
+	}
 
+	config := configuration.NewDomainControllerConfiguration(controllerID,parentDomain)
+	configuration.NewDomainControllerConfigurationManager().StoreConfig(config)
 }

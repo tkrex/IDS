@@ -9,6 +9,7 @@ import (
 	"github.com/tkrex/IDS/domainController/persistence"
 	"github.com/tkrex/IDS/common/publishing"
 	"github.com/tkrex/IDS/common/routing"
+	"github.com/tkrex/IDS/domainController/configuration"
 )
 
 type DomainInformationForwarder struct {
@@ -96,9 +97,11 @@ func (forwarder *DomainInformationForwarder) forwardDomainInformation(domain *mo
 	}
 
 
+	configManager := configuration.NewDomainControllerConfigurationManager()
+	config,_ := configManager.DomainControllerConfig()
 	targetDomain := new(models.RealWorldDomain)
-	//TODO: Get ParentDomain From ENV
-	parentDomain := models.NewRealWorldDomain("default")
+
+	parentDomain := config.ParentDomain
 	if !domain.IsSubDomainOf(parentDomain) {
 		targetDomain = domain
 	} else {
@@ -112,10 +115,8 @@ func (forwarder *DomainInformationForwarder) forwardDomainInformation(domain *mo
 		return
 	}
 
-	domainControllerPublisherConfig := models.NewMqttClientConfiguration(domainController.BrokerAddress, "domainControllerID")
+	domainControllerPublisherConfig := models.NewMqttClientConfiguration(domainController.BrokerAddress, config.DomainControllerID)
 	domainControllerPublisher := publishing.NewMqttPublisher(domainControllerPublisherConfig,false)
-
-	//TODO: Come up with DomainController ID
 
 
 	for _, information := range domainInformation {
