@@ -20,21 +20,22 @@ func NewDomainControllerManagementRequestHandler(managementBrokerAddress *url.UR
 }
 
 func (handler *DomainControllerManagementRequestHandler) handleManagementRequest(request *models.DomainControllerManagementRequest) *models.DomainController {
-	 dbWorker,_ := controlling.NewControlMessageDBDelegate()
+	dbWorker, _ := controlling.NewControlMessageDBDelegate()
 	if dbWorker == nil {
 		fmt.Println("Can't connect to database")
 		return nil
 	}
-	 defer dbWorker.Close()
+	defer dbWorker.Close()
 
 	var changedDomainController  *models.DomainController
-	if request.RequestType == models.DomainControllerDelete {
+	switch request.RequestType {
+	case models.DomainControllerDelete:
 		if domainController := dbWorker.FindDomainControllerForDomain(request.Domain.Name); domainController != nil {
 			dbWorker.RemoveDomainControllerForDomain(request.Domain)
 			changedDomainController = domainController
 		}
 
-	} else if request.RequestType == models.DomainControllerChange {
+	case models.DomainControllerChange:
 		if domainController := handler.startNewDomainControllerInstance(request.Domain); domainController != nil {
 			changed, _ := dbWorker.StoreDomainController(domainController)
 			if changed {
@@ -42,10 +43,17 @@ func (handler *DomainControllerManagementRequestHandler) handleManagementRequest
 				changedDomainController = domainController
 			}
 		}
+	case models.DomainControllerFetch:
+		dbDelegate , err := controlling.NewControlMessageDBDelegate()
+		if err != nil {
+			fmt.Println(err)
+		}
+		changedDomainController = dbDelegate.FindDomainControllerForDomain(request.Domain)
 	}
 
+
 	if changedDomainController != nil {
-		controlMessage := models.NewControlMessage(request.RequestType,changedDomainController)
+		controlMessage := models.NewControlMessage(request.RequestType, changedDomainController)
 		handler.forwardControlMessage(controlMessage)
 	}
 	return changedDomainController
@@ -54,13 +62,11 @@ func (handler *DomainControllerManagementRequestHandler) handleManagementRequest
 func (handler *DomainControllerManagementRequestHandler) startNewDomainControllerInstance(domain *models.RealWorldDomain) *models.DomainController {
 	//TODO: start new docker instance
 
-	restEndpoint,_ := url.Parse("http://localhost:8000/rest")
-	brokerAddress,_ := url.Parse("ws://localhost:11883")
-	domainController := models.NewDomainController(restEndpoint,brokerAddress,domain)
+	restEndpoint, _ := url.Parse("http://localhost:8000/rest")
+	brokerAddress, _ := url.Parse("ws://localhost:11883")
+	domainController := models.NewDomainController(restEndpoint, brokerAddress, domain)
 	return domainController
 }
-
-
 
 func (worker *DomainControllerManagementRequestHandler) forwardControlMessage(controlMessage *models.ControlMessage) {
 	json, err := json.Marshal(&controlMessage)
@@ -70,9 +76,9 @@ func (worker *DomainControllerManagementRequestHandler) forwardControlMessage(co
 	}
 
 	publishConfig := models.NewMqttClientConfiguration(worker.managementBrokerAddress, "gateway")
-	publisher := publishing.NewMqttPublisher(publishConfig,false)
+	publisher := publishing.NewMqttPublisher(publishConfig, false)
 	defer publisher.Close()
-	publisher.Publish(json,"ControlMessage")
+	publisher.Publish(json, "ControlMessage")
 }
 
 

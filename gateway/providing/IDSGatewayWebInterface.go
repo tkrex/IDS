@@ -36,8 +36,10 @@ func (webInterface *IDSGatewayWebInterface) run(port string) {
 	router.HandleFunc("/rest/domainInformation/{domain}", webInterface.handleDomainInformation).Methods("GET")
 	router.HandleFunc("/rest/brokers/{brokerId}/{domain}", webInterface.getDomainInformationForBroker).Methods("GET")
 	router.HandleFunc("/rest/domainControllers/{domainName}", webInterface.getDomainControllerForDomain).Methods("GET")
-	router.HandleFunc("/rest/brokers/{domainName}", webInterface.getBrokers).Methods("GET")
+	router.HandleFunc("/rest/brokers/{domainName}", webInterface.getBrokersForDomain).Methods("GET")
 	router.HandleFunc("/rest/brokers", webInterface.addBroker).Methods("POST")
+	router.HandleFunc("/rest/brokers", webInterface.addBroker).Methods("GET")
+
 	router.PathPrefix("/").Handler(http.StripPrefix("/", fileHandler))
 
 	http.ListenAndServe(":" + port, router)
@@ -122,7 +124,7 @@ func (webInterface *IDSGatewayWebInterface) getDomainInformationForBroker(res ht
 	fmt.Fprint(res, string(outgoingJSON))
 }
 
-func (webInterface *IDSGatewayWebInterface) getBrokers(res http.ResponseWriter, req *http.Request) {
+func (webInterface *IDSGatewayWebInterface) getBrokersForDomain(res http.ResponseWriter, req *http.Request) {
 	res.Header().Set("Content-Type", "application/json")
 	fmt.Println("Received Broker Request")
 	requestParameters := mux.Vars(req)
@@ -150,6 +152,10 @@ func (webInterface *IDSGatewayWebInterface) getBrokers(res http.ResponseWriter, 
 		return
 	}
 	fmt.Fprint(res, string(outgoingJSON))
+}
+
+func (webInterface *IDSGatewayWebInterface) getAllBrokers(res http.ResponseWriter, req *http.Request){
+	//TODO: implemenet
 }
 
 func (webInterface *IDSGatewayWebInterface) addBroker(res http.ResponseWriter, req *http.Request) {

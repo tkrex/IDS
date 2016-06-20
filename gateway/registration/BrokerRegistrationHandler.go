@@ -25,7 +25,7 @@ func (handler *BrokerRegistrationHandler) RegisterBroker(broker *models.Broker) 
 	md5Bytes := md5.Sum(byteArray)
 	brokerID := fmt.Sprintf("%x", md5Bytes)
 
-	var domainControllers []*models.DomainController
+	var domainController *models.DomainController
 	var err error
 	controlMessageDBDelegate,_  := controlling.NewControlMessageDBDelegate()
 
@@ -34,10 +34,9 @@ func (handler *BrokerRegistrationHandler) RegisterBroker(broker *models.Broker) 
 		return nil,errors.New("Can't connect with database")
 	}
 	defer dbWorker.Close()
-	if domainControllers, err = controlMessageDBDelegate.FindAllDomainController(); err != nil {
+	if domainController, err = controlMessageDBDelegate.FindDomainControllerForDomain(broker.RealWorldDomain); err != nil {
 		return nil, err
 	}
-	fmt.Println(domainControllers)
 
 	broker.ID = brokerID
 	if _, found := dbWorker.FindBrokerById(brokerID); found {
@@ -48,6 +47,6 @@ func (handler *BrokerRegistrationHandler) RegisterBroker(broker *models.Broker) 
 		}
 	}
 
-	registrationResponse := models.NewBrokerRegistrationResponse(broker, domainControllers)
+	registrationResponse := models.NewBrokerRegistrationResponse(broker, domainController)
 	return registrationResponse, nil
 }

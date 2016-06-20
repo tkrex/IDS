@@ -71,10 +71,10 @@ func (worker *ControlMessageDBDelegate) RemoveDomainControllerForDomain(domain *
 	return err
 }
 
-func (worker *ControlMessageDBDelegate) FindDomainControllerForDomain(domainName string)  *models.DomainController {
+func (worker *ControlMessageDBDelegate) FindDomainControllerForDomain(domain *models.RealWorldDomain)  *models.DomainController {
 	coll := worker.domainControllerCollection()
 	var domainController *models.DomainController
-	if err := coll.Find(bson.M{"domain.name":domainName}).One(&domainController); err != nil {
+	if err := coll.Find(bson.M{"domain.name":domain.Name}).One(&domainController); err != nil {
 		fmt.Println(err)
 	}
 	return domainController

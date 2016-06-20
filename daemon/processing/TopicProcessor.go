@@ -201,6 +201,7 @@ func (processor *TopicProcessor) updateTopicInformation(existingTopic *models.To
 
 func (processor *TopicProcessor) calculatePayloadSimilarity(topic *models.Topic, newJSONPayload string) {
 	if topic.UpdateBehavior.NumberOfUpdates % 100 == 0 {
+		fmt.Println("DEBUG: Similarity Check for Topic: ", topic.Name)
 		processor.calculatePayloadSimilarityCheckInterval(topic)
 
 	}
@@ -287,4 +288,19 @@ func (processor *TopicProcessor) calculateUpdateBehavior(topic *models.Topic, ne
 	updateBehavior.UpdateIntervalsInSeconds = append(updateBehavior.UpdateIntervalsInSeconds, float64(newUpdateInterval))
 	updateBehavior.NumberOfUpdates++
 	updateBehavior.UpdateIntervalDeviation = processor.topicReliabilityStrategy.Calculate(updateBehavior)
+	processor.determineReliability(topic)
+
+}
+
+func (processor *TopicProcessor)  determineReliability(topic *models.Topic) {
+	intervalDeviation := topic.UpdateBehavior.UpdateIntervalDeviation
+	reliability := ""
+	if intervalDeviation >= 0 && intervalDeviation <= 30 * time.Minute.Seconds() {
+		reliability = "Automatic"
+	} else if intervalDeviation <= time.Hour.Seconds() {
+		reliability = "Semi-Automatic"
+	} else if  intervalDeviation > time.Hour.Seconds() {
+		reliability = "Non-Deterministic"
+	}
+	topic.UpdateBehavior.Reliability = reliability
 }

@@ -135,8 +135,6 @@ initializeMap();
                   function initializeMap() {
                       $scope.map = {center: {latitude: -33.865143, longitude: 151.209900}, zoom: 10, refresh: "true"};
                       $scope.marker = {idkey: 1,coords:{latitude: -33.865143, longitude: 151.209900}};
-
-
                   }
 
                  function subscribeBrokerInformation() {

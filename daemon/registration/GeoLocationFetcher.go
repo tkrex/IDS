@@ -36,14 +36,14 @@ type Location struct {
 func (fetcher *GeoLocationFetcher) SendGeoLocationRequest(address string) (*models.Geolocation,error)  {
 	response, err := http.Get(APIEndpont + address)
 	if err != nil {
-		fmt.Printf("%s", err)
+		fmt.Println(err)
 		return nil,err
 
 	}
-	defer response.Body.Close()
+	fmt.Println(response.StatusCode)
 	contents, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		fmt.Printf("%s", err)
+		fmt.Println(err)
 		return nil,err
 	}
 	location := Location{}

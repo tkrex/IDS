@@ -22,7 +22,7 @@ func (m MeanAbsoluteDeviation) Name() string{
 
 func (m MeanAbsoluteDeviation) Calculate(updateStats *UpdateBehavior) float64 {
 	if len(updateStats.UpdateIntervalsInSeconds) < 2 {
-		return 0.0
+		return -1.0
 	}
 	deviationSum := float64(0)
 	for _,interval := range updateStats.UpdateIntervalsInSeconds {

@@ -5,6 +5,7 @@ type ControlMessageType string
 const (
 	DomainControllerChange ControlMessageType = "Update"
 	DomainControllerDelete ControlMessageType = "Delete"
+	DomainControllerFetch ControlMessageType = "Fetch"
 )
 
 type ControlMessage struct {

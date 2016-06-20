@@ -17,6 +17,8 @@ type DomainInformationForwarder struct {
 
 	forwardSignalChannel chan *models.RealWorldDomain
 	updateFlags          map[string]bool
+
+	routingManager *routing.RoutingManager
 }
 
 const (
@@ -26,6 +28,7 @@ const (
 func NewDomainInformationForwarder(forwardSignalChannel chan *models.RealWorldDomain) *DomainInformationForwarder {
 	forwarder := new(DomainInformationForwarder)
 	forwarder.forwardSignalChannel = forwardSignalChannel
+	forwarder.routingManager = routing.NewRoutingManager()
 	forwarder.updateFlags = make(map[string]bool)
 	forwarder.forwarderStarted.Add(1)
 	forwarder.forwarderStopped.Add(1)
@@ -95,17 +98,18 @@ func (forwarder *DomainInformationForwarder) forwardDomainInformation(domain *mo
 	//TODO: Get ParentDomain From ENV
 	parentDomain := models.NewRealWorldDomain("default")
 
-	routingManager := routing.NewRoutingManager()
-	domainController := routingManager.DomainControllerForDomain(parentDomain)
-	if domainController == nil {
-		fmt.Println("FORWARDER: No target controller found")
+
+	domainController,err := forwarder.routingManager.DomainControllerForDomain(parentDomain,false)
+	if err != nil {
+		fmt.Println("Forwarder: No Target Controller Found")
 		return
 	}
+
+	domainControllerPublisherConfig := models.NewMqttClientConfiguration(domainController.BrokerAddress, "domainControllerID")
+	domainControllerPublisher := publishing.NewMqttPublisher(domainControllerPublisherConfig,false)
+
 	//TODO: Come up with DomainController ID
 
-	publisherConfig := models.NewMqttClientConfiguration(domainController.BrokerAddress, "DomainControllerID")
-	publisher := publishing.NewMqttPublisher(publisherConfig, false)
-	defer publisher.Close()
 
 	for _, information := range domainInformation {
 		json, err := json.Marshal(information)
@@ -113,6 +117,21 @@ func (forwarder *DomainInformationForwarder) forwardDomainInformation(domain *mo
 			fmt.Printf("Marshalling Error: %s", err)
 			return
 		}
-		publisher.Publish(json, information.Broker.ID)
+		error := domainControllerPublisher.Publish(json, information.Broker.ID)
+		if error != nil {
+			domainController,err := forwarder.routingManager.DomainControllerForDomain(parentDomain,true)
+			if err != nil {
+				fmt.Println("Forwarder: No Target Controller Found")
+				return
+			}
+			domainControllerPublisherConfig := models.NewMqttClientConfiguration(domainController.BrokerAddress, information.Broker.ID)
+			domainControllerPublisher := publishing.NewMqttPublisher(domainControllerPublisherConfig,false)
+			error := domainControllerPublisher.Publish(json,information.Broker.ID)
+			if error != nil {
+				fmt.Println(error)
+				return
+			}
+		}
+		domainControllerPublisher.Close()
 	}
 }

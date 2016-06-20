@@ -3,16 +3,13 @@ package main
 import (
 
 	"fmt"
-	"github.com/tkrex/IDS/daemon/layers"
+	"github.com/tkrex/IDS/daemon/registration"
 )
 
 func main() {
-	//fetcher := common.NewGeoLocationFetcher()
-	//location,_ := fetcher.SendGeoLocationRequest("ma-krex-bruegge.in.tum.de")
-	//fmt.Println(location)
+	fetcher := registration.NewGeoLocationFetcher()
+	location,_ := fetcher.SendGeoLocationRequest("ma-krex-bruegge.in.tum.de")
+	fmt.Println(location)
 
-	categorizer := layers.NewWebsiteCategorizationWorker()
-	categories,_ :=categorizer.RequestCategoriesForWebsite("www.in.tum.de")
-	fmt.Println(categories)
 
 }

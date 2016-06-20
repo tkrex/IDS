@@ -5,15 +5,15 @@ import (
 )
 
 type Topic struct {
-	Name                string        `json:"name" bson:"name"`
-	LastPayload         string       `json:"payload" bson:"payload"`
-	PayloadSimilarity   float64       `json:"payloadSimilarity" bson:"payloadSimilarity"`
-	SimilarityCheckInterval int
-	FirstUpdateTimeStamp time.Time            `json:"firstUpdate"`
-	LastUpdateTimeStamp time.Time        `json:"lastUpdate" bson:"lastUpdate"`
-	UpdateBehavior      *UpdateBehavior
-	Domain              *RealWorldDomain   `json:"domain" bson:"domain`
-	Visibility 	    bool                `json:"visibility"`
+	Name                    string        `json:"name" bson:"name"`
+	LastPayload             string       `json:"payload" bson:"payload"`
+	PayloadSimilarity       float64       `json:"payloadSimilarity" bson:"payloadSimilarity"`
+	SimilarityCheckInterval int                `json:"-" bson:""`
+	FirstUpdateTimeStamp    time.Time            `json:"firstUpdate"`
+	LastUpdateTimeStamp     time.Time        `json:"lastUpdate" bson:"lastUpdate"`
+	UpdateBehavior          *UpdateBehavior
+	Domain                  *RealWorldDomain   `json:"domain" bson:"domain`
+	Visibility              bool                `json:"-"`
 }
 
 type RawTopicMessage struct {
@@ -36,16 +36,16 @@ type UpdateBehavior struct {
 	AverageUpdateIntervalInSeconds float64 `json:"averageInterval"`
 	MinimumUpdateIntervalInSeconds int `json:"minimumInterval"`
 	MaximumUpdateIntervalInSeconds int `json:"maximumInterval"`
-	UpdateIntervalDeviation              float64          `json:"deviation"`
+	UpdateIntervalDeviation        float64          `json:"deviation"`
+	Reliability                    string `json:"reliability"`
 }
-
 
 func NewUpdateBehavior() *UpdateBehavior {
 	behavior := new(UpdateBehavior)
 	return behavior
 }
 
-func NewTopic(name string, payload string,arrivalTime time.Time) *Topic {
+func NewTopic(name string, payload string, arrivalTime time.Time) *Topic {
 	topic := new(Topic)
 	topic.Name = name
 	topic.LastPayload = payload

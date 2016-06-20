@@ -3,18 +3,18 @@ package models
 import "fmt"
 
 type BrokerRegistrationResponse struct {
-	Broker            *Broker `json:"broker"`
-	DomainControllers []*DomainController `json:"domainControllers"`
+	Broker           *Broker `json:"broker"`
+	DomainController *DomainController `json:"domainControllers"`
 }
 
-func NewBrokerRegistrationResponse(broker *Broker, controllers []*DomainController) *BrokerRegistrationResponse {
+func NewBrokerRegistrationResponse(broker *Broker, controller *DomainController) *BrokerRegistrationResponse {
 	response := new(BrokerRegistrationResponse)
 	response.Broker = broker
-	response.DomainControllers = controllers
+	response.DomainController = controller
 	return response
 }
 
 
 func (response *BrokerRegistrationResponse) String() string {
-	return fmt.Sprintf("Broker: %s, Controllers: %s",response.Broker, response.DomainControllers)
+	return fmt.Sprintf("Broker: %s, Controllers: %s",response.Broker, response.DomainController)
 }

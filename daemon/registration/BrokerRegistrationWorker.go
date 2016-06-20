@@ -1,7 +1,6 @@
 package registration
 
 import (
-	"github.com/tkrex/IDS/common/models"
 	"encoding/json"
 	"net/http"
 	"bytes"
@@ -10,22 +9,25 @@ import (
 	"net"
 	"time"
 	"sync"
+	"os"
+	"net/url"
+	"github.com/tkrex/IDS/common/models"
 	"github.com/tkrex/IDS/daemon/persistence"
 	"github.com/tkrex/IDS/common/controlling"
-	"os"
+	"github.com/tkrex/IDS/common/routing"
 )
 
 const RegisterInterval = time.Second * 10
 
 type BrokerRegistrationWorker struct {
-	registrationServerAddress string
+	registrationServerAddress *url.URL
 	registerTicker            *time.Ticker
 	workerStarted             sync.WaitGroup
 	workerStopped             sync.WaitGroup
 	dbDelegate                *persistence.DaemonDatabaseWorker
 }
 
-func NewBrokerRegistrationWorker(registrationServerAddress string) *BrokerRegistrationWorker {
+func NewBrokerRegistrationWorker(registrationServerAddress *url.URL) *BrokerRegistrationWorker {
 	worker := new(BrokerRegistrationWorker)
 	worker.registrationServerAddress = registrationServerAddress
 	worker.workerStarted.Add(1)
@@ -113,7 +115,7 @@ func (worker *BrokerRegistrationWorker) sendRegistrationRequestForBroker(broker 
 
 	jsonString, _ := json.Marshal(&broker)
 
-	req, err := http.NewRequest("POST", worker.registrationServerAddress + "/rest/brokers", bytes.NewBuffer(jsonString))
+	req, err := http.NewRequest("POST", worker.registrationServerAddress.String() + "/rest/brokers", bytes.NewBuffer(jsonString))
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
@@ -143,19 +145,6 @@ func (worker *BrokerRegistrationWorker) sendRegistrationRequestForBroker(broker 
 
 	err = worker.dbDelegate.StoreBroker(response.Broker)
 
-	controllingDBDelegate, error := controlling.NewControlMessageDBDelegate()
-	if error != nil {
-		fmt.Println(error)
-		return false
-	}
-	defer controllingDBDelegate.Close()
-	for _, domainController := range response.DomainControllers {
-
-		_,err = controllingDBDelegate.StoreDomainController(domainController)
-		if err != nil {
-			fmt.Println(err)
-			return false
-		}
-	}
+	routing.NewRoutingManager().AddDomainController(response.DomainController)
 	return true
 }

@@ -16,6 +16,7 @@ type DomainInformationForwarder struct {
 	forwarderStopped     sync.WaitGroup
 	forwardSignalChannel chan int
 	lastForwardTimestamp           time.Time
+	routingManager 	*routing.RoutingManager
 }
 
 const (
@@ -26,6 +27,7 @@ func NewDomainInformationForwarder(forwardSignalChannel chan int) *DomainInforma
 	forwarder := new(DomainInformationForwarder)
 	forwarder.forwardSignalChannel = forwardSignalChannel
 	forwarder.lastForwardTimestamp = time.Now()
+	forwarder.routingManager = routing.NewRoutingManager()
 	forwarder.forwarderStarted.Add(1)
 	forwarder.forwarderStopped.Add(1)
 	go forwarder.run()
@@ -124,15 +126,30 @@ func (forwarder *DomainInformationForwarder) forwardDomainInformation(domain *mo
 		return
 	}
 
-	routingManager := routing.NewRoutingManager()
-	domainController := routingManager.DomainControllerForDomain(domain)
-	if domainController == nil {
+	domainController,err := forwarder.routingManager.DomainControllerForDomain(domain,false)
+	if err != nil {
 		fmt.Println("Forwarder: No Target Controller Found")
 		return
 	}
 
+
 	domainControllerPublisherConfig := models.NewMqttClientConfiguration(domainController.BrokerAddress, domainInformation.Broker.ID)
 	domainControllerPublisher := publishing.NewMqttPublisher(domainControllerPublisherConfig,false)
-	domainControllerPublisher.Publish(json,domainInformation.Broker.ID)
+	error := domainControllerPublisher.Publish(json,domainInformation.Broker.ID)
+	if error != nil {
+		domainController,err := forwarder.routingManager.DomainControllerForDomain(domain,true)
+		if err != nil {
+			fmt.Println("Forwarder: No Target Controller Found")
+			return
+		}
+		domainControllerPublisherConfig := models.NewMqttClientConfiguration(domainController.BrokerAddress, domainInformation.Broker.ID)
+		domainControllerPublisher := publishing.NewMqttPublisher(domainControllerPublisherConfig,false)
+		error := domainControllerPublisher.Publish(json,domainInformation.Broker.ID)
+		if error != nil {
+			fmt.Println(error)
+			return
+		}
+	}
 	domainControllerPublisher.Close()
 }
+

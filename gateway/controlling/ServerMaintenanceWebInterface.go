@@ -34,8 +34,9 @@ func NewServerMaintenanceWebInterface(port string, managementBrokerAddress *url.
 
 func (webInterface *ServerMaintenanceWebInterface) run(port string) {
 	router := mux.NewRouter()
-	router.HandleFunc("/domainController/{domain}/new", webInterface.instantiateDomainController).Methods("GET")
-	router.HandleFunc("/domainController/{domain}/delete", webInterface.deleteDomainController).Methods("GET")
+	router.HandleFunc("/rest/domainControllers/{domain}/new", webInterface.instantiateDomainController).Methods("GET")
+	router.HandleFunc("/rest/domainControllers/{domain}/delete", webInterface.deleteDomainController).Methods("GET")
+	router.HandleFunc("/rest/domainControllers/{domain}", webInterface.fetchDomainController).Methods("GET")
 
 
 	listener, err := net.Listen("tcp", ":"+port)
@@ -55,6 +56,24 @@ func (webInterface ServerMaintenanceWebInterface) instantiateDomainController(re
 	domain := models.NewRealWorldDomain(domainName)
 
 	var messageType = models.DomainControllerChange
+	managementRequest := models.NewDomainControllerManagementRequest(messageType,domain)
+
+	requestHandler := NewDomainControllerManagementRequestHandler(webInterface.managementBrokerAddress)
+	if domainController := requestHandler.handleManagementRequest(managementRequest); domainController != nil {
+		json.NewEncoder(res).Encode(&domainController)
+		return
+	}
+	http.Error(res, "Internal Error", http.StatusInternalServerError)
+	return
+}
+
+
+func (webInterface ServerMaintenanceWebInterface) fetchDomainController(res http.ResponseWriter, req *http.Request) {
+	parameters := mux.Vars(req)
+	domainName := parameters["domain"]
+	domain := models.NewRealWorldDomain(domainName)
+
+	var messageType = models.DomainControllerFetch
 	managementRequest := models.NewDomainControllerManagementRequest(messageType,domain)
 
 	requestHandler := NewDomainControllerManagementRequestHandler(webInterface.managementBrokerAddress)

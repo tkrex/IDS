@@ -20,7 +20,7 @@ func main() {
 
 	//go startControlMessageProcessing()
 	go startTopicProcessing()
-	startControlInterface()
+	//startControlInterface()
 	for {
 		time.Sleep(time.Second)
 	}
@@ -29,8 +29,12 @@ func main() {
 
 func startTopicProcessing() {
 	brokerAddressString := os.Getenv("BROKER_URI")
+	if brokerAddressString == "" {
+		brokerAddressString = "ws://localhost:11883"
+	}
 	brokerAddress, _ := url.Parse(brokerAddressString)
 	fmt.Println("Broker URL", brokerAddress)
+
 	desiredTopic  := "#"
 	subscriberConfig := models.NewMqttClientConfiguration(brokerAddress,"subscriber")
 	subscriber := subscribing.NewMqttSubscriber(subscriberConfig,desiredTopic,false)
@@ -52,7 +56,12 @@ func startControlMessageProcessing() {
 }
 
 func startBrokerRegistration() {
-	_ = registration.NewBrokerRegistrationWorker(os.Getenv("MANAGEMENT_INTERFACE_URL"))
+	registrationServiceUrlString := os.Getenv("MANAGEMENT_INTERFACE_URL")
+	if registrationServiceUrlString == "" {
+		registrationServiceUrlString = "http://localhost:8000"
+	}
+	registrationServiceUrl,_ := url.Parse(registrationServiceUrlString)
+	_ = registration.NewBrokerRegistrationWorker(registrationServiceUrl)
 }
 
 func startControlInterface () {
