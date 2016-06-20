@@ -6,7 +6,7 @@ import (
 )
 
 type RealWorldDomain struct {
-	Name 	string `json:"name"`
+	Name string `json:"name"`
 }
 
 func NewRealWorldDomain(name string) *RealWorldDomain {
@@ -20,8 +20,32 @@ func (domain *RealWorldDomain) String() string {
 }
 
 func (domain *RealWorldDomain) FirstLevelDomain() string {
-	domainLevels := strings.Split(domain.Name,"/")
+	domainLevels := strings.Split(domain.Name, "/")
 	firstLevelDomain := domainLevels[0]
 	firstLevelDomain = strings.TrimSpace(firstLevelDomain)
 	return firstLevelDomain
+}
+
+func (domain *RealWorldDomain) DomainLevels() []string {
+	domainLevels := strings.Split(domain.Name, "/")
+	for index, domain := range domainLevels {
+		domainLevels[index] = strings.TrimSpace(domain)
+	}
+	return domainLevels
+}
+
+func (domain *RealWorldDomain) IsSubDomainOf(secondDomain *RealWorldDomain) bool {
+	firstDomainLevels := domain.DomainLevels()
+	secondDomainLevels := secondDomain.DomainLevels()
+
+	if len(firstDomainLevels) < len(secondDomainLevels) {
+		return false
+	}
+
+	for index, domain := range secondDomainLevels {
+		if domain != firstDomainLevels[index] {
+			return false
+		}
+	}
+	return true
 }

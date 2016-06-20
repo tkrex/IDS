@@ -95,11 +95,18 @@ func (forwarder *DomainInformationForwarder) forwardDomainInformation(domain *mo
 		return
 	}
 
+
+	targetDomain := new(models.RealWorldDomain)
 	//TODO: Get ParentDomain From ENV
 	parentDomain := models.NewRealWorldDomain("default")
+	if !domain.IsSubDomainOf(parentDomain) {
+		targetDomain = domain
+	} else {
+		targetDomain = parentDomain
+	}
 
 
-	domainController,err := forwarder.routingManager.DomainControllerForDomain(parentDomain,false)
+	domainController,err := forwarder.routingManager.DomainControllerForDomain(targetDomain,false)
 	if err != nil {
 		fmt.Println("Forwarder: No Target Controller Found")
 		return
@@ -119,7 +126,7 @@ func (forwarder *DomainInformationForwarder) forwardDomainInformation(domain *mo
 		}
 		error := domainControllerPublisher.Publish(json, information.Broker.ID)
 		if error != nil {
-			domainController,err := forwarder.routingManager.DomainControllerForDomain(parentDomain,true)
+			domainController,err := forwarder.routingManager.DomainControllerForDomain(targetDomain,true)
 			if err != nil {
 				fmt.Println("Forwarder: No Target Controller Found")
 				return

@@ -77,13 +77,19 @@ func (processor *DomainInformationProcessor) processDomainInformationMessage(top
 		fmt.Println(err)
 		return
 	}
+	ownDomain := models.NewRealWorldDomain("default")
 
-	go processor.storeDomainInformation(domainInformationMessage)
+	processor.storeDomainInformation(domainInformationMessage)
 
-		processor.newDomainInformationCounter[domainInformationMessage.RealWorldDomain.Name] += domainInformationMessage.ForwardPriority
-		if processor.newDomainInformationCounter[domainInformationMessage.RealWorldDomain.Name] > ForwardThreshold {
-			processor.forwardingSignalChannel <- domainInformationMessage.RealWorldDomain
-		}
+	//Forward DomainInformation to correct Domain Controller
+	if !domainInformationMessage.RealWorldDomain.IsSubDomainOf(ownDomain) {
+		processor.forwardingSignalChannel <- domainInformationMessage.RealWorldDomain
+	}
+
+	processor.newDomainInformationCounter[domainInformationMessage.RealWorldDomain.Name] += domainInformationMessage.ForwardPriority
+	if processor.newDomainInformationCounter[domainInformationMessage.RealWorldDomain.Name] > ForwardThreshold {
+		processor.forwardingSignalChannel <- domainInformationMessage.RealWorldDomain
+	}
 }
 
 func (processor *DomainInformationProcessor) storeDomainInformation(information *models.DomainInformationMessage) {

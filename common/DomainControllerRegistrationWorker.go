@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"encoding/json"
 	"fmt"
+	"github.com/tkrex/IDS/common/routing"
 )
 
 type DomainControllerRegistrationWorker struct {
@@ -24,9 +25,9 @@ func (worker *DomainControllerRegistrationWorker) RequestNewDomainControllerForD
 	domainController , err := worker.sendManagementRequest(models.DomainControllerChange,domain)
 	if err != nil {
 		fmt.Println(err)
-	} else {
-		fmt.Println(domainController)
+		return
 	}
+	routing.NewRoutingManager().AddDomainController(domainController)
 }
 
 func (worker *DomainControllerRegistrationWorker) RequestDomainControllerDeletionForDomain(domain *models.RealWorldDomain) {
