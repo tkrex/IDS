@@ -30,7 +30,7 @@ func (handler *DomainControllerManagementRequestHandler) handleManagementRequest
 	var changedDomainController  *models.DomainController
 	switch request.RequestType {
 	case models.DomainControllerDelete:
-		if domainController := dbWorker.FindDomainControllerForDomain(request.Domain.Name); domainController != nil {
+		if domainController := dbWorker.FindDomainControllerForDomain(request.Domain); domainController != nil {
 			dbWorker.RemoveDomainControllerForDomain(request.Domain)
 			changedDomainController = domainController
 		}

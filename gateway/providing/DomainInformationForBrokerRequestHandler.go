@@ -42,8 +42,8 @@ func (handler *DomainInformationForBrokerRequestHandler) handleRequest(brokerId 
 	message := models.NewDomainInformationMessage(domain,broker,topics)
 	return message,nil
 
-	destinationDomainController := routing.NewRoutingManager().DomainControllerForDomain(domain)
-	if destinationDomainController == nil {
+	destinationDomainController,err := routing.NewRoutingManager().DomainControllerForDomain(domain,false)
+	if err != nil {
 		return nil, errors.New("No target controller found")
 	}
 	return handler.forwardRequestToDomainController(brokerId,informationRequest,destinationDomainController)
@@ -53,7 +53,10 @@ func (handler *DomainInformationForBrokerRequestHandler) forwardRequestToDomainC
 	requestUrlString := domainController.RestEndpoint.String() + "/brokers/" + brokerId + "/" + informationRequest.Domain()
 	requestUrl,_ := url.Parse(requestUrlString)
 	query := requestUrl.Query()
-//	query.Set("location",informationRequest.Location())
+
+	locationJSON, _ := json.Marshal(informationRequest.Location())
+
+        query.Set("location",string(locationJSON))
 	query.Set("name",informationRequest.Name())
 
 	fmt.Println("Forwarding Request to ",requestUrl)
@@ -61,13 +64,13 @@ func (handler *DomainInformationForBrokerRequestHandler) forwardRequestToDomainC
 	request,_ := http.NewRequest("GET",requestUrl.String(),nil)
 	response, err := client.Do(request)
 	if err != nil {
-		fmt.Printf("%s", err)
+		fmt.Println(err)
 		return nil, err
 	}
 	defer response.Body.Close()
 	contents, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		fmt.Printf("%s", err)
+		fmt.Println(err)
 		return nil, err
 	}
 	var domainInformation *models.DomainInformationMessage

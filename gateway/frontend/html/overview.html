@@ -2,8 +2,9 @@
 
 <div class="row">
     <div class="col-md-12">
-
-        <div class="list-group" ng-repeat="broker in results">
+        <div ng-repeat="(domain, brokers) in results">
+            <p> {{domain}}</p>
+        <div class="list-group" ng-repeat="broker in brokers">
             <a href="" ng-click="onBrokerSelect(broker)" class="list-group-item">
                 <span class="badge">{{broker.statistics.numberOfTopics}}</span>
                 <h4 class="list-group-item-heading">{{broker.ip}}</h4>
@@ -11,6 +12,7 @@
                     {{broker.geolocation.region}} </p>
             </a>
 
+        </div>
         </div>
     </div>
     </div>

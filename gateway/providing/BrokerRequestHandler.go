@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/url"
+	"github.com/tkrex/IDS/common/routing"
 )
 
 type BrokerRequestHandler struct {
@@ -21,19 +22,22 @@ func NewBrokerRequestHandler() *BrokerRequestHandler {
 }
 
 
-func (handler *BrokerRequestHandler) handleRequest(informationRequest *models.DomainInformationRequest) ([]*models.Broker,error) {
+func (handler *BrokerRequestHandler) handleRequest(informationRequest *models.DomainInformationRequest) (map[string][]*models.Broker,error) {
 
-
+	domains := []*models.RealWorldDomain{ models.NewRealWorldDomain("education/schools"), models.NewRealWorldDomain("education"), models.NewRealWorldDomain("education/university")}
+	brokers := []*models.Broker{}
+	for _, domain := range domains {
 	//DEBUG CODE
-	domain := models.NewRealWorldDomain("education")
 	broker := models.NewBroker()
 	broker.ID = "testID"
 	broker.IP = "localhost"
-	broker.RealWorldDomain = models.NewRealWorldDomain("education")
-	broker.Geolocation = models.NewGeolocation("germany","bavaria","munich",11.6309,48.2499)
+	broker.RealWorldDomain = domain
+	broker.Geolocation = models.NewGeolocation("germany", "bavaria", "munich", 11.6309, 48.2499)
 	broker.Statitics.NumberOfTopics = 20
-	brokers := []*models.Broker{broker}
-	return brokers, nil
+	brokers = append(brokers, broker)
+	}
+	sortedBrokers := handler.sortBrokersByDomains(brokers)
+	return sortedBrokers, nil
 
 	dbDelegate, err := controlling.NewControlMessageDBDelegate()
 	if err != nil {
@@ -41,20 +45,34 @@ func (handler *BrokerRequestHandler) handleRequest(informationRequest *models.Do
 	}
 	defer dbDelegate.Close()
 
-	var destinationDomainController *models.DomainController
-	domain = models.NewRealWorldDomain(informationRequest.Domain())
-	destinationDomainController = dbDelegate.FindDomainControllerForDomain(domain.FirstLevelDomain())
-
-	if destinationDomainController == nil {
-		destinationDomainController = dbDelegate.FindDomainControllerForDomain("default")
-	}
+	domain := models.NewRealWorldDomain(informationRequest.Domain())
+	targetDomain := domain.FirstLevelDomain()
+	destinationDomainController,_ := routing.NewRoutingManager().DomainControllerForDomain(targetDomain,false)
 
 	if destinationDomainController != nil {
-		return handler.requestBrokersFromDomainController(informationRequest,destinationDomainController)
+		brokers, _ :=  handler.requestBrokersFromDomainController(informationRequest,destinationDomainController)
+		if brokers != nil {
+			sortedBrokers := handler.sortBrokersByDomains(brokers)
+			return sortedBrokers, nil
+
+		}
 	}
 	return nil, errors.New("No target controller found")
 }
 
+
+func (handler *BrokerRequestHandler) sortBrokersByDomains(brokers []*models.Broker) map[string][]*models.Broker {
+	sortedBrokers := make(map[string][]*models.Broker)
+	for _,broker := range brokers {
+		domains := sortedBrokers[broker.RealWorldDomain.Name]
+		if domains != nil {
+			domains = append(domains,broker)
+		} else {
+			sortedBrokers[broker.RealWorldDomain.Name] = []*models.Broker{broker}
+		}
+	}
+	return sortedBrokers
+}
 func (handler *BrokerRequestHandler) requestBrokersFromDomainController(informationRequest *models.DomainInformationRequest, domainController *models.DomainController) ([]*models.Broker,error) {
 	requestUrlString := domainController.RestEndpoint.String() + "/brokers/" + informationRequest.Domain()
 	requestUrl,_ := url.Parse(requestUrlString)

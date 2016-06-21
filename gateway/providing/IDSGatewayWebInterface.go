@@ -9,6 +9,7 @@ import (
 	"github.com/tkrex/IDS/common/models"
 	"github.com/tkrex/IDS/gateway/registration"
 	"github.com/tkrex/IDS/common/routing"
+	"strings"
 )
 
 type IDSGatewayWebInterface struct {
@@ -39,9 +40,9 @@ func (webInterface *IDSGatewayWebInterface) run(port string) {
 	router.HandleFunc("/rest/brokers/{domainName}", webInterface.getBrokersForDomain).Methods("GET")
 	router.HandleFunc("/rest/brokers", webInterface.addBroker).Methods("POST")
 	router.HandleFunc("/rest/brokers", webInterface.addBroker).Methods("GET")
+	router.HandleFunc("/rest/domains", webInterface.getAllDomains).Methods("GET")
 
 	router.PathPrefix("/").Handler(http.StripPrefix("/", fileHandler))
-
 	http.ListenAndServe(":" + port, router)
 }
 
@@ -76,7 +77,7 @@ func (webInterface *IDSGatewayWebInterface) handleDomainInformation(res http.Res
 }
 
 func (webInterface *IDSGatewayWebInterface) getDomainControllerForDomain(res http.ResponseWriter, req *http.Request) {
-	fmt.Println("domain controller Request Received")
+	fmt.Println("Domain Controller Request Received")
 
 	requestParameters := mux.Vars(req)
 	domainName := requestParameters["domainName"]
@@ -85,7 +86,7 @@ func (webInterface *IDSGatewayWebInterface) getDomainControllerForDomain(res htt
 		return
 	}
 	domain := models.NewRealWorldDomain(domainName)
-	domainController := routing.NewRoutingManager().DomainControllerForDomain(domain)
+	domainController, _ := routing.NewRoutingManager().DomainControllerForDomain(domain,false)
 	if domainController != nil {
 		fmt.Println("Responding with Domain Controller: ",domainController)
 		json.NewEncoder(res).Encode(domainController)
@@ -95,12 +96,13 @@ func (webInterface *IDSGatewayWebInterface) getDomainControllerForDomain(res htt
 }
 
 func (webInterface *IDSGatewayWebInterface) getDomainInformationForBroker(res http.ResponseWriter, req *http.Request) {
-	//res.Header().Set("Content-Type", "application/json")
-	fmt.Println("domain Information Request Received")
+	res.Header().Set("Content-Type", "application/json")
+	fmt.Println("Domain Information Request Received")
 
 	requestParameters := mux.Vars(req)
 	brokerId := requestParameters["brokerId"]
 	domainName := requestParameters["domain"]
+	fmt.Println(domainName)
 	req.ParseForm()
 	location := req.FormValue("location")
 	parsedLocation := new(models.Geolocation)
@@ -129,7 +131,7 @@ func (webInterface *IDSGatewayWebInterface) getBrokersForDomain(res http.Respons
 	fmt.Println("Received Broker Request")
 	requestParameters := mux.Vars(req)
 	domainName := requestParameters["domainName"]
-
+	domainName = strings.Replace(domainName,"%2F","/",-1)
 	req.ParseForm()
 	location := req.FormValue("location")
 	parsedLocation := new(models.Geolocation)
@@ -138,13 +140,13 @@ func (webInterface *IDSGatewayWebInterface) getBrokersForDomain(res http.Respons
 	name := req.FormValue("name")
 
 	informationRequest := models.NewDomainInformationRequest(domainName,parsedLocation,name)
-	brokers,err := NewBrokerRequestHandler().handleRequest(informationRequest)
+	brokersSortedByDomains,err := NewBrokerRequestHandler().handleRequest(informationRequest)
 
 	if err != nil {
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	outgoingJSON, error := json.Marshal(brokers)
+	outgoingJSON, error := json.Marshal(brokersSortedByDomains)
 
 	if error != nil {
 		fmt.Println(error.Error())
@@ -157,6 +159,18 @@ func (webInterface *IDSGatewayWebInterface) getBrokersForDomain(res http.Respons
 func (webInterface *IDSGatewayWebInterface) getAllBrokers(res http.ResponseWriter, req *http.Request){
 	//TODO: implemenet
 }
+
+
+func (webInterface *IDSGatewayWebInterface) getAllDomains(res http.ResponseWriter, req *http.Request) {
+	fmt.Println("Domain Request Received")
+	domains , err := NewDomainRequestHandler().handleRequest()
+	if err != nil {
+		http.Error(res, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(res).Encode(domains)
+}
+
 
 func (webInterface *IDSGatewayWebInterface) addBroker(res http.ResponseWriter, req *http.Request) {
 	res.Header().Set("Content-Type", "application/json")

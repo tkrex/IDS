@@ -24,7 +24,18 @@ var sampleApp = angular.module('gatewayApp', ["ui.router","ngResource",'uiGmapgo
       });
 
 
-  sampleApp.controller('MainController', ["$scope",'$state', function($scope, $state){
+  sampleApp.controller('MainController', ["$scope",'$state','$resource', function($scope, $state, $resource){
+
+                 var Domains = $resource("rest/domains", {}, {search: {method:"GET", params: {}, isArray: true}});
+                     $scope.getDomains = function(){
+                            			// Passing parameters to Book calls will become arguments if
+                            			// we haven't defined it as part of the path (we did with id)
+                                			Domains.search({}, function(data){
+                            				$scope.domains = data;
+                            				console.log(data);
+                            			});
+                            		};
+                       $scope.getDomains();
           $scope.queryInformation = function() {
             if ($scope.query.location != null) {
             var parsedLocation = parseLocation($scope.query.location);
@@ -75,16 +86,23 @@ var sampleApp = angular.module('gatewayApp', ["ui.router","ngResource",'uiGmapgo
                     $state.go("details",{"brokerId": broker.id,"domain":$scope.queryDomain,"country":$scope.location.country,"city":$scope.location.city,"name":$scope.name})
                     }
 
-    var Brokers = $resource("rest/brokers/:domainName", {domainName: '@domainName'}, {search: {method:"GET", params: {domainName: "@domainName", country: "country"}, isArray: true}});
-     $scope.get = function(domainName,location,name){
+    var Brokers = $resource("rest/brokers/:domainName", {domainName: '@domainName'}, {search: {method:"GET", params: {domainName: "@domainName", country: "country"}, isArray: false}});
+     $scope.getBrokers = function(domainName,location,name){
             			// Passing parameters to Book calls will become arguments if
             			// we haven't defined it as part of the path (we did with id)
-                			Brokers.search({domainName:domainName,location:location,name:name}, function(data){
+            			    var encodedDomain = encodeURIComponent(domainName)
+            			    console.log(encodedDomain)
+                			Brokers.search({domainName:encodedDomain,location:location,name:name}, function(data){
             				$scope.results = data;
             				console.log(data);
             			});
             		};
-     $scope.get($scope.queryDomain,$scope.location,$scope.name);
+
+
+     $scope.getBrokers($scope.queryDomain,$scope.location,$scope.name);
+
+
+
   }]);
 
   sampleApp.controller('ResultDetailsController', ["$scope",'$state','$stateParams','$resource' ,function($scope, $state,$stateParams,$resource){

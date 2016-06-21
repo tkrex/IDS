@@ -13,7 +13,6 @@ import (
 	"net/url"
 	"github.com/tkrex/IDS/common/models"
 	"github.com/tkrex/IDS/daemon/persistence"
-	"github.com/tkrex/IDS/common/controlling"
 	"github.com/tkrex/IDS/common/routing"
 )
 

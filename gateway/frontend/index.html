@@ -104,8 +104,9 @@
     <div class="row">
         <div id="custom-search-input">
             <div class="col-md-3">
-                <input type="text"  ng-model="query.domain" class="  search-query form-control"
-                       placeholder="Domain"/>
+                <select class="form-control" name="repeatSelect" id="repeatSelect" ng-model="query.domain">
+                    <option ng-repeat="domain in domains" value="{{domain.name}}">{{domain.name}}</option>
+                </select>
             </div>
             <div class="col-md-3">
                 <input class="form-control" g-places-autocomplete ng-model="query.location" placeholder="Location"/>

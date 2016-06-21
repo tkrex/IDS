@@ -14,7 +14,7 @@ const (
 	Password = "example"
 	Database = "IDSGateway"
 	BrokerCollection = "brokers"
-	DomainInformationCollection = "domainInformation"
+	DomainCollection = "domains"
 )
 
 type GatewayDBWorker struct {
@@ -37,6 +37,10 @@ func (worker *GatewayDBWorker) brokerCollection() *mgo.Collection {
 	return worker.session.DB(Database).C(BrokerCollection)
 }
 
+func (worker *GatewayDBWorker) domainCollection() *mgo.Collection {
+	return worker.session.DB(Database).C(DomainCollection)
+}
+
 
 func (worker *GatewayDBWorker) StoreBroker(broker *models.Broker) (error) {
 	coll := worker.brokerCollection()
@@ -45,6 +49,37 @@ func (worker *GatewayDBWorker) StoreBroker(broker *models.Broker) (error) {
 		return err
 	}
 	return nil
+}
+
+func (worker *GatewayDBWorker) StoreDomains(domains []*models.RealWorldDomain) error {
+	coll := worker.brokerCollection()
+	index := mgo.Index{
+		Key:        []string{"name"},
+		Unique:     true,
+		DropDups:   true,
+		Background: true,
+		Sparse:     true,
+	}
+	_ = coll.EnsureIndex(index)
+
+	bulkTransaction := coll.Bulk()
+
+	for _, domain := range domains {
+		bulkTransaction.Remove(bson.M{"name": domain.Name })
+		bulkTransaction.Insert(domain)
+	}
+	_, err := bulkTransaction.Run()
+	return  err
+}
+
+func (worker *GatewayDBWorker) FindAllDomains() ([]*models.RealWorldDomain, error) {
+	coll := worker.domainCollection()
+	domains := []*models.RealWorldDomain{}
+	var error error
+	if error = coll.Find(nil).All(&domains); error != nil {
+		fmt.Println(error)
+	}
+	return domains, error
 }
 
 func (worker *GatewayDBWorker) FindAllBrokers() ([]*models.Broker, error) {

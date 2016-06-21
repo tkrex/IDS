@@ -1,10 +1,6 @@
 package routing
 
-import (
-	"github.com/tkrex/IDS/common/models"
-	"github.com/tkrex/IDS/common/controlling"
-	"fmt"
-)
+
 
 //type RoutingManager struct {
 //

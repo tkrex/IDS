@@ -19,11 +19,9 @@ func (domain *RealWorldDomain) String() string {
 	return fmt.Sprintf("Name: %s", domain.Name)
 }
 
-func (domain *RealWorldDomain) FirstLevelDomain() string {
-	domainLevels := strings.Split(domain.Name, "/")
-	firstLevelDomain := domainLevels[0]
-	firstLevelDomain = strings.TrimSpace(firstLevelDomain)
-	return firstLevelDomain
+func (domain *RealWorldDomain) FirstLevelDomain() *RealWorldDomain {
+	domainLevels := domain.DomainLevels()
+	return NewRealWorldDomain(domainLevels[0])
 }
 
 func (domain *RealWorldDomain) DomainLevels() []string {

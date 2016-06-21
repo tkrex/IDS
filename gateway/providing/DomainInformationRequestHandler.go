@@ -45,7 +45,7 @@ func (handler *DomainInformationRequestHandler) handleRequest(informationRequest
 
 
 	domain = models.NewRealWorldDomain(informationRequest.Domain())
-	destinationController := routing.NewRoutingManager().DomainControllerForDomain(domain)
+	destinationController,_ := routing.NewRoutingManager().DomainControllerForDomain(domain,false)
 
 	if destinationController != nil {
 		return handler.requestDomainInformationFromDomainController(informationRequest,destinationController)

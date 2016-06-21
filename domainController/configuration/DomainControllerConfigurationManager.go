@@ -1,6 +1,9 @@
 package configuration
 
-import "github.com/tkrex/IDS/common/models"
+import (
+	"github.com/tkrex/IDS/common/models"
+	"net/url"
+)
 
 type DomainControllerConfigurationManager struct {
 
@@ -10,12 +13,14 @@ type DomainControllerConfigurationManager struct {
 type DomainControllerConfiguration struct {
 	DomainControllerID string `bson:"id"`
 	ParentDomain *models.RealWorldDomain `bson:"parentDomain"`
+	GatewayBrokerAddress *url.URL `bson:"gatewayBrokerAddress"`
 }
 
-func NewDomainControllerConfiguration(controllerID string,parentDomain *models.RealWorldDomain) *DomainControllerConfiguration {
+func NewDomainControllerConfiguration(controllerID string,parentDomain *models.RealWorldDomain, gatewayBrokerAddress *url.URL) *DomainControllerConfiguration {
 	config := new(DomainControllerConfiguration)
 	config.DomainControllerID = controllerID
 	config.ParentDomain = parentDomain
+	config.GatewayBrokerAddress = gatewayBrokerAddress
 	return config
 }
 

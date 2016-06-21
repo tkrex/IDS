@@ -45,10 +45,7 @@ func (webInterface *ServerMaintenanceWebInterface) run(port string) {
 	}
 	webInterface.providerStarted.Done()
 	go http.Serve(listener, router)
-
 }
-
-
 
 func (webInterface ServerMaintenanceWebInterface) instantiateDomainController(res http.ResponseWriter, req *http.Request) {
 	parameters := mux.Vars(req)
@@ -66,7 +63,6 @@ func (webInterface ServerMaintenanceWebInterface) instantiateDomainController(re
 	http.Error(res, "Internal Error", http.StatusInternalServerError)
 	return
 }
-
 
 func (webInterface ServerMaintenanceWebInterface) fetchDomainController(res http.ResponseWriter, req *http.Request) {
 	parameters := mux.Vars(req)
