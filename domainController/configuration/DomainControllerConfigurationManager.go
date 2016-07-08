@@ -42,7 +42,7 @@ func (configManager *DomainControllerConfigurationManager) StoreConfig(config *D
 func (configManager *DomainControllerConfigurationManager) DomainControllerConfig() (*DomainControllerConfiguration,error) {
 	storageManager, err := NewDomainControllerConfigStorageManager()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer storageManager.Close()
 	conifg ,error := storageManager.FindDomainControllerConfig()

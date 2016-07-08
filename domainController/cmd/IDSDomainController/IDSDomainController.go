@@ -8,9 +8,7 @@ import (
 	"github.com/tkrex/IDS/domainController/providing"
 	"os"
 	"fmt"
-	"github.com/tkrex/IDS/common/controlling"
 	"net/url"
-	"github.com/tkrex/IDS/domainController"
 	"github.com/tkrex/IDS/domainController/configuration"
 )
 
@@ -43,16 +41,25 @@ func startDomainInformationProcessing() {
 }
 
 func initDomainControllerConfiguration () {
-	parentDomain := os.Getenv("PARENT_DOMAIN")
-	if parentDomain == "" {
-		parentDomain = models.NewRealWorldDomain("default")
+	parentDomainString := os.Getenv("PARENT_DOMAIN")
+	if parentDomainString == "" {
+		parentDomainString = "default"
 	}
+
+	parentDomain := models.NewRealWorldDomain(parentDomainString)
+
 
 	controllerID := os.Getenv("CONTROLLER_ID")
 	if controllerID == "" {
 		controllerID = "controllerID"
 	}
 
-	config := configuration.NewDomainControllerConfiguration(controllerID,parentDomain)
+	brokerURLString := os.Getenv("BROKER_URL")
+	if brokerURLString == "" {
+		brokerURLString = "ws://localhost:18833"
+	}
+	brokerURL,_ := url.Parse(brokerURLString)
+
+	config := configuration.NewDomainControllerConfiguration(controllerID, parentDomain, brokerURL)
 	configuration.NewDomainControllerConfigurationManager().StoreConfig(config)
 }
