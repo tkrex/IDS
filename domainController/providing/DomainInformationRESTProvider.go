@@ -26,7 +26,7 @@ func NewDomainInformationRESTProvider(port string) *DomainInformationRESTProvide
 }
 
 func (provider *DomainInformationRESTProvider) run(port string) {
-	fmt.Println("IDSGatewayInterface started")
+	fmt.Println("DomainController Rest Interface started")
 	 provider.providerStarted.Done()
 
 	router := mux.NewRouter()
@@ -46,8 +46,10 @@ func (webInterface *DomainInformationRESTProvider) getBrokersForDomain(res http.
 	req.ParseForm()
 	location := req.FormValue("location")
 	name := req.FormValue("name")
+	parsedLocation := new(models.Geolocation)
+	json.Unmarshal([]byte(location),parsedLocation)
 
-	informationRequest := models.NewDomainInformationRequest(domainName, location,name)
+	informationRequest := models.NewDomainInformationRequest(domainName, parsedLocation,name)
 	brokers, err := NewBrokerRequestHandler().handleRequest(informationRequest)
 	if err != nil {
 		http.Error(res, err.Error(), http.StatusInternalServerError)
@@ -67,7 +69,9 @@ func (webInterface *DomainInformationRESTProvider) getDomainInformationForBroker
 	req.ParseForm()
 	location := req.FormValue("location")
 	name := req.FormValue("name")
-	informationRequest := models.NewDomainInformationRequest(domainName,location,name)
+	parsedLocation := new(models.Geolocation)
+	json.Unmarshal([]byte(location),parsedLocation)
+	informationRequest := models.NewDomainInformationRequest(domainName,parsedLocation,name)
 
 
 
@@ -88,8 +92,10 @@ func (webInterface *DomainInformationRESTProvider) handleDomainInformation(res h
 	requestParameters := mux.Vars(req)
 	domainName := requestParameters["domain"]
 	location := req.FormValue("location")
+	parsedLocation := new(models.Geolocation)
+	json.Unmarshal([]byte(location),parsedLocation)
 	name := req.FormValue("name")
-	informationRequest := models.NewDomainInformationRequest(domainName,location,name)
+	informationRequest := models.NewDomainInformationRequest(domainName,parsedLocation,name)
 
 	domainInformation, err := NewDomainInformationRequestHandler().handleRequest(informationRequest)
 	fmt.Println(domainInformation)

@@ -23,7 +23,7 @@
                 <ui-gmap-marker coords="marker.coords" idkey="marker.idkey"></ui-gmap-marker>
             </ui-gmap-google-map>
             <p>Location: {{details.broker.geolocation.country}}, {{details.broker.geolocation.region}}, {{details.broker.geolocation.city}}</p>
-            <p>RealWorldDomain: {{details.realWorldDomain.domain.name}}</p>
+            <p>RealWorldDomain: {{details.broker.realWorldDomain.name}}</p>
 
 
         </div>
@@ -34,7 +34,7 @@
                 <p>{{topic.name}}</p>
                 <p>Last Payload: {{topic.payload}}</p>
                 <p>Last Update : {{topic.lastUpdate}}</p>
-                <p>Deviation: {{topic.deviation}}</p>
+                <p>Deviation: {{topic.updateBehavior.deviation}}</p>
             </div>
         </div>
     </div>
