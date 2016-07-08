@@ -8,19 +8,16 @@ import (
 	"github.com/tkrex/IDS/common/models"
 	"github.com/tkrex/IDS/domainController/persistence"
 	"github.com/tkrex/IDS/common/publishing"
-	"github.com/tkrex/IDS/common/routing"
 	"github.com/tkrex/IDS/domainController/configuration"
-	"github.com/tkrex/IDS/domainController"
 )
 
 type BrokerInformationForwarder struct {
 	forwarderStarted     sync.WaitGroup
 	forwarderStopped     sync.WaitGroup
-
 }
 
 const (
-	ForwardInterval = 1 * time.Minute
+	BrokerForwardInterval = 1 * time.Minute
 )
 
 func NewBrokerInformationForwarder() *BrokerInformationForwarder {
@@ -42,7 +39,7 @@ func (forwarder *BrokerInformationForwarder) close() {
 
 
 func (forwarder *BrokerInformationForwarder) startForwardTicker() {
-	forwardTicker := time.NewTicker(ForwardInterval)
+	forwardTicker := time.NewTicker(BrokerForwardInterval)
 	for _ = range forwardTicker.C {
 		forwarder.forwardBrokerInformation()
 	}

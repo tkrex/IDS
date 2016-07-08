@@ -23,7 +23,7 @@ type DomainInformationForwarder struct {
 }
 
 const (
-	ForwardInterval = 1 * time.Minute
+	DomainForwardInterval = 1 * time.Minute
 )
 
 func NewDomainInformationForwarder(forwardSignalChannel chan *models.RealWorldDomain) *DomainInformationForwarder {
@@ -60,7 +60,7 @@ func (forwarder *DomainInformationForwarder) listenOnForwardSignal() {
 }
 
 func (forwarder *DomainInformationForwarder) startForwardTicker() {
-	forwardTicker := time.NewTicker(ForwardInterval)
+	forwardTicker := time.NewTicker(DomainForwardInterval)
 	for _ = range forwardTicker.C {
 		forwarder.checkDomainsForForwarding()
 	}
