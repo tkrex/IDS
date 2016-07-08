@@ -1,0 +1,23 @@
+version: '2'
+services:
+  broker:
+    container_name: "domainController-broker"
+    image: toke/mosquitto
+    port:
+      - “9001”
+  database:
+    container_name: "domainController-db"  
+    image: mongo:3.0
+    expose:
+      - "27017"
+
+    command: mongod --smallfiles --quiet --logpath=/dev/null
+  ids-domaincontroller:
+    depends_on:
+      - domainController-db
+      - domainController-broker
+    enviroment:
+      - MONGODB_URI = domainController-db
+      - BROKER_URI = domainController-broker:9001
+      - MANAGEMENT_INTERFACE_URL = localhost
+    build: .

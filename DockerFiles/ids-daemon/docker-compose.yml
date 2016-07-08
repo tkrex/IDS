@@ -1,0 +1,22 @@
+version: '2'
+services:
+  database:
+    container_name: "daemon-db"  
+    image: mongo:3.0
+    expose:
+      - "27017"
+    command: mongod --smallfiles --quiet --logpath=/dev/null
+  
+  ids-daemon:
+    depends_on:
+      - database
+    volumes:
+      - /go/src/
+    environment:
+      - MONGODB_URI=daemon-db:27017
+      - BROKER_URI=192.168.0.22
+      - MANAGEMENT_INTERFACE_URL=http://localhost
+      - MANAGEMENT_BROKER_URL=localhost
+    ports:
+      - "8080:8080"
+    build: .
