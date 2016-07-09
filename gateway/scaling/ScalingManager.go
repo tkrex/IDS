@@ -29,14 +29,14 @@ func (scalingManager *ScalingManager) StartDomainControllerInstance(domain *mode
 	cmdName := "cd"
 	cmdArgs := []string{dockerFilePath}
 	if err = exec.Command(cmdName, cmdArgs...).Run(); err != nil {
-		fmt.Fprintln(os.Stderr, "There was an error running git rev-parse command: ", err)
+		fmt.Fprintln(os.Stderr, "Error changing directory to ", err)
 		return nil ,err
 	}
 
 	cmdName = "docker-compose"
 	cmdArgs = []string{"up","-d"}
 	if err = exec.Command(cmdName, cmdArgs...).Run(); err != nil {
-		fmt.Fprintln(os.Stderr, "There was an error running git rev-parse command: ", err)
+		fmt.Fprintln(os.Stderr, "Error starting docker compose instance: ", err)
 		return nil ,err
 	}
 	brokerPort := scalingManager.getContainerPort(envVariables["broker"])
@@ -67,12 +67,11 @@ func (scalingManager *ScalingManager) setEnvVariables(variables map[string]strin
 	for key, value := range variables {
 		cmdName := "export"
 		cmdArgs := []string{key+"="+value}
+		fmt.Println(cmdArgs)
 		if err := exec.Command(cmdName, cmdArgs...).Run; err != nil {
-			fmt.Fprintln(os.Stderr, "There was an error running git rev-parse command: ", err)
-			os.Exit(1)
+			fmt.Fprintln(os.Stderr, "ERROR Setting Env Variables", err)
 		}
 	}
-	return
 }
 
 func (scalingManager *ScalingManager) getContainerPort(containerName string) int {
