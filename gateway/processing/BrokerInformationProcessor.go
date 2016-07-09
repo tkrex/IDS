@@ -83,5 +83,5 @@ func (processor *DomainProcessor) storeDomainList(domains []*models.RealWorldDom
 		return
 	}
 	defer dbDelegate.Close()
-	dbDelegate.S
+	dbDelegate.StoreDomains(domains)
 }
