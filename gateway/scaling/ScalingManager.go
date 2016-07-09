@@ -66,18 +66,18 @@ func (scalingManager *ScalingManager) setEnvVariables(variables map[string]strin
 	}
 }
 
-func (scalingManager *ScalingManager) getContainerPort(containerName string, port string) int {
+func (scalingManager *ScalingManager) getContainerPort(containerName string, internalPort string) int {
 	var (
 		cmdOut []byte
 		err    error
 	)
 	cmdName := "docker"
-	cmdArgs := []string{"inspect", "-f","'{{index .NetworkSettings.Ports \""+port+" 0 \"HostPort\"}}'", containerName}
+	cmdArgs := []string{"inspect", "-f","'{{index .NetworkSettings.Ports \""+internalPort+" 0 \"HostPort\"}}'", containerName}
 	if cmdOut, err = exec.Command(cmdName, cmdArgs...).Output(); err != nil {
 		fmt.Fprintln(os.Stderr, "There was an error running git rev-parse command: ", err)
 		os.Exit(1)
 	}
-	port,_ := strconv.Atoi(string(cmdOut))
-	return port
+	externalPort,_ := strconv.Atoi(string(cmdOut))
+	return externalPort
 }
 
