@@ -14,6 +14,7 @@ type DomainControllerConfiguration struct {
 	DomainControllerID string `bson:"id"`
 	ParentDomain *models.RealWorldDomain `bson:"parentDomain"`
 	GatewayBrokerAddress *url.URL `bson:"gatewayBrokerAddress"`
+
 }
 
 func NewDomainControllerConfiguration(controllerID string,parentDomain *models.RealWorldDomain, gatewayBrokerAddress *url.URL) *DomainControllerConfiguration {

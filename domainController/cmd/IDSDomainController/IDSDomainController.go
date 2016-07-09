@@ -54,7 +54,7 @@ func initDomainControllerConfiguration () {
 		controllerID = "controllerID"
 	}
 
-	brokerURLString := os.Getenv("BROKER_URL")
+	brokerURLString := os.Getenv("BROKER_URI")
 	if brokerURLString == "" {
 		brokerURLString = "ws://localhost:18833"
 	}

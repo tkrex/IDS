@@ -5,14 +5,11 @@ import (
 	"gopkg.in/mgo.v2"
 	"github.com/tkrex/IDS/common/models"
 	"gopkg.in/mgo.v2/bson"
+	"os"
 )
 
 const (
-	Host = "localhost:27017"
-	Username = "example"
-	Password = "example"
 	Database = "IDSDomainController"
-
 	BrokerCollection = "brokers"
 	DomainInformationCollection = "domainInformation"
 	DomainCollection = "domains"
@@ -33,7 +30,8 @@ func NewDomainControllerDatabaseWorker() (*DomainControllerDatabaseWorker, error
 }
 
 func openSession() (*mgo.Session, error) {
-	session, err := mgo.Dial(Host)
+	host := os.Getenv("MONGODB_URI")
+	session, err := mgo.Dial(host)
 	return session, err
 }
 
