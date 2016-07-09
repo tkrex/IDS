@@ -4,7 +4,7 @@ import (
 	"os/exec"
 	"fmt"
 	"os"
-	"strconv"
+	"strings"
 	"github.com/tkrex/IDS/common/models"
 	"net/url"
 )
@@ -39,8 +39,8 @@ func (scalingManager *ScalingManager) StartDomainControllerInstance(parentDomain
 	brokerPort := scalingManager.getContainerPort(envVariables["broker"],"9001/tcp")
 	restPort := scalingManager.getContainerPort(envVariables["domainController"],"8080/tcp")
 	clusterIP := "10.40.53.21"
-	brokerURL,_ := url.Parse("ws://"+ clusterIP + ":" + string(brokerPort))
-	restURL,_ := url.Parse("http://"+ clusterIP + ":" + string(restPort))
+	brokerURL,_ := url.Parse("ws://"+ clusterIP + ":" + brokerPort)
+	restURL,_ := url.Parse("http://"+ clusterIP + ":" + restPort)
 	domainController := models.NewDomainController(restURL,brokerURL, ownDomain)
 	return domainController, nil
 }
@@ -66,18 +66,21 @@ func (scalingManager *ScalingManager) setEnvVariables(variables map[string]strin
 	}
 }
 
-func (scalingManager *ScalingManager) getContainerPort(containerName string, internalPort string) int {
+func (scalingManager *ScalingManager) getContainerPort(containerName string, internalPort string) string {
 	var (
 		cmdOut []byte
 		err    error
 	)
 	cmdName := "docker"
-	cmdArgs := []string{"inspect", "-f","'{{index .NetworkSettings.Ports \""+internalPort+" 0 \"HostPort\"}}'", containerName}
+	cmdArgs := []string{"inspect", "-f","'{{index .NetworkSettings.Ports \""+internalPort+"\" 0 \"HostPort\"}}'", containerName}
+	fmt.Println(cmdArgs)
 	if cmdOut, err = exec.Command(cmdName, cmdArgs...).Output(); err != nil {
 		fmt.Println("Error while parsing external port for container: ",containerName)
 		os.Exit(1)
 	}
-	externalPort,_ := strconv.Atoi(string(cmdOut))
+	externalPort := string(cmdOut)
+	externalPort=strings.Replace(externalPort,"'","",-1)
+	externalPort=strings.Replace(externalPort,"\n","",-1)
 	return externalPort
 }
 
