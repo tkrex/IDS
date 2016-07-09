@@ -25,17 +25,14 @@ func (scalingManager *ScalingManager) StartDomainControllerInstance(domain *mode
 	goPath := os.Getenv("GOPATH")
 	dockerFilePath := goPath+"/src/github.com/tkrex/IDS/DockerFiles/domainController"
 
-	var err    error
-	cmdName := "cd"
-	cmdArgs := []string{dockerFilePath}
-	if err = exec.Command(cmdName, cmdArgs...).Run(); err != nil {
-		fmt.Fprintln(os.Stderr, "Error changing directory to ", err)
-		return nil ,err
+	if error := os.Chdir(dockerFilePath); error != nil {
+		fmt.Fprintln(os.Stderr, "Error starting docker compose instance: ", error)
+		return nil ,error
 	}
 
-	cmdName = "docker-compose"
-	cmdArgs = []string{"up","-d"}
-	if err = exec.Command(cmdName, cmdArgs...).Run(); err != nil {
+	cmdName := "docker-compose"
+	cmdArgs := []string{"up","-d"}
+	if err := exec.Command(cmdName, cmdArgs...).Run(); err != nil {
 		fmt.Fprintln(os.Stderr, "Error starting docker compose instance: ", err)
 		return nil ,err
 	}
@@ -65,11 +62,8 @@ func (scalingManager *ScalingManager) buildEnvVariables(domain *models.RealWorld
 
 func (scalingManager *ScalingManager) setEnvVariables(variables map[string]string) {
 	for key, value := range variables {
-		cmdName := "export"
-		cmdArgs := []string{key+"="+value}
-		fmt.Println(cmdArgs)
-		if err := exec.Command(cmdName, cmdArgs...).Run; err != nil {
-			fmt.Fprintln(os.Stderr, "ERROR Setting Env Variables", err)
+		if error := os.Setenv(key,value); error != nil {
+			fmt.Println(error)
 		}
 	}
 }
