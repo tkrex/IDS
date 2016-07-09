@@ -21,17 +21,20 @@ type DomainInformationProcessor struct {
 	processorStarted            sync.WaitGroup
 	processorStopped            sync.WaitGroup
 	incomingTopicChannel        chan *models.RawTopicMessage
+	forwardFlag bool
 	forwardingSignalChannel     chan *models.RealWorldDomain
 
 	newDomainInformationCounter map[string]int
 }
 
-func NewDomainInformationProcessor(incomingTopicChannel chan *models.RawTopicMessage) *DomainInformationProcessor {
+func NewDomainInformationProcessor(incomingTopicChannel chan *models.RawTopicMessage, forwardFlag bool) *DomainInformationProcessor {
 	processor := new(DomainInformationProcessor)
 	processor.processorStarted.Add(1)
 	processor.processorStopped.Add(1)
 	processor.incomingTopicChannel = incomingTopicChannel
+	processor.forwardFlag = forwardFlag
 	processor.forwardingSignalChannel = make(chan *models.RealWorldDomain)
+
 	processor.newDomainInformationCounter = make(map[string]int)
 	go processor.run()
 	processor.processorStarted.Wait()
@@ -87,7 +90,7 @@ func (processor *DomainInformationProcessor) processDomainInformationMessage(top
 	}
 
 	processor.newDomainInformationCounter[domainInformationMessage.RealWorldDomain.Name] += domainInformationMessage.ForwardPriority
-	if processor.newDomainInformationCounter[domainInformationMessage.RealWorldDomain.Name] > ForwardThreshold {
+	if  processor.forwardFlag && processor.newDomainInformationCounter[domainInformationMessage.RealWorldDomain.Name] > ForwardThreshold {
 		processor.forwardingSignalChannel <- domainInformationMessage.RealWorldDomain
 	}
 }

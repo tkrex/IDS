@@ -14,7 +14,8 @@ services:
     command: mongod --smallfiles --quiet --logpath=/dev/null
   ids-domaincontroller:
     container_name: ${domainController}
-
+    ports:
+      - "8080"
     depends_on:
       - broker
       - database

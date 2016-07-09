@@ -3,6 +3,9 @@ package configuration
 import (
 	"github.com/tkrex/IDS/common/models"
 	"net/url"
+	"os"
+	"fmt"
+	"github.com/tkrex/IDS/daemon/configuration"
 )
 
 type DomainControllerConfigurationManager struct {
@@ -35,7 +38,48 @@ func NewDomainControllerConfigurationManager() *DomainControllerConfigurationMan
 	return configManager
 }
 
-func (configManager *DomainControllerConfigurationManager) StoreConfig(config *DomainControllerConfiguration) error{
+func (configManager *DomainControllerConfigurationManager) InitConfig() *DomainControllerConfiguration {
+	parentDomainString := os.Getenv("PARENT_DOMAIN")
+	if parentDomainString == "" {
+		parentDomainString = "default"
+	}
+
+	parentDomain := models.NewRealWorldDomain(parentDomainString)
+
+	ownDomainString := os.Getenv("OWN_DOMAIN")
+	if parentDomainString == "" {
+		parentDomainString = "default"
+	}
+
+	ownDomain := models.NewRealWorldDomain(ownDomainString)
+
+
+	controllerID := os.Getenv("CONTROLLER_ID")
+	if controllerID == "" {
+		controllerID = "controllerID"
+	}
+
+	brokerURLString := os.Getenv("BROKER_URI")
+	fmt.Println()
+	if brokerURLString == "" {
+		brokerURLString = "ws://localhost:18833"
+	}
+	brokerURL,error := url.Parse(brokerURLString)
+	if error != nil {
+		fmt.Println("Parsing Error: ",error)
+	}
+
+	gatewayBrokerURLString := os.Getenv("GATEWAY_BROKER_URI")
+	if gatewayBrokerURLString == "" {
+		gatewayBrokerURLString = "ws://localhost:18833"
+	}
+	gatewayBrokerURL,_ := url.Parse(gatewayBrokerURLString)
+	config := NewDomainControllerConfiguration(controllerID, parentDomain,ownDomain, brokerURL,gatewayBrokerURL)
+	configManager.storeConfig(config)
+	return config
+}
+
+func (configManager *DomainControllerConfigurationManager) storeConfig(config *DomainControllerConfiguration) error{
 	storageManager, err := NewDomainControllerConfigStorageManager()
 	if err != nil {
 		return err

@@ -36,18 +36,14 @@ func (scalingManager *ScalingManager) StartDomainControllerInstance(parentDomain
 		fmt.Fprintln(os.Stderr, "Error starting docker compose instance: ", err)
 		return nil ,err
 	}
-	brokerPort := scalingManager.getContainerPort(envVariables["broker"])
-	restPort := scalingManager.getContainerPort(envVariables["domainController"])
+	brokerPort := scalingManager.getContainerPort(envVariables["broker"],"9001/tcp")
+	restPort := scalingManager.getContainerPort(envVariables["domainController"],"8080/tcp")
 	clusterIP := "10.40.53.21"
 	brokerURL,_ := url.Parse("ws://"+ clusterIP + ":" + string(brokerPort))
 	restURL,_ := url.Parse("http://"+ clusterIP + ":" + string(restPort))
 	domainController := models.NewDomainController(restURL,brokerURL, ownDomain)
 	return domainController, nil
 }
-
-
-
-
 
 func (scalingManager *ScalingManager) buildEnvVariables(parentDomain, ownDomain *models.RealWorldDomain) map[string]string{
 	domainControllerName := "domainController-" + ownDomain.Name
@@ -70,13 +66,13 @@ func (scalingManager *ScalingManager) setEnvVariables(variables map[string]strin
 	}
 }
 
-func (scalingManager *ScalingManager) getContainerPort(containerName string) int {
+func (scalingManager *ScalingManager) getContainerPort(containerName string, port string) int {
 	var (
 		cmdOut []byte
 		err    error
 	)
 	cmdName := "docker"
-	cmdArgs := []string{"inspect", "-f","'{{index .NetworkSettings.Ports \"9001/tcp\" 0 \"HostPort\"}}'", containerName}
+	cmdArgs := []string{"inspect", "-f","'{{index .NetworkSettings.Ports \""+port+" 0 \"HostPort\"}}'", containerName}
 	if cmdOut, err = exec.Command(cmdName, cmdArgs...).Output(); err != nil {
 		fmt.Fprintln(os.Stderr, "There was an error running git rev-parse command: ", err)
 		os.Exit(1)

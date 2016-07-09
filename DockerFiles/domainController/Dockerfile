@@ -14,3 +14,4 @@ RUN go install github.com/tkrex/IDS/domainController/...
 
 # Run the outyet command by default when the container starts.
 ENTRYPOINT /go/bin/IDSDomainController domain
+EXPOSES 8080
