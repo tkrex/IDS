@@ -7,6 +7,7 @@ import (
 	"github.com/tkrex/IDS/common/publishing"
 	"github.com/tkrex/IDS/common/controlling"
 	"net/url"
+	"github.com/tkrex/IDS/gateway/scaling"
 )
 
 type DomainControllerManagementRequestHandler struct {
@@ -36,7 +37,7 @@ func (handler *DomainControllerManagementRequestHandler) handleManagementRequest
 		}
 
 	case models.DomainControllerChange:
-		if domainController := handler.startNewDomainControllerInstance(request.Domain); domainController != nil {
+		if domainController,_ := handler.startNewDomainControllerInstance(request.Domain); domainController != nil {
 			changed, _ := dbWorker.StoreDomainController(domainController)
 			if changed {
 				fmt.Println("New Domain Controller stored")
@@ -59,13 +60,10 @@ func (handler *DomainControllerManagementRequestHandler) handleManagementRequest
 	return changedDomainController
 }
 
-func (handler *DomainControllerManagementRequestHandler) startNewDomainControllerInstance(domain *models.RealWorldDomain) *models.DomainController {
+func (handler *DomainControllerManagementRequestHandler) startNewDomainControllerInstance(domain *models.RealWorldDomain) (*models.DomainController,error) {
 	//TODO: start new docker instance
-
-	restEndpoint, _ := url.Parse("http://localhost:8000/rest")
-	brokerAddress, _ := url.Parse("ws://localhost:11883")
-	domainController := models.NewDomainController(restEndpoint, brokerAddress, domain)
-	return domainController
+	domainController,error := scaling.NewScalingManager().StartDomainControllerInstance(domain)
+	return domainController, error
 }
 
 func (worker *DomainControllerManagementRequestHandler) forwardControlMessage(controlMessage *models.ControlMessage) {

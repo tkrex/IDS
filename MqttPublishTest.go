@@ -5,6 +5,8 @@ import (
 	"github.com/tkrex/IDS/common/publishing"
 	"time"
 	"encoding/json"
+	"net/url"
+	"github.com/tkrex/IDS/common/subscribing"
 )
 
 func main() {
@@ -31,7 +33,9 @@ func main() {
 
 	json,_ := json.Marshal(message)
 
-	publishConfig := models.NewMqttClientConfiguration("localhost","11883","ws","testID","testClient")
+	brokerURL,_  :=  url.Parse("ws://10.40.53.21:32769")
+	publishConfig := models.NewMqttClientConfiguration(brokerURL,"testPublisher")
 	publisher := publishing.NewMqttPublisher(publishConfig,false)
-	publisher.Publish(json)
+	publisher.Publish(json,"test")
+	for {}
 }
