@@ -68,13 +68,12 @@ func (processor *DomainProcessor) listenForDomains() bool {
 }
 
 func (processor *DomainProcessor) processDomainList(topic *models.RawTopicMessage) {
-	var brokers []*models.Broker
-	if err := json.Unmarshal(topic.Payload, &brokers); err != nil {
+	var domains []*models.RealWorldDomain
+	if err := json.Unmarshal(topic.Payload, &domains); err != nil {
 		fmt.Println(err)
 		return
 	}
-
-	processor.storeDomainList(brokers)
+	processor.storeDomainList(domains)
 }
 
 func (processor *DomainProcessor) storeDomainList(domains []*models.RealWorldDomain) {
