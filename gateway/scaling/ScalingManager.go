@@ -74,7 +74,7 @@ func (scalingManager *ScalingManager) getContainerPort(containerName string, int
 	cmdName := "docker"
 	cmdArgs := []string{"inspect", "-f","'{{index .NetworkSettings.Ports \""+internalPort+" 0 \"HostPort\"}}'", containerName}
 	if cmdOut, err = exec.Command(cmdName, cmdArgs...).Output(); err != nil {
-		fmt.Fprintln(os.Stderr, "There was an error running git rev-parse command: ", err)
+		fmt.Fprintln("Error while parsing external port for container: ",containerName)
 		os.Exit(1)
 	}
 	externalPort,_ := strconv.Atoi(string(cmdOut))
