@@ -4,7 +4,7 @@ services:
     container_name: ${broker}
     image: toke/mosquitto
     ports:
-      - “9001”
+      - "9001"
   database:
     container_name: ${db}
     image: mongo:3.0
@@ -15,8 +15,8 @@ services:
   ids-domaincontroller:
     container_name: ${domainController}
     depends_on:
-      - ${db}
-      - ${broker}
+      - broker
+      - database
     environment:
       - MONGODB_URI = ${db}:27017
       - BROKER_URI = ${broker}:9001
