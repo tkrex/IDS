@@ -51,11 +51,15 @@ func (webInterface ServerMaintenanceWebInterface) instantiateDomainController(re
 	parameters := mux.Vars(req)
 	domainName := parameters["domain"]
 	domain := models.NewRealWorldDomain(domainName)
+	req.ParseForm()
+	parentDomain := req.FormValue("parent_domain")
+	fmt.Println(parentDomain)
 
 	var messageType = models.DomainControllerChange
 	managementRequest := models.NewDomainControllerManagementRequest(messageType,domain)
+	managementRequest.ParentDomain = models.NewRealWorldDomain(parentDomain)
 
-	requestHandler := NewDomainControllerManagementRequestHandler(webInterface.managementBrokerAddress)
+	requestHandler := NewDomainControllerManagementRequestHandler()
 	if domainController := requestHandler.handleManagementRequest(managementRequest); domainController != nil {
 		json.NewEncoder(res).Encode(&domainController)
 		return
@@ -72,7 +76,7 @@ func (webInterface ServerMaintenanceWebInterface) fetchDomainController(res http
 	var messageType = models.DomainControllerFetch
 	managementRequest := models.NewDomainControllerManagementRequest(messageType,domain)
 
-	requestHandler := NewDomainControllerManagementRequestHandler(webInterface.managementBrokerAddress)
+	requestHandler := NewDomainControllerManagementRequestHandler()
 	if domainController := requestHandler.handleManagementRequest(managementRequest); domainController != nil {
 		json.NewEncoder(res).Encode(&domainController)
 		return
@@ -89,7 +93,7 @@ func (webInterface ServerMaintenanceWebInterface) deleteDomainController(res htt
 	var messageType = models.DomainControllerDelete
 	managementRequest := models.NewDomainControllerManagementRequest(messageType,domain)
 
-	requestHandler := NewDomainControllerManagementRequestHandler(webInterface.managementBrokerAddress)
+	requestHandler := NewDomainControllerManagementRequestHandler()
 	if domainController := requestHandler.handleManagementRequest(managementRequest); domainController != nil {
 		json.NewEncoder(res).Encode(domainController)
 		return

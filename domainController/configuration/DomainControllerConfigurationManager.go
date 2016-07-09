@@ -13,14 +13,18 @@ type DomainControllerConfigurationManager struct {
 type DomainControllerConfiguration struct {
 	DomainControllerID string `bson:"id"`
 	ParentDomain *models.RealWorldDomain `bson:"parentDomain"`
+	OwnDomain *models.RealWorldDomain `bson:"ownDomain"`
+	ControllerBrokerAddress *url.URL `bson:"controllerBrokerAddress"`
 	GatewayBrokerAddress *url.URL `bson:"gatewayBrokerAddress"`
 
 }
 
-func NewDomainControllerConfiguration(controllerID string,parentDomain *models.RealWorldDomain, gatewayBrokerAddress *url.URL) *DomainControllerConfiguration {
+func NewDomainControllerConfiguration(controllerID string,parentDomain *models.RealWorldDomain, ownDomain *models.RealWorldDomain, controllerBrokerAddress *url.URL, gatewayBrokerAddress *url.URL) *DomainControllerConfiguration {
 	config := new(DomainControllerConfiguration)
 	config.DomainControllerID = controllerID
 	config.ParentDomain = parentDomain
+	config.OwnDomain = ownDomain
+	config.ControllerBrokerAddress = controllerBrokerAddress
 	config.GatewayBrokerAddress = gatewayBrokerAddress
 	return config
 }

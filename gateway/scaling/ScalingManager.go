@@ -17,9 +17,9 @@ func NewScalingManager() *ScalingManager {
 }
 
 
-func (scalingManager *ScalingManager) StartDomainControllerInstance(domain *models.RealWorldDomain) (*models.DomainController, error) {
+func (scalingManager *ScalingManager) StartDomainControllerInstance(parentDomain,ownDomain *models.RealWorldDomain) (*models.DomainController, error) {
 
-	envVariables := scalingManager.buildEnvVariables(domain)
+	envVariables := scalingManager.buildEnvVariables(parentDomain,ownDomain)
 	scalingManager.setEnvVariables(envVariables)
 
 	goPath := os.Getenv("GOPATH")
@@ -41,7 +41,7 @@ func (scalingManager *ScalingManager) StartDomainControllerInstance(domain *mode
 	clusterIP := "10.40.53.21"
 	brokerURL,_ := url.Parse("ws://"+ clusterIP + ":" + string(brokerPort))
 	restURL,_ := url.Parse("http://"+ clusterIP + ":" + string(restPort))
-	domainController := models.NewDomainController(restURL,brokerURL,domain)
+	domainController := models.NewDomainController(restURL,brokerURL, ownDomain)
 	return domainController, nil
 }
 
@@ -49,14 +49,16 @@ func (scalingManager *ScalingManager) StartDomainControllerInstance(domain *mode
 
 
 
-func (scalingManager *ScalingManager) buildEnvVariables(domain *models.RealWorldDomain) map[string]string{
-	domainControllerName := "domainController-" + domain.Name
-	brokerName := "broker-" + domain.Name
-	dbName := "db-"+domain.Name
+func (scalingManager *ScalingManager) buildEnvVariables(parentDomain, ownDomain *models.RealWorldDomain) map[string]string{
+	domainControllerName := "domainController-" + ownDomain.Name
+	brokerName := "broker-" + ownDomain.Name
+	dbName := "db-"+ ownDomain.Name
 	envVariables := make(map[string]string)
 	envVariables["domainController"] = domainControllerName
 	envVariables["db"] = dbName
 	envVariables["broker"] = brokerName
+	envVariables["own_domain"] = ownDomain.Name
+	envVariables["parent_domain"] = parentDomain.Name
 	return envVariables
 }
 

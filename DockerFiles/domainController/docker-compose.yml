@@ -20,6 +20,9 @@ services:
       - database
     environment:
       - MONGODB_URI=${db}:27017
-      - BROKER_URI=${broker}:9001
-      - MANAGEMENT_INTERFACE_URL=localhost
+      - BROKER_URI=ws://${broker}:9001
+      - MANAGEMENT_INTERFACE_URI=http://10.40.53.21:8080
+      - GATEWAY_BROKER_URI=ws://10.40.53.21:9001
+      - PARENT_DOMAIN=${parent_domain}
+      - OWN_DOMAIN=${own_domain}
     build: .

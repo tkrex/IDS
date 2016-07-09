@@ -3,20 +3,16 @@ package controlling
 import (
 	"github.com/tkrex/IDS/common/models"
 	"fmt"
-	"encoding/json"
-	"github.com/tkrex/IDS/common/publishing"
 	"github.com/tkrex/IDS/common/controlling"
-	"net/url"
 	"github.com/tkrex/IDS/gateway/scaling"
 )
 
 type DomainControllerManagementRequestHandler struct {
-	managementBrokerAddress *url.URL
+
 }
 
-func NewDomainControllerManagementRequestHandler(managementBrokerAddress *url.URL) *DomainControllerManagementRequestHandler {
+func NewDomainControllerManagementRequestHandler() *DomainControllerManagementRequestHandler {
 	worker := new(DomainControllerManagementRequestHandler)
-	worker.managementBrokerAddress = managementBrokerAddress
 	return worker
 }
 
@@ -37,7 +33,7 @@ func (handler *DomainControllerManagementRequestHandler) handleManagementRequest
 		}
 
 	case models.DomainControllerChange:
-		if domainController,_ := handler.startNewDomainControllerInstance(request.Domain); domainController != nil {
+		if domainController,_ := handler.startNewDomainControllerInstance(request.Domain, request.ParentDomain); domainController != nil {
 			changed, _ := dbWorker.StoreDomainController(domainController)
 			if changed {
 				fmt.Println("New Domain Controller stored")
@@ -52,32 +48,27 @@ func (handler *DomainControllerManagementRequestHandler) handleManagementRequest
 		changedDomainController = dbDelegate.FindDomainControllerForDomain(request.Domain)
 	}
 
-
-	if changedDomainController != nil {
-		controlMessage := models.NewControlMessage(request.RequestType, changedDomainController)
-		handler.forwardControlMessage(controlMessage)
-	}
 	return changedDomainController
 }
 
-func (handler *DomainControllerManagementRequestHandler) startNewDomainControllerInstance(domain *models.RealWorldDomain) (*models.DomainController,error) {
+func (handler *DomainControllerManagementRequestHandler) startNewDomainControllerInstance(domain *models.RealWorldDomain,parentDomain *models.RealWorldDomain) (*models.DomainController,error) {
 	//TODO: start new docker instance
-	domainController,error := scaling.NewScalingManager().StartDomainControllerInstance(domain)
+	domainController,error := scaling.NewScalingManager().StartDomainControllerInstance(parentDomain,domain)
 	return domainController, error
 }
 
-func (worker *DomainControllerManagementRequestHandler) forwardControlMessage(controlMessage *models.ControlMessage) {
-	json, err := json.Marshal(&controlMessage)
-	if err != nil {
-		fmt.Print(err)
-		return
-	}
-
-	publishConfig := models.NewMqttClientConfiguration(worker.managementBrokerAddress, "gateway")
-	publisher := publishing.NewMqttPublisher(publishConfig, false)
-	defer publisher.Close()
-	publisher.Publish(json, "ControlMessage")
-}
+//func (worker *DomainControllerManagementRequestHandler) forwardControlMessage(controlMessage *models.ControlMessage) {
+//	json, err := json.Marshal(&controlMessage)
+//	if err != nil {
+//		fmt.Print(err)
+//		return
+//	}
+//
+//	publishConfig := models.NewMqttClientConfiguration(worker.managementBrokerAddress, "gateway")
+//	publisher := publishing.NewMqttPublisher(publishConfig, false)
+//	defer publisher.Close()
+//	publisher.Publish(json, "ControlMessage")
+//}
 
 
 
