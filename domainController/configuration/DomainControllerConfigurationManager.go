@@ -19,16 +19,17 @@ type DomainControllerConfiguration struct {
 	OwnDomain *models.RealWorldDomain `bson:"ownDomain"`
 	ControllerBrokerAddress *url.URL `bson:"controllerBrokerAddress"`
 	GatewayBrokerAddress *url.URL `bson:"gatewayBrokerAddress"`
-
+	ScalingInterfaceAddress *url.URL `bson:"scalingInterfaceAddress"`
 }
 
-func NewDomainControllerConfiguration(controllerID string,parentDomain *models.RealWorldDomain, ownDomain *models.RealWorldDomain, controllerBrokerAddress *url.URL, gatewayBrokerAddress *url.URL) *DomainControllerConfiguration {
+func NewDomainControllerConfiguration(controllerID string,parentDomain *models.RealWorldDomain, ownDomain *models.RealWorldDomain, controllerBrokerAddress *url.URL, gatewayBrokerAddress *url.URL, scalingInterfaceAddress *url.URL) *DomainControllerConfiguration {
 	config := new(DomainControllerConfiguration)
 	config.DomainControllerID = controllerID
 	config.ParentDomain = parentDomain
 	config.OwnDomain = ownDomain
 	config.ControllerBrokerAddress = controllerBrokerAddress
 	config.GatewayBrokerAddress = gatewayBrokerAddress
+	config.ScalingInterfaceAddress = scalingInterfaceAddress
 	return config
 }
 
@@ -39,42 +40,39 @@ func NewDomainControllerConfigurationManager() *DomainControllerConfigurationMan
 }
 
 func (configManager *DomainControllerConfigurationManager) InitConfig() *DomainControllerConfiguration {
-	parentDomainString := os.Getenv("PARENT_DOMAIN")
-	if parentDomainString == "" {
-		parentDomainString = "default"
-	}
 
+	//Default values
+	parentDomainString := "default"
+	ownDomainString := "default"
+	controllerID := "controllerID"
+	brokerURLString := "ws://localhost:18833"
+	gatewayBrokerURLString := "ws://localhost:18833"
+	scalingInterfaceString := "http://localhost:8000"
+
+
+	var parsingError error
+	parentDomainString = os.Getenv("PARENT_DOMAIN")
 	parentDomain := models.NewRealWorldDomain(parentDomainString)
 
-	ownDomainString := os.Getenv("OWN_DOMAIN")
-	if parentDomainString == "" {
-		parentDomainString = "default"
-	}
-
+	ownDomainString = os.Getenv("OWN_DOMAIN")
 	ownDomain := models.NewRealWorldDomain(ownDomainString)
 
+	controllerID = os.Getenv("CONTROLLER_ID")
 
-	controllerID := os.Getenv("CONTROLLER_ID")
-	if controllerID == "" {
-		controllerID = "controllerID"
+	brokerURLString = os.Getenv("BROKER_URI")
+	brokerURL,parsingError := url.Parse(brokerURLString)
+
+	scalingInterfaceString = os.Getenv("MANAGEMENT_INTERFACE_URI")
+	scalingInterfaceURL, parsingError := url.Parse(scalingInterfaceString)
+
+	gatewayBrokerURLString = os.Getenv("GATEWAY_BROKER_URI")
+	gatewayBrokerURL,parsingError := url.Parse(gatewayBrokerURLString)
+
+	if parsingError != nil {
+		fmt.Println("ConfigManager: Parsing Error")
 	}
 
-	brokerURLString := os.Getenv("BROKER_URI")
-	fmt.Println()
-	if brokerURLString == "" {
-		brokerURLString = "ws://localhost:18833"
-	}
-	brokerURL,error := url.Parse(brokerURLString)
-	if error != nil {
-		fmt.Println("Parsing Error: ",error)
-	}
-
-	gatewayBrokerURLString := os.Getenv("GATEWAY_BROKER_URI")
-	if gatewayBrokerURLString == "" {
-		gatewayBrokerURLString = "ws://localhost:18833"
-	}
-	gatewayBrokerURL,_ := url.Parse(gatewayBrokerURLString)
-	config := NewDomainControllerConfiguration(controllerID, parentDomain,ownDomain, brokerURL,gatewayBrokerURL)
+	config := NewDomainControllerConfiguration(controllerID, parentDomain,ownDomain, brokerURL,gatewayBrokerURL,scalingInterfaceURL)
 	configManager.storeConfig(config)
 	return config
 }
