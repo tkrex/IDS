@@ -170,6 +170,16 @@ func (dbWoker *DomainControllerDatabaseWorker) FindDomainInformationForBroker(in
 	return domainInformation, error
 }
 
+func (dbWorker *DomainControllerDatabaseWorker) NumberOfBrokersForDomain(domain *models.RealWorldDomain) int {
+	count := 0
+
+	coll := dbWorker.domainInformationCollection()
+	if count, error := coll.Find(bson.M{"domain.name": domain.Name}).Count(); error != nil {
+		fmt.Println(error)
+	}
+	return count
+}
+
 func (dbWoker *DomainControllerDatabaseWorker) FindBrokersForDomain(domainName string) ([]*models.Broker, error) {
 	coll := dbWoker.brokerCollection()
 	var domainInformation []*models.DomainInformationMessage

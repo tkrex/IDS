@@ -3,8 +3,8 @@ package models
 type ControlMessageType string
 
 const (
-	DomainControllerChange ControlMessageType = "Update"
-	DomainControllerDelete ControlMessageType = "Delete"
+	DomainControllerStart ControlMessageType = "Update"
+	DomainControllerStop ControlMessageType = "Delete"
 	DomainControllerFetch ControlMessageType = "Fetch"
 )
 

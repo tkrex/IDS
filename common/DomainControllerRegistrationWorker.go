@@ -22,7 +22,7 @@ func NewDomainControllerRegistrationWorker(managementServerAddress string) *Doma
 }
 
 func (worker *DomainControllerRegistrationWorker) RequestNewDomainControllerForDomain(domain *models.RealWorldDomain) {
-	domainController , err := worker.sendManagementRequest(models.DomainControllerChange,domain)
+	domainController , err := worker.sendManagementRequest(models.DomainControllerStart,domain)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -31,7 +31,7 @@ func (worker *DomainControllerRegistrationWorker) RequestNewDomainControllerForD
 }
 
 func (worker *DomainControllerRegistrationWorker) RequestDomainControllerDeletionForDomain(domain *models.RealWorldDomain) {
-	domainController , err := worker.sendManagementRequest(models.DomainControllerDelete,domain)
+	domainController , err := worker.sendManagementRequest(models.DomainControllerStop,domain)
 	if err != nil {
 		fmt.Println(err)
 	} else {
@@ -43,9 +43,9 @@ func  (worker *DomainControllerRegistrationWorker) sendManagementRequest(request
 	registrationURL := worker.managementServerAddress+"/domainController/"+domain.Name
 
 	switch requestType {
-	case models.DomainControllerChange:
+	case models.DomainControllerStart:
 		registrationURL += "/new"
-	case models.DomainControllerDelete:
+	case models.DomainControllerStop:
 		registrationURL += "/delete"
 
 	}

@@ -60,9 +60,9 @@ func (processor *ControlMessageProcessor) processIncomingControlMessage() bool {
 	}
 
 	if controlMessage != nil {
-		if controlMessage.MessageType == models.DomainControllerChange {
+		if controlMessage.MessageType == models.DomainControllerStart {
 			go processor.storeDomainController(controlMessage.DomainController)
-		} else if controlMessage.MessageType == models.DomainControllerDelete {
+		} else if controlMessage.MessageType == models.DomainControllerStop {
 			go processor.removeDomainController(controlMessage.DomainController)
 		}
 	}
