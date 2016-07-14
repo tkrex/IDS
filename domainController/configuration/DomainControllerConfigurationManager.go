@@ -18,7 +18,7 @@ var once sync.Once
 
 func DomainControllerConfigurationManager() *DomainControllerConfigurationManager {
 	once.Do(func() {
-		instance = &DomainControllerConfigurationManager{}
+		instance = NewDomainControllerConfigurationManager()
 	})
 	return instance
 }
