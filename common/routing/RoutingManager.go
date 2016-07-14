@@ -9,49 +9,61 @@ import (
 	"net/url"
 	"time"
 	"github.com/tkrex/IDS/common/controlling"
+	"sync"
+	"github.com/tkrex/IDS/domainController/configuration"
 )
 
+const RouteUpdateThreshold = time.Minute * 5
+
 type RoutingManager struct {
-	dbDelegate *controlling.ControlMessageDBDelegate
-	lastUpdate 	time.Time
+	routingTable   map[string]*models.DomainController
+	routeLifeTimes map[string]time.Time
 }
 
 
 func NewRoutingManager() *RoutingManager {
 	routingManager := new(RoutingManager)
-	dbDelegate,_ := controlling.NewControlMessageDBDelegate()
-	routingManager.dbDelegate = dbDelegate
-
+	routingManager.routeLifeTimes = make(map[string]time.Time)
+	routingManager.routingTable = make(map[string]*models.DomainController)
 	return routingManager
 }
 
-func (routingManager *RoutingManager) DomainControllerForDomain(domain *models.RealWorldDomain, forceRefresh bool) (*models.DomainController,error) {
+var instance *RoutingManager
+var once sync.Once
 
+func RoutingManager() *RoutingManager {
+	once.Do(func() {
+		instance = NewRoutingManager()
+	})
+	return instance
+}
+
+
+func (routingManager *RoutingManager) DomainControllerForDomain(domain *models.RealWorldDomain, forceRefresh bool) (*models.DomainController, error) {
 	if !forceRefresh {
-		cachedDomainController := routingManager.dbDelegate.FindDomainControllerForDomain(domain)
-		if cachedDomainController != nil {
+		cachedDomainController, exist := routingManager.routingTable[domain.Name]
+		if exist && time.Now().Sub(routingManager.routeLifeTimes[domain.Name]).Minutes() <= RouteUpdateThreshold {
 			return cachedDomainController, nil
 		}
 	}
+
 	fetchedDomainController, err := routingManager.requestDomainControllerForDomain(domain)
 	if fetchedDomainController != nil {
-		routingManager.AddDomainController(fetchedDomainController)
+		routingManager.AddDomainControllerForDomain(fetchedDomainController,domain)
 	}
 	return fetchedDomainController, err
 }
 
-func (routingManager *RoutingManager) AddDomainController(domainController *models.DomainController) {
-	routingManager.dbDelegate.StoreDomainController(domainController)
+func (routingManager *RoutingManager) AddDomainControllerForDomain(domainController *models.DomainController, domain *models.RealWorldDomain) {
+	routingManager.routingTable[domain.Name] = domainController
+	routingManager.routeLifeTimes[domain.Name] = time.Now()
 }
 
+func (routingManager *RoutingManager) requestDomainControllerForDomain(domain *models.RealWorldDomain) (*models.DomainController, error) {
+	fmt.Println("Sending Domain Controller Request for domain:",domain.Name)
+	infrastructureManagerURL := configuration.DomainControllerConfigurationManager().Config().ScalingInterfaceAddress
 
-
-func (routingManager *RoutingManager) requestDomainControllerForDomain(domain *models.RealWorldDomain) (*models.DomainController,error) {
-	fmt.Println("Sending Broker Registration Request")
-
-	InfrastructureManagerURL,_ := url.Parse("http://localhost:8080/rest")
-
-	req, err := http.NewRequest("GET",  InfrastructureManagerURL.String() + "/domainControllers/"+domain.Name,nil)
+	req, err := http.NewRequest("GET", infrastructureManagerURL.String() + "/rest/domainControllers/" + domain.Name, nil)
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
@@ -67,8 +79,3 @@ func (routingManager *RoutingManager) requestDomainControllerForDomain(domain *m
 	err = json.Unmarshal(body, &domainController)
 	return domainController, err
 }
-
-
-
-
-
