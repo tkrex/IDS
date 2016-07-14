@@ -8,19 +8,19 @@ import (
 	"github.com/tkrex/IDS/common/models"
 	"net/url"
 )
-type ScalingManager struct {
+type DockerManager struct {
 
 }
 
-func NewScalingManager() *ScalingManager {
-	return new(ScalingManager)
+func NewDockerManager() *DockerManager {
+	return new(DockerManager)
 }
 
 
-func (scalingManager *ScalingManager) StartDomainControllerInstance(parentDomain,ownDomain *models.RealWorldDomain) (*models.DomainController, error) {
+func (dockerManager *DockerManager) StartDomainControllerInstance(parentDomain,ownDomain *models.RealWorldDomain) (*models.DomainController, error) {
 
-	envVariables := scalingManager.buildEnvVariables(parentDomain,ownDomain)
-	scalingManager.setEnvVariables(envVariables)
+	envVariables := dockerManager.buildEnvVariables(parentDomain,ownDomain)
+	dockerManager.setEnvVariables(envVariables)
 
 	goPath := os.Getenv("GOPATH")
 	dockerFilePath := goPath+"/src/github.com/tkrex/IDS/DockerFiles/domainController"
@@ -36,8 +36,8 @@ func (scalingManager *ScalingManager) StartDomainControllerInstance(parentDomain
 		fmt.Fprintln(os.Stderr, "Error starting docker compose instance: ", err)
 		return nil ,err
 	}
-	brokerPort := scalingManager.getContainerPort(envVariables["broker"],"9001/tcp")
-	restPort := scalingManager.getContainerPort(envVariables["domainController"],"8080/tcp")
+	brokerPort := dockerManager.getContainerPort(envVariables["broker"],"9001/tcp")
+	restPort := dockerManager.getContainerPort(envVariables["domainController"],"8080/tcp")
 	clusterIP := "10.40.53.21"
 	brokerURL,_ := url.Parse("ws://"+ clusterIP + ":" + brokerPort)
 	restURL,_ := url.Parse("http://"+ clusterIP + ":" + restPort)
@@ -45,7 +45,7 @@ func (scalingManager *ScalingManager) StartDomainControllerInstance(parentDomain
 	return domainController, nil
 }
 
-func (scalingManager *ScalingManager) buildEnvVariables(parentDomain, ownDomain *models.RealWorldDomain) map[string]string{
+func (dockerManager *DockerManager) buildEnvVariables(parentDomain, ownDomain *models.RealWorldDomain) map[string]string{
 	domainControllerName := "domainController-" + ownDomain.Name
 	brokerName := "broker-" + ownDomain.Name
 	dbName := "db-"+ ownDomain.Name
@@ -58,7 +58,7 @@ func (scalingManager *ScalingManager) buildEnvVariables(parentDomain, ownDomain 
 	return envVariables
 }
 
-func (scalingManager *ScalingManager) setEnvVariables(variables map[string]string) {
+func (dockerManager *DockerManager) setEnvVariables(variables map[string]string) {
 	for key, value := range variables {
 		if error := os.Setenv(key,value); error != nil {
 			fmt.Println(error)
@@ -66,7 +66,7 @@ func (scalingManager *ScalingManager) setEnvVariables(variables map[string]strin
 	}
 }
 
-func (scalingManager *ScalingManager) getContainerPort(containerName string, internalPort string) string {
+func (dockerManager *DockerManager) getContainerPort(containerName string, internalPort string) string {
 	var (
 		cmdOut []byte
 		err    error
@@ -84,3 +84,8 @@ func (scalingManager *ScalingManager) getContainerPort(containerName string, int
 	return externalPort
 }
 
+//TODO: Implement
+func (dockerManager *DockerManager) StopDomainControllerInstance(domain *models.RealWorldDomain) error {
+	var error error
+	return error
+}
