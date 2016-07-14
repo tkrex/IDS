@@ -12,6 +12,8 @@ type DomainControllerManager struct {
 
 }
 
+const defaultDomain = models.NewRealWorldDomain("default")
+
 func NewDomainControllerManager() *DomainControllerManager {
 	worker := new(DomainControllerManager)
 	return worker
@@ -37,11 +39,11 @@ func (handler *DomainControllerManager) handleManagementRequest(request *models.
 func (handler *DomainControllerManager) DomainControllerForDomain(domain *models.RealWorldDomain) (*models.DomainController, error) {
 	var fetchError error
 	var requestedDomainController *models.DomainController
-	//dbWorker, fetchError := controlling.NewControlMessageDBDelegate()
+	dbWorker, fetchError := controlling.NewControlMessageDBDelegate()
 	domainLevels := domain.DomainLevels()
 	for i := len(domainLevels)-1; i >= 0; i-- {
 		fmt.Println("Searching Domain Controller for domain: ",domain)
-		//requestedDomainController= dbWorker.FindDomainControllerForDomain(domain)
+		requestedDomainController= dbWorker.FindDomainControllerForDomain(domain)
 		if requestedDomainController != nil {
 			break
 		}
@@ -49,7 +51,10 @@ func (handler *DomainControllerManager) DomainControllerForDomain(domain *models
 	}
 
 	if requestedDomainController == nil {
-		fetchError = errors.New("No DomainController found")
+		requestedDomainController= dbWorker.FindDomainControllerForDomain(domain)
+		if requestedDomainController == nil {
+			fetchError = errors.New("No DomainController found")
+		}
 	}
 	return requestedDomainController, fetchError
 }

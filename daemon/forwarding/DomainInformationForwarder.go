@@ -27,7 +27,7 @@ func NewDomainInformationForwarder(forwardSignalChannel chan int) *DomainInforma
 	forwarder := new(DomainInformationForwarder)
 	forwarder.forwardSignalChannel = forwardSignalChannel
 	forwarder.lastForwardTimestamp = time.Now()
-	forwarder.routingManager = routing.NewRoutingManager()
+	forwarder.routingManager = routing.RoutingManager()
 	forwarder.forwarderStarted.Add(1)
 	forwarder.forwarderStopped.Add(1)
 	go forwarder.run()
@@ -131,7 +131,6 @@ func (forwarder *DomainInformationForwarder) forwardDomainInformation(domain *mo
 		fmt.Println("Forwarder: No Target Controller Found")
 		return
 	}
-
 
 	domainControllerPublisherConfig := models.NewMqttClientConfiguration(domainController.BrokerAddress, domainInformation.Broker.ID)
 	domainControllerPublisher := publishing.NewMqttPublisher(domainControllerPublisherConfig,false)
