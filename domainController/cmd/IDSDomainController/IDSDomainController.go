@@ -8,18 +8,20 @@ import (
 	"github.com/tkrex/IDS/domainController/providing"
 	"fmt"
 	"github.com/tkrex/IDS/domainController/configuration"
+	"github.com/tkrex/IDS/domainController/forwarding"
 )
 
 
 
 func main() {
-	controllerConfig  := configuration.NewDomainControllerConfigurationManager().InitConfig()
+	controllerConfig  := configuration.DomainControllerConfigurationManager().Config()
 
 	isTopLevelController := controllerConfig.ParentDomain == nil
 	go startDomainInformationProcessing(!isTopLevelController)
 	if isTopLevelController {
 		_ = providing.NewDomainInformationRESTProvider("8080")
 	}
+	forwarding.NewDomainInformationForwarder()
 	for {}
 }
 
@@ -28,14 +30,16 @@ func startDomainInformationProcessing(forwardFlag bool) {
 	//producer layer
 
 
-	config, _ := configuration.NewDomainControllerConfigurationManager().DomainControllerConfig()
+	config := configuration.DomainControllerConfigurationManager().Config()
 
-	fmt.Println("Broker URI: ",config.ControllerBrokerAddress )
+	fmt.Println("Config: ",config)
 
 	desiredTopic  := "#"
-	subscriberConfig := models.NewMqttClientConfiguration(config.ControllerBrokerAddress,"domainController")
+	subscriberConfig := models.NewMqttClientConfiguration(config.ControllerBrokerAddress,config.DomainControllerID)
 	subscriber := subscribing.NewMqttSubscriber(subscriberConfig,desiredTopic,false)
 	//processing layer
-	_ = processing.NewDomainInformationProcessor(subscriber.IncomingTopicsChannel(),forwardFlag)
+	processor := processing.NewDomainInformationProcessor(subscriber.IncomingTopicsChannel(),forwardFlag)
+	forwarding.NewDomainInformationForwarder(processor.ForwardSignalChannel())
+	
 }
 

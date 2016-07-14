@@ -6,12 +6,10 @@ import (
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"os"
+	"github.com/tkrex/IDS/daemon/configuration"
 )
 
 const (
-	Host = "localhost:27017"
-	Username = "example"
-	Password = "example"
 	Database = "IDSDaemon"
 	TopicCollection = "topics"
 	BrokerCollection = "broker"
@@ -38,9 +36,8 @@ func (dbWoker *DaemonDatabaseWorker)Close() {
 }
 
 func openSession() (*mgo.Session, error) {
-	host := os.Getenv("MONGODB_URI")
-	fmt.Println("DIAL IN TO HOST: ", host)
-	session, err := mgo.Dial(host)
+	host := configuration.NewDaemonConfigurationManager().Config().DatabaseURL
+	session, err := mgo.Dial(host.String())
 	return session, err
 }
 

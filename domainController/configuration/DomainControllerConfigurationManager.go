@@ -47,6 +47,7 @@ func NewDomainControllerConfiguration(controllerID string,parentDomain *models.R
 
 func NewDomainControllerConfigurationManager() *DomainControllerConfigurationManager {
 	configManager := new(DomainControllerConfigurationManager)
+	configManager.config = configManager.initConfig()
 	return configManager
 }
 
@@ -54,7 +55,7 @@ func (configManager *DomainControllerConfigurationManager) Config() *DomainContr
 	return configManager.config
 }
 
-func (configManager *DomainControllerConfigurationManager) InitConfig() *DomainControllerConfiguration {
+func (configManager *DomainControllerConfigurationManager) initConfig() *DomainControllerConfiguration {
 
 	//Default values
 	parentDomainString := "default"
