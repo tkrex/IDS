@@ -35,7 +35,7 @@ func (domain *RealWorldDomain) DomainLevels() []string {
 func (domain *RealWorldDomain) IsSubDomainOf(secondDomain *RealWorldDomain) bool {
 	firstDomainLevels := domain.DomainLevels()
 	secondDomainLevels := secondDomain.DomainLevels()
-	if len(firstDomainLevels) < len(secondDomainLevels) {
+	if len(firstDomainLevels) <= len(secondDomainLevels) {
 		return false
 	}
 
@@ -53,9 +53,9 @@ func (domain *RealWorldDomain) ParentDomain() *RealWorldDomain {
 		return nil
 	}
 	domainString := ""
-	for i := 0;i<len(domainLevels) -1; i++{
+	for i := 0;i < len(domainLevels) - 1; i++{
 		domainString += domainLevels[i]
-		if i <= len(domainLevels) -2 {
+		if i < len(domainLevels) -2 {
 			domainString += "/"
 		}
 	}
