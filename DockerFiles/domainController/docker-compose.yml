@@ -26,4 +26,5 @@ services:
       - GATEWAY_BROKER_URI=ws://10.40.53.21:9001
       - PARENT_DOMAIN=${parent_domain}
       - OWN_DOMAIN=${own_domain}
+      - CONTROLLER_ID=${controller_id}
     build: .

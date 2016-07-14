@@ -6,10 +6,21 @@ import (
 	"os"
 	"fmt"
 	"github.com/tkrex/IDS/daemon/configuration"
+	"sync"
 )
 
 type DomainControllerConfigurationManager struct {
+	config *DomainControllerConfiguration
+}
 
+var instance *DomainControllerConfigurationManager
+var once sync.Once
+
+func DomainControllerConfigurationManager() *DomainControllerConfigurationManager {
+	once.Do(func() {
+		instance = &DomainControllerConfigurationManager{}
+	})
+	return instance
 }
 
 
@@ -39,6 +50,10 @@ func NewDomainControllerConfigurationManager() *DomainControllerConfigurationMan
 	return configManager
 }
 
+func (configManager *DomainControllerConfigurationManager) Config() *DomainControllerConfiguration {
+	return configManager.config
+}
+
 func (configManager *DomainControllerConfigurationManager) InitConfig() *DomainControllerConfiguration {
 
 	//Default values
@@ -48,6 +63,12 @@ func (configManager *DomainControllerConfigurationManager) InitConfig() *DomainC
 	brokerURLString := "ws://localhost:18833"
 	gatewayBrokerURLString := "ws://localhost:18833"
 	scalingInterfaceString := "http://localhost:8000"
+
+
+	if existingConfig, _ :=  configManager.fetchDomainControllerConfig(); existingConfig != nil {
+		configManager.config = existingConfig
+		return existingConfig
+	}
 
 
 	var parsingError error
@@ -77,6 +98,7 @@ func (configManager *DomainControllerConfigurationManager) InitConfig() *DomainC
 	return config
 }
 
+
 func (configManager *DomainControllerConfigurationManager) storeConfig(config *DomainControllerConfiguration) error{
 	storageManager, err := NewDomainControllerConfigStorageManager()
 	if err != nil {
@@ -86,7 +108,7 @@ func (configManager *DomainControllerConfigurationManager) storeConfig(config *D
 	return err
 }
 
-func (configManager *DomainControllerConfigurationManager) DomainControllerConfig() (*DomainControllerConfiguration,error) {
+func (configManager *DomainControllerConfigurationManager) fetchDomainControllerConfig() (*DomainControllerConfiguration,error) {
 	storageManager, err := NewDomainControllerConfigStorageManager()
 	if err != nil {
 		return nil, err
