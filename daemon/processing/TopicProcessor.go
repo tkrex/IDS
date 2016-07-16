@@ -40,7 +40,6 @@ func NewTopicProcessor(incomingTopicChannel chan *models.RawTopicMessage) *Topic
 	processor.processorStarted.Add(1)
 	processor.processorStopped.Add(1)
 	processor.incomingTopicChannel = incomingTopicChannel
-	//processor.newTopicsCounter = make(map[string]int)
 	processor.forwardingSignalChannel = make(chan int)
 	processor.topicReliabilityStrategy = models.MeanAbsoluteDeviation{}
 	processor.topicUpdates = make([]*models.RawTopicMessage, 0, BulkUpdateThreshold)
@@ -242,7 +241,6 @@ func Include(array []string, value string) bool {
 }
 
 func getKeysFromJSONString(jsonString string) []string {
-
 	var objmap map[string]*json.RawMessage
 	jsonData := []byte(jsonString)
 	if err := json.Unmarshal(jsonData, &objmap); err != nil {

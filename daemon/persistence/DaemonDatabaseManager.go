@@ -6,7 +6,6 @@ import (
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"os"
-	"github.com/tkrex/IDS/daemon/configuration"
 )
 
 const (
@@ -36,8 +35,8 @@ func (dbWoker *DaemonDatabaseWorker)Close() {
 }
 
 func openSession() (*mgo.Session, error) {
-	host := configuration.NewDaemonConfigurationManager().Config().DatabaseURL
-	session, err := mgo.Dial(host.String())
+	host := os.Getenv("MONGODB_URI")
+	session, err := mgo.Dial(host)
 	return session, err
 }
 

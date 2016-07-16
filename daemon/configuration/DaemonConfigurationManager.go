@@ -14,7 +14,7 @@ type DaemonConfigurationManager struct {
 var instance *DaemonConfigurationManager
 var once sync.Once
 
-func DaemonConfigurationManager() *DaemonConfigurationManager {
+func DaemonConfigurationManagerInstance() *DaemonConfigurationManager {
 	once.Do(func() {
 		instance = NewDaemonConfigurationManager()
 	})
