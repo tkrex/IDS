@@ -1,4 +1,4 @@
-package controlling
+package domainControllerManagement
 
 import (
 	"github.com/tkrex/IDS/common/models"

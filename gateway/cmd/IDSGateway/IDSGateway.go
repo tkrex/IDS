@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/tkrex/IDS/gateway/domainControllerManagement"
 	"github.com/tkrex/IDS/gateway/providing"
+	"github.com/tkrex/IDS/gateway/domainControllerManagement"
 	"github.com/tkrex/IDS/common"
 	"github.com/tkrex/IDS/common/models"
 	"fmt"
@@ -11,7 +11,7 @@ import (
 func main() {
 
 
-	_ = controlling.NewDomainContollerManagementInterface("8080")
+	_ = domainControllerManagement.NewDomainContollerManagementInterface("8080")
 
 	providing.NewIDSGatewayWebInterface("8000")
 

@@ -2,12 +2,12 @@ package providing
 
 import (
 	"github.com/tkrex/IDS/common/models"
-	"github.com/tkrex/IDS/gateway/domainControllerManagement"
 	"sync"
+	"github.com/tkrex/IDS/gateway/domainControllerManagement"
 )
 
 type RequestRoutingManager struct {
-	dbManager *controlling.DomainControllerStorageManager
+	dbManager *domainControllerManagement.DomainControllerStorageManager
 }
 
 var instance *RequestRoutingManager
@@ -23,7 +23,7 @@ func RequestRoutingManagerInstance() *RequestRoutingManager {
 
 func newRequestRoutingManager() *RequestRoutingManager {
 	routingManager := new(RequestRoutingManager)
-	routingManager.dbManager = controlling.NewDomainControllerStorageManager()
+	routingManager.dbManager = domainControllerManagement.NewDomainControllerStorageManager()
 	return  routingManager
 }
 
