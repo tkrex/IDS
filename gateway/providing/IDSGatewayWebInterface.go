@@ -9,6 +9,7 @@ import (
 	"github.com/tkrex/IDS/common/models"
 	"github.com/tkrex/IDS/gateway/registration"
 	"strings"
+	"os"
 )
 
 type IDSGatewayWebInterface struct {
