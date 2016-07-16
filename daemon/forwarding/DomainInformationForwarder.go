@@ -9,6 +9,7 @@ import (
 	"github.com/tkrex/IDS/daemon/persistence"
 	"github.com/tkrex/IDS/common/publishing"
 	"github.com/tkrex/IDS/common/routing"
+	"github.com/tkrex/IDS/daemon/configuration"
 )
 
 type DomainInformationForwarder struct {
@@ -27,7 +28,7 @@ func NewDomainInformationForwarder(forwardSignalChannel chan int) *DomainInforma
 	forwarder := new(DomainInformationForwarder)
 	forwarder.forwardSignalChannel = forwardSignalChannel
 	forwarder.lastForwardTimestamp = time.Now()
-	forwarder.routingManager = routing.RoutingManager()
+	forwarder.routingManager = routing.NewRoutingManager(configuration.DaemonConfigurationManagerInstance().Config().RoutingManagementURL)
 	forwarder.forwarderStarted.Add(1)
 	forwarder.forwarderStopped.Add(1)
 	go forwarder.run()

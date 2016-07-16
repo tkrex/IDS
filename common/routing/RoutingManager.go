@@ -8,9 +8,6 @@ import (
 	"io/ioutil"
 	"net/url"
 	"time"
-	"github.com/tkrex/IDS/common/controlling"
-	"sync"
-	"github.com/tkrex/IDS/domainController/configuration"
 )
 
 const RouteUpdateThreshold = time.Minute * 5
@@ -18,31 +15,22 @@ const RouteUpdateThreshold = time.Minute * 5
 type RoutingManager struct {
 	routingTable   map[string]*models.DomainController
 	routeLifeTimes map[string]time.Time
+	infrastructureManagerURL *url.URL
 }
 
 
-func NewRoutingManager() *RoutingManager {
+func NewRoutingManager(infrastructureManagerURL *url.URL) *RoutingManager {
 	routingManager := new(RoutingManager)
 	routingManager.routeLifeTimes = make(map[string]time.Time)
 	routingManager.routingTable = make(map[string]*models.DomainController)
+	routingManager.infrastructureManagerURL = infrastructureManagerURL
 	return routingManager
 }
-
-var instance *RoutingManager
-var once sync.Once
-
-func RoutingManager() *RoutingManager {
-	once.Do(func() {
-		instance = NewRoutingManager()
-	})
-	return instance
-}
-
 
 func (routingManager *RoutingManager) DomainControllerForDomain(domain *models.RealWorldDomain, forceRefresh bool) (*models.DomainController, error) {
 	if !forceRefresh {
 		cachedDomainController, exist := routingManager.routingTable[domain.Name]
-		if exist && time.Now().Sub(routingManager.routeLifeTimes[domain.Name]).Minutes() <= RouteUpdateThreshold {
+		if exist && time.Now().Sub(routingManager.routeLifeTimes[domain.Name]) <= RouteUpdateThreshold {
 			return cachedDomainController, nil
 		}
 	}
@@ -61,9 +49,8 @@ func (routingManager *RoutingManager) AddDomainControllerForDomain(domainControl
 
 func (routingManager *RoutingManager) requestDomainControllerForDomain(domain *models.RealWorldDomain) (*models.DomainController, error) {
 	fmt.Println("Sending Domain Controller Request for domain:",domain.Name)
-	infrastructureManagerURL := configuration.DomainControllerConfigurationManager().Config().ScalingInterfaceAddress
 
-	req, err := http.NewRequest("GET", infrastructureManagerURL.String() + "/rest/domainControllers/" + domain.Name, nil)
+	req, err := http.NewRequest("GET", routingManager.infrastructureManagerURL.String() + "/rest/domainControllers/" + domain.Name, nil)
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
