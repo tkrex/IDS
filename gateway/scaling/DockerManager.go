@@ -26,7 +26,7 @@ func (dockerManager *DockerManager) StartDomainControllerInstance(parentDomain,o
 	dockerFilePath := goPath+"/src/github.com/tkrex/IDS/DockerFiles/domainController"
 
 	if error := os.Chdir(dockerFilePath); error != nil {
-		fmt.Fprintln(os.Stderr, "Error starting docker compose instance: ", error)
+		fmt.Fprintln(os.Stderr, "Error changing directory: ", error)
 		return nil ,error
 	}
 
@@ -48,8 +48,8 @@ func (dockerManager *DockerManager) StartDomainControllerInstance(parentDomain,o
 
 func (dockerManager *DockerManager) buildEnvVariables(parentDomain, ownDomain *models.RealWorldDomain) map[string]string{
 	domainControllerName := "domainController"
-	brokerName := "broker"
-	dbName := "db"
+	brokerName := "broker-"+ownDomain.Name
+	dbName := "db-"+ownDomain.Name
 	envVariables := make(map[string]string)
 	envVariables["domainController"] = domainControllerName
 	envVariables["db"] = dbName
