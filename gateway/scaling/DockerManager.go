@@ -47,7 +47,7 @@ func (dockerManager *DockerManager) StartDomainControllerInstance(parentDomain,o
 }
 
 func (dockerManager *DockerManager) buildEnvVariables(parentDomain, ownDomain *models.RealWorldDomain) map[string]string{
-	domainControllerName := "domainController"
+	domainControllerName := "domainController-"+ownDomain.Name
 	brokerName := "broker-"+ownDomain.Name
 	dbName := "db-"+ownDomain.Name
 	envVariables := make(map[string]string)
