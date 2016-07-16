@@ -87,7 +87,7 @@ func (handler *DomainControllerManager) startNewDomainControllerInstance(domain 
 		startError = errors.New("Domain Controller for this domain already exists")
 	}
 	if domainController, _:= scaling.NewDockerManager().StartDomainControllerInstance(parentDomain, domain); domainController != nil {
-		dbWorker.StoreDomainController(dbWorker)
+		dbWorker.StoreDomainController(domainController)
 	} else {
 		startError = errors.New("Failed to start new domain controller instance")
 
