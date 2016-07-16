@@ -31,7 +31,9 @@ func (webInterface *IDSGatewayWebInterface) run(port string) {
 	webInterface.providerStarted.Done()
 
 	router := mux.NewRouter()
-	fs := http.Dir("./gateway/frontend/")
+	goPath := os.Getenv("GOPATH")
+	htmlPath := goPath+"/src/github.com/tkrex/IDS/gateway/frontend/"
+	fs := http.Dir(htmlPath)
 	fileHandler := http.FileServer(fs)
 	router.HandleFunc("/rest/domainInformation/{domain}", webInterface.handleDomainInformation).Methods("GET")
 	router.HandleFunc("/rest/brokers/{brokerId}/{domain}", webInterface.getDomainInformationForBroker).Methods("GET")
