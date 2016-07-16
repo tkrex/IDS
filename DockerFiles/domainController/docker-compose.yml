@@ -20,7 +20,7 @@ services:
       - broker
       - database
     environment:
-      - MONGODB_URI=${db}:27017
+      - MONGODB_URI=${own_domain}-${db}:27017
       - BROKER_URI=ws://${own_domain}-${broker}:9001
       - MANAGEMENT_INTERFACE_URI=http://10.40.53.21:8080
       - GATEWAY_BROKER_URI=ws://10.40.53.21:9001
