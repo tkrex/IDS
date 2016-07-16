@@ -192,13 +192,11 @@ func (webInterface *IDSGatewayWebInterface) addBroker(res http.ResponseWriter, r
 	}
 
 	outgoingJSON, error := json.Marshal(response)
-	fmt.Println(string(outgoingJSON))
 	if error != nil {
 		fmt.Println(error.Error())
 		http.Error(res, error.Error(), http.StatusInternalServerError)
 		return
 	}
-
 	fmt.Fprint(res, string(outgoingJSON))
 }
 

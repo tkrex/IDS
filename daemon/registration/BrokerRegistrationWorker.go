@@ -13,7 +13,6 @@ import (
 	"net/url"
 	"github.com/tkrex/IDS/common/models"
 	"github.com/tkrex/IDS/daemon/persistence"
-	"github.com/tkrex/IDS/common/routing"
 )
 
 const RegisterInterval = time.Second * 10
@@ -144,6 +143,5 @@ func (worker *BrokerRegistrationWorker) sendRegistrationRequestForBroker(broker 
 
 	err = worker.dbDelegate.StoreBroker(response.Broker)
 
-	routing.NewRoutingManager().AddDomainController(response.DomainController)
 	return true
 }

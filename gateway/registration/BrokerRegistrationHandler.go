@@ -18,14 +18,13 @@ func NewBrokerRegistrationHandler() *BrokerRegistrationHandler {
 	return handler
 }
 
-func (handler *BrokerRegistrationHandler) RegisterBroker(broker *models.Broker) (*models.BrokerRegistrationResponse, error) {
+func (handler *BrokerRegistrationHandler) RegisterBroker(broker *models.Broker) (*models.Broker, error) {
 
 	brokerIdentificationString := broker.IP + broker.InternetDomain
 	byteArray := []byte(brokerIdentificationString)
 	md5Bytes := md5.Sum(byteArray)
 	brokerID := fmt.Sprintf("%x", md5Bytes)
 
-	var domainController *models.DomainController
 	var err error
 
 	dbWorker := persistence.NewGatewayDBWorker()
@@ -33,7 +32,6 @@ func (handler *BrokerRegistrationHandler) RegisterBroker(broker *models.Broker) 
 		return nil,errors.New("Can't connect with database")
 	}
 	defer dbWorker.Close()
-	domainController, _ = routing.NewRoutingManager().DomainControllerForDomain(broker.RealWorldDomain,false)
 
 
 	broker.ID = brokerID
@@ -44,7 +42,5 @@ func (handler *BrokerRegistrationHandler) RegisterBroker(broker *models.Broker) 
 			return nil, err
 		}
 	}
-
-	registrationResponse := models.NewBrokerRegistrationResponse(broker, domainController)
-	return registrationResponse, nil
+	return broker, nil
 }
