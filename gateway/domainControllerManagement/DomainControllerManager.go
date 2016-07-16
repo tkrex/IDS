@@ -49,7 +49,7 @@ func (handler *DomainControllerManager) DomainControllerForDomain(domain *models
 	}
 
 	if requestedDomainController == nil {
-		requestedDomainController= dbWorker.FindDomainControllerForDomain(domain)
+		requestedDomainController= dbWorker.FindDomainControllerForDomain(models.NewRealWorldDomain("default"))
 		if requestedDomainController == nil {
 			fetchError = errors.New("No DomainController found")
 		}
