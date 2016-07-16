@@ -8,13 +8,13 @@ import (
 	"github.com/tkrex/IDS/daemon/forwarding"
 	"github.com/tkrex/IDS/daemon/registration"
 	"github.com/tkrex/IDS/daemon/configuration"
+	"fmt"
 )
 
 func main() {
-
-
 	config := configuration.DaemonConfigurationManagerInstance().Config()
-	startBrokerRegistration(config)
+	fmt.Println("Daemon Config ",config)
+	//startBrokerRegistration(config)
 	startTopicProcessing(config)
 	for {
 		time.Sleep(time.Second)

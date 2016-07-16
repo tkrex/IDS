@@ -33,13 +33,13 @@ func NewDaemonConfiguration(brokerURL *url.URL, routingManagementURL *url.URL,re
 	config.BrokerURL = brokerURL
 	config.RoutingManagementURL = routingManagementURL
 	config.DatabaseAddress = databaseURL
+	config.RegistrationURL = registrationURL
 	return config
 }
 
 func newDaemonConfigurationManager() *DaemonConfigurationManager {
 	configManager := new(DaemonConfigurationManager)
 	configManager.config = configManager.initConfig()
-	fmt.Println("Config:" ,configManager.config)
 	return configManager
 }
 
@@ -48,25 +48,23 @@ func (configManager *DaemonConfigurationManager) Config() *DaemonConfiguration {
 }
 
 func (configManager *DaemonConfigurationManager) initConfig() *DaemonConfiguration {
+	fmt.Println("Init Config")
 
-
-	brokerURLString := "ws://localhost:18833"
+	brokerURLString := "tcp://localhost:1883"
 	registrationURLString := "http://localhost:8000"
 	mongoURL := "localhost:27017"
 	routingManagementURL,_ := url.Parse("http://localhost:8000")
 
-	if existingConfig, _ := configManager.fetchDomainControllerConfig(); existingConfig != nil {
-		configManager.config = existingConfig
-		return existingConfig
-	}
-
-
 	mongoURL = os.Getenv("MONGODB_URI")
 
-	brokerURLString = os.Getenv("BROKER_URI")
+	if broker := os.Getenv("BROKER_URI"); broker != "" {
+		brokerURLString = broker
+	}
 	brokerURL, parsingError := url.Parse(brokerURLString)
 
-	registrationURLString = os.Getenv("REGISTRATION_URL")
+	if registration  := os.Getenv("REGISTRATION_URL"); registration != "" {
+		registrationURLString = registration
+	}
 	registrationURL, parsingError := url.Parse(registrationURLString)
 
 	if parsingError != nil {
@@ -74,7 +72,7 @@ func (configManager *DaemonConfigurationManager) initConfig() *DaemonConfigurati
 	}
 
 	config := NewDaemonConfiguration(brokerURL,routingManagementURL,registrationURL,mongoURL)
-	configManager.storeConfig(config)
+	//configManager.storeConfig(config)
 	return config
 }
 
