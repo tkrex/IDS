@@ -24,8 +24,8 @@ func NewDaemonConfigStorageManager() (*DaemonConfigStorageManager, error) {
 }
 
 func openSession() (*mgo.Session, error) {
-	Host := NewDaemonConfigurationManager().Config().DatabaseURL
-	session, err := mgo.Dial(Host.String())
+	Host := DaemonConfigurationManagerInstance().Config().DatabaseAddress
+	session, err := mgo.Dial(Host)
 	return session, err
 }
 

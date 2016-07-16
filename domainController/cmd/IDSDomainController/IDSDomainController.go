@@ -14,14 +14,15 @@ import (
 
 
 func main() {
-	controllerConfig  := configuration.DomainControllerConfigurationManager().Config()
+	controllerConfig  := configuration.DomainControllerConfigurationManagerInstance().Config()
 
 	isTopLevelController := controllerConfig.ParentDomain == nil
-	go startDomainInformationProcessing(!isTopLevelController)
+	isDefaultController := controllerConfig.OwnDomain.Name == "default"
+	shouldForwardDomainInformation := isDefaultController || !isTopLevelController
+	go startDomainInformationProcessing(shouldForwardDomainInformation)
 	if isTopLevelController {
 		_ = providing.NewDomainInformationRESTProvider("8080")
 	}
-	forwarding.NewDomainInformationForwarder()
 	for {}
 }
 
@@ -30,7 +31,7 @@ func startDomainInformationProcessing(forwardFlag bool) {
 	//producer layer
 
 
-	config := configuration.DomainControllerConfigurationManager().Config()
+	config := configuration.DomainControllerConfigurationManagerInstance().Config()
 
 	fmt.Println("Config: ",config)
 
@@ -39,7 +40,9 @@ func startDomainInformationProcessing(forwardFlag bool) {
 	subscriber := subscribing.NewMqttSubscriber(subscriberConfig,desiredTopic,false)
 	//processing layer
 	processor := processing.NewDomainInformationProcessor(subscriber.IncomingTopicsChannel(),forwardFlag)
-	forwarding.NewDomainInformationForwarder(processor.ForwardSignalChannel())
-	
+	if forwardFlag {
+		forwarding.NewDomainInformationForwarder(processor.ForwardSignalChannel())
+	}
+
 }
 

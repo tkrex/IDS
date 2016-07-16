@@ -58,7 +58,7 @@ func (forwarder *BrokerInformationForwarder) forwardBrokerInformation() {
 	}
 
 	configManager := configuration.NewDomainControllerConfigurationManager()
-	config,_ := configManager.DomainControllerConfig()
+	config := configManager.Config()
 
 	jsonArray,_ := json.Marshal(brokers)
 

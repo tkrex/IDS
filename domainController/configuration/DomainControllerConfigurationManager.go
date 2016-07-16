@@ -5,7 +5,6 @@ import (
 	"net/url"
 	"os"
 	"fmt"
-	"github.com/tkrex/IDS/daemon/configuration"
 	"sync"
 )
 
@@ -16,7 +15,7 @@ type DomainControllerConfigurationManager struct {
 var instance *DomainControllerConfigurationManager
 var once sync.Once
 
-func DomainControllerConfigurationManager() *DomainControllerConfigurationManager {
+func DomainControllerConfigurationManagerInstance() *DomainControllerConfigurationManager {
 	once.Do(func() {
 		instance = NewDomainControllerConfigurationManager()
 	})

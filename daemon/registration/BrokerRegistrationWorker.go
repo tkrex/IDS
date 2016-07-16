@@ -9,10 +9,10 @@ import (
 	"net"
 	"time"
 	"sync"
-	"os"
 	"net/url"
 	"github.com/tkrex/IDS/common/models"
 	"github.com/tkrex/IDS/daemon/persistence"
+	"github.com/tkrex/IDS/daemon/configuration"
 )
 
 const RegisterInterval = time.Second * 10
@@ -50,8 +50,10 @@ func (worker *BrokerRegistrationWorker) registerBroker() {
 	}
 	//TODO: Get IP address from Docker ENV
 
+	daemonConfig := configuration.DaemonConfigurationManagerInstance().Config()
+
 	broker := models.NewBroker()
-	broker.IP = os.Getenv("BROKER_URI")
+	broker.IP = daemonConfig.BrokerURL.String()
 	worker.findDomainNameForBroker(broker)
 	worker.findRealWorldDomainsForBroker(broker)
 	worker.findGeolocationForBroker(broker)

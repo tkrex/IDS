@@ -174,7 +174,8 @@ func (dbWorker *DomainControllerDatabaseWorker) NumberOfBrokersForDomain(domain 
 	count := 0
 
 	coll := dbWorker.domainInformationCollection()
-	if count, error := coll.Find(bson.M{"domain.name": domain.Name}).Count(); error != nil {
+	count, error := coll.Find(bson.M{"domain.name": domain.Name}).Count();
+	if  error != nil {
 		fmt.Println(error)
 	}
 	return count

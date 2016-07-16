@@ -8,48 +8,29 @@ import (
 	"github.com/tkrex/IDS/daemon/forwarding"
 	"github.com/tkrex/IDS/daemon/registration"
 	"github.com/tkrex/IDS/daemon/configuration"
-	"os"
-	"fmt"
-	"net/url"
 )
 
 func main() {
 
-	startBrokerRegistration()
 
-	//go startControlMessageProcessing()
-	go startTopicProcessing()
-	//startControlInterface()
+	config := configuration.DaemonConfigurationManagerInstance().Config()
+	startBrokerRegistration(config)
+	go startTopicProcessing(config)
 	for {
 		time.Sleep(time.Second)
 	}
 }
 
-func startTopicProcessing() {
-	brokerAddressString := os.Getenv("BROKER_URI")
-	if brokerAddressString == "" {
-		brokerAddressString = "ws://localhost:11883"
-	}
-	brokerAddress, _ := url.Parse(brokerAddressString)
-	fmt.Println("Broker URL", brokerAddress)
+func startBrokerRegistration(config *configuration.DaemonConfiguration) {
+	_ = registration.NewBrokerRegistrationWorker(config.RegistrationURL)
+}
 
+func startTopicProcessing(config *configuration.DaemonConfiguration) {
 	desiredTopic := "#"
-	subscriberConfig := models.NewMqttClientConfiguration(brokerAddress, "subscriber")
+	subscriberConfig := models.NewMqttClientConfiguration(config.BrokerURL, "subscriber")
 	subscriber := subscribing.NewMqttSubscriber(subscriberConfig, desiredTopic, false)
 	topicProcessor := processing.NewTopicProcessor(subscriber.IncomingTopicsChannel())
-
 	_ = forwarding.NewDomainInformationForwarder(topicProcessor.ForwardSignalChannel())
 }
 
-func startBrokerRegistration() {
-	registrationServiceUrlString := os.Getenv("MANAGEMENT_INTERFACE_URL")
-	if registrationServiceUrlString == "" {
-		registrationServiceUrlString = "http://localhost:8000"
-	}
-	registrationServiceUrl,_ := url.Parse(registrationServiceUrlString)
-	_ = registration.NewBrokerRegistrationWorker(registrationServiceUrl)
-}
 
-func startControlInterface () {
-	_ = configuration.NewConfigurationInterface("8080")
-}
