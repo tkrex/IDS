@@ -15,7 +15,7 @@ func main() {
 
 	config := configuration.DaemonConfigurationManagerInstance().Config()
 	startBrokerRegistration(config)
-	go startTopicProcessing(config)
+	startTopicProcessing(config)
 	for {
 		time.Sleep(time.Second)
 	}

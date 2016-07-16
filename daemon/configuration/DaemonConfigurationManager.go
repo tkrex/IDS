@@ -39,7 +39,7 @@ func NewDaemonConfiguration(brokerURL *url.URL, routingManagementURL *url.URL,re
 func newDaemonConfigurationManager() *DaemonConfigurationManager {
 	configManager := new(DaemonConfigurationManager)
 	configManager.config = configManager.initConfig()
-	fmt.Println(configManager.config)
+	fmt.Println("Config:" ,configManager.config)
 	return configManager
 }
 

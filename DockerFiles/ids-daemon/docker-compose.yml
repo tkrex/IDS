@@ -14,7 +14,7 @@ services:
       - /go/src/
     environment:
       - MONGODB_URI=daemon-db:27017
-      - BROKER_URI={broker_address}
+      - BROKER_URI=${broker_address}
       - REGISTRATION_URL=http://10.40.53.21:8000
     ports:
       - "8080:8080"

@@ -93,10 +93,6 @@ func (subscriber *MqttSubscriber) stopCollectingTopics() {
 func (subscriber *MqttSubscriber) onReceiveMessage(msg MQTT.Message) {
   rawTopic := models.NewRawTopicMessage(msg.Topic(),msg.Payload())
 
-  //DEBUG in case of one local broker for daemon and domainController
-  if subscriber.isDaemon && rawTopic.Name == "domainController" {
-    return
-  }
   if closed := subscriber.State() == 1; !closed {
     fmt.Println(rawTopic.Name)
     subscriber.incomingTopicsChannel <- rawTopic
