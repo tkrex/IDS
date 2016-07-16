@@ -31,7 +31,7 @@ func (dockerManager *DockerManager) StartDomainControllerInstance(parentDomain,o
 	}
 
 	cmdName := "docker-compose"
-	cmdArgs := []string{"up","-d"}
+	cmdArgs := []string{"-p "+ownDomain.Name,"up","-d",}
 	if err := exec.Command(cmdName, cmdArgs...).Run(); err != nil {
 		fmt.Fprintln(os.Stderr, "Error starting docker compose instance: ", err)
 		return nil ,err
@@ -46,9 +46,9 @@ func (dockerManager *DockerManager) StartDomainControllerInstance(parentDomain,o
 }
 
 func (dockerManager *DockerManager) buildEnvVariables(parentDomain, ownDomain *models.RealWorldDomain) map[string]string{
-	domainControllerName := "domainController-" + ownDomain.Name
-	brokerName := "broker-" + ownDomain.Name
-	dbName := "db-"+ ownDomain.Name
+	domainControllerName := "domainController
+	brokerName := "broker"
+	dbName := "db"
 	envVariables := make(map[string]string)
 	envVariables["domainController"] = domainControllerName
 	envVariables["db"] = dbName
