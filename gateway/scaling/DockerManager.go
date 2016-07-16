@@ -32,6 +32,7 @@ func (dockerManager *DockerManager) StartDomainControllerInstance(parentDomain,o
 
 	cmdName := "docker-compose"
 	cmdArgs := []string{"-p "+ownDomain.Name,"up","-d",}
+	fmt.Println(cmdArgs)
 	if err := exec.Command(cmdName, cmdArgs...).Run(); err != nil {
 		fmt.Fprintln(os.Stderr, "Error starting docker compose instance: ", err)
 		return nil ,err
@@ -73,7 +74,6 @@ func (dockerManager *DockerManager) getContainerPort(containerName string, inter
 	)
 	cmdName := "docker"
 	cmdArgs := []string{"inspect", "-f","'{{index .NetworkSettings.Ports \""+internalPort+"\" 0 \"HostPort\"}}'", containerName}
-	fmt.Println(cmdArgs)
 	if cmdOut, err = exec.Command(cmdName, cmdArgs...).Output(); err != nil {
 		fmt.Println("Error while parsing external port for container: ",containerName)
 		os.Exit(1)
