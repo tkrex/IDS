@@ -11,7 +11,6 @@ type DomainControllerManager struct {
 
 }
 
-
 func NewDomainControllerManager() *DomainControllerManager {
 	worker := new(DomainControllerManager)
 	return worker
@@ -26,10 +25,10 @@ func (handler *DomainControllerManager) handleManagementRequest(request *models.
 	case models.DomainControllerStop:
 		requestError = handler.stopDomainControllerInstance(request.Domain)
 	case models.DomainControllerStart:
-		requestedDomainController, requestError = handler.startNewDomainControllerInstance(request.Domain, request.ParentDomain)
+		requestedDomainController, requestError = handler.StartNewDomainControllerInstance(request.Domain, request.ParentDomain)
 
 	case models.DomainControllerFetch:
-		requestedDomainController , requestError = handler.DomainControllerForDomain(request.Domain)
+		requestedDomainController, requestError = handler.DomainControllerForDomain(request.Domain)
 	}
 	return requestedDomainController, requestError
 }
@@ -39,9 +38,9 @@ func (handler *DomainControllerManager) DomainControllerForDomain(domain *models
 	var requestedDomainController *models.DomainController
 	dbWorker := NewDomainControllerStorageManager()
 	domainLevels := domain.DomainLevels()
-	for i := len(domainLevels)-1; i >= 0; i-- {
-		fmt.Println("Searching Domain Controller for domain: ",domain)
-		requestedDomainController= dbWorker.FindDomainControllerForDomain(domain)
+	for i := len(domainLevels) - 1; i >= 0; i-- {
+		fmt.Println("Searching Domain Controller for domain: ", domain)
+		requestedDomainController = dbWorker.FindDomainControllerForDomain(domain)
 		if requestedDomainController != nil {
 			break
 		}
@@ -49,7 +48,7 @@ func (handler *DomainControllerManager) DomainControllerForDomain(domain *models
 	}
 
 	if requestedDomainController == nil {
-		requestedDomainController= dbWorker.FindDomainControllerForDomain(models.NewRealWorldDomain("default"))
+		requestedDomainController = dbWorker.FindDomainControllerForDomain(models.NewRealWorldDomain("default"))
 		if requestedDomainController == nil {
 			fetchError = errors.New("No DomainController found")
 		}
@@ -72,11 +71,10 @@ func (handler *DomainControllerManager) stopDomainControllerInstance(domain *mod
 	} else {
 		stopError = errors.New("No Domain Controller exists for this domain")
 	}
-	return  stopError
+	return stopError
 }
 
-
-func (handler *DomainControllerManager) startNewDomainControllerInstance(domain *models.RealWorldDomain, parentDomain *models.RealWorldDomain) (*models.DomainController, error) {
+func (handler *DomainControllerManager) StartNewDomainControllerInstance(domain *models.RealWorldDomain, parentDomain *models.RealWorldDomain) (*models.DomainController, error) {
 	var startError error
 	dbWorker := NewDomainControllerStorageManager()
 
@@ -86,7 +84,8 @@ func (handler *DomainControllerManager) startNewDomainControllerInstance(domain 
 	if existingDomainController != nil {
 		startError = errors.New("Domain Controller for this domain already exists")
 	}
-	if domainController, _:= scaling.NewDockerManager().StartDomainControllerInstance(parentDomain, domain); domainController != nil {
+	domainController, startError := scaling.NewDockerManager().StartDomainControllerInstance(parentDomain, domain);
+	if domainController != nil {
 		dbWorker.StoreDomainController(domainController)
 	} else {
 		startError = errors.New("Failed to start new domain controller instance")

@@ -5,7 +5,6 @@ import (
 	"github.com/tkrex/IDS/gateway/domainControllerManagement"
 	"github.com/tkrex/IDS/common/models"
 	"fmt"
-	"github.com/tkrex/IDS/gateway/scaling"
 )
 
 func main() {
@@ -15,8 +14,8 @@ func main() {
 
 	providing.NewIDSGatewayWebInterface("8000")
 
-	scalingManager := scaling.NewDockerManager()
-	if domainController,_ := scalingManager.StartDomainControllerInstance(models.NewRealWorldDomain("none"),models.NewRealWorldDomain("default")); domainController != nil {
+	domainControllerManager := domainControllerManagement.NewDomainControllerManager()
+	if domainController,_ := domainControllerManager.StartNewDomainControllerInstance(models.NewRealWorldDomain("default"),models.NewRealWorldDomain("none")); domainController != nil {
 		fmt.Println("Default DomainController created: ", domainController)
 	}
 	for  {}
