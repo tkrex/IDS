@@ -13,24 +13,24 @@ import (
 )
 
 type DomainInformationForwarder struct {
-	forwarderStarted     sync.WaitGroup
-	forwarderStopped     sync.WaitGroup
+	forwarderStarted       sync.WaitGroup
+	forwarderStopped       sync.WaitGroup
 
-	forwardSignalChannel chan *models.RealWorldDomain
-	updateFlags          map[string]bool
-
-	routingManager *routing.RoutingManager
+	forwardSignalChannel   chan *models.RealWorldDomain
+	routingManager         *routing.RoutingManager
+	forwardPriorityCounter map[string]int
 }
 
 const (
-	DomainForwardInterval = 1 * time.Minute
+	DomainForwardInterval = 1 * time.Hour
+	ForwardThreshold = 10
 )
 
-func NewDomainInformationForwarder(forwardSignalChannel chan *models.RealWorldDomain) *DomainInformationForwarder {
+func NewDomainInformationForwarder(forwardSignalChannel chan *models.ForwardMessage) *DomainInformationForwarder {
 	forwarder := new(DomainInformationForwarder)
 	forwarder.forwardSignalChannel = forwardSignalChannel
-	forwarder.routingManager = routing.NewRoutingManager()
-	forwarder.updateFlags = make(map[string]bool)
+	forwarder.routingManager = routing.NewRoutingManager(configuration.DomainControllerConfigurationManagerInstance().Config().ScalingInterfaceAddress)
+	forwarder.forwardPriorityCounter = make(map[string]int)
 	forwarder.forwarderStarted.Add(1)
 	forwarder.forwarderStopped.Add(1)
 	go forwarder.run()
@@ -49,12 +49,12 @@ func (forwarder *DomainInformationForwarder) close() {
 
 func (forwarder *DomainInformationForwarder) listenOnForwardSignal() {
 	for {
-		domain, open := <-forwarder.forwardSignalChannel
+		forwardMessage, open := <-forwarder.forwardSignalChannel
 		if !open {
 			break
 		}
-		if domain != nil {
-			go forwarder.forwardDomainInformation(domain)
+		if forwardMessage != nil {
+			go forwarder.processForwardMessage(forwardMessage)
 		}
 	}
 }
@@ -66,20 +66,37 @@ func (forwarder *DomainInformationForwarder) startForwardTicker() {
 	}
 }
 
+func (forwarder *DomainInformationForwarder) processForwardMessage(forwardMessage *models.ForwardMessage) {
+	config := configuration.DomainControllerConfigurationManagerInstance().Config()
+	parentDomain := config.ParentDomain
+
+	domain := forwardMessage.Domain
+	priority := forwardMessage.Priority
+
+	if domain.IsSubDomainOf(parentDomain) {
+		forwarder.forwardPriorityCounter[domain.Name] += priority
+		if forwarder.forwardPriorityCounter[domain.Name] >= ForwardThreshold {
+			forwarder.forwardDomainInformation(domain)
+
+			return
+		}
+	} else {
+		forwarder.forwardDomainInformation(domain)
+	}
+}
+
 func (forwarder *DomainInformationForwarder) checkDomainsForForwarding() {
 	dbDelagte, _ := persistence.NewDomainControllerDatabaseWorker()
 	defer dbDelagte.Close()
 	domains, _ := dbDelagte.FindAllDomains()
 	for _, domain := range domains {
-		if updateFlag := forwarder.updateFlags[domain.Name]; !updateFlag {
-			go forwarder.forwardDomainInformation(domain)
-		}
-		forwarder.updateFlags[domain.Name] = false
+		forwarder.forwardDomainInformation(domain)
 	}
-
 }
 
 func (forwarder *DomainInformationForwarder) forwardDomainInformation(domain *models.RealWorldDomain) {
+	forwarder.forwardPriorityCounter[domain.Name] = 0
+
 	domainInformationDelegate, _ := persistence.NewDomainControllerDatabaseWorker()
 	defer domainInformationDelegate.Close()
 
@@ -92,32 +109,28 @@ func (forwarder *DomainInformationForwarder) forwardDomainInformation(domain *mo
 
 	if len(domainInformation) == 0 {
 		domainInformationDelegate.RemoveDomain(domain)
-		delete(forwarder.updateFlags, domain.Name)
 		return
 	}
 
-
-	configManager := configuration.NewDomainControllerConfigurationManager()
-	config,_ := configManager.DomainControllerConfig()
+	configManager := configuration.DomainControllerConfigurationManagerInstance()
 	targetDomain := new(models.RealWorldDomain)
 
-	parentDomain := config.ParentDomain
-	if !domain.IsSubDomainOf(parentDomain) {
+	parentDomain := configManager.Config().ParentDomain
+	ownDomain := configManager.Config().OwnDomain
+	if ownDomain.Name == "default" {
 		targetDomain = domain
 	} else {
 		targetDomain = parentDomain
 	}
 
-
-	domainController,err := forwarder.routingManager.DomainControllerForDomain(targetDomain,false)
+	domainController, err := forwarder.routingManager.DomainControllerForDomain(targetDomain, false)
 	if err != nil {
 		fmt.Println("Forwarder: No Target Controller Found")
 		return
 	}
 
-	domainControllerPublisherConfig := models.NewMqttClientConfiguration(domainController.BrokerAddress, config.DomainControllerID)
-	domainControllerPublisher := publishing.NewMqttPublisher(domainControllerPublisherConfig,false)
-
+	domainControllerPublisherConfig := models.NewMqttClientConfiguration(domainController.BrokerAddress, configManager.Config().DomainControllerID)
+	domainControllerPublisher := publishing.NewMqttPublisher(domainControllerPublisherConfig, false)
 
 	for _, information := range domainInformation {
 		json, err := json.Marshal(information)
@@ -127,14 +140,14 @@ func (forwarder *DomainInformationForwarder) forwardDomainInformation(domain *mo
 		}
 		error := domainControllerPublisher.Publish(json, information.Broker.ID)
 		if error != nil {
-			domainController,err := forwarder.routingManager.DomainControllerForDomain(targetDomain,true)
+			domainController, err := forwarder.routingManager.DomainControllerForDomain(targetDomain, true)
 			if err != nil {
 				fmt.Println("Forwarder: No Target Controller Found")
 				return
 			}
 			domainControllerPublisherConfig := models.NewMqttClientConfiguration(domainController.BrokerAddress, information.Broker.ID)
-			domainControllerPublisher := publishing.NewMqttPublisher(domainControllerPublisherConfig,false)
-			error := domainControllerPublisher.Publish(json,information.Broker.ID)
+			domainControllerPublisher := publishing.NewMqttPublisher(domainControllerPublisherConfig, false)
+			error := domainControllerPublisher.Publish(json, information.Broker.ID)
 			if error != nil {
 				fmt.Println(error)
 				return

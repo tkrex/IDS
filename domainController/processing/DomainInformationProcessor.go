@@ -7,11 +7,17 @@ import (
 	"encoding/json"
 	"github.com/tkrex/IDS/common/models"
 	"github.com/tkrex/IDS/domainController/persistence"
+	"github.com/tkrex/IDS/domainController/configuration"
+	"os"
+	"github.com/tkrex/IDS/common/routing"
+	"github.com/tkrex/IDS/domainController"
 )
 
-const (
-	ForwardThreshold = 10
-)
+
+
+
+
+
 
 type DomainInformationProcessor struct {
 	// Flag to indicate that the consumer state
@@ -22,9 +28,11 @@ type DomainInformationProcessor struct {
 	processorStopped            sync.WaitGroup
 	incomingTopicChannel        chan *models.RawTopicMessage
 	forwardFlag bool
-	forwardingSignalChannel     chan *models.RealWorldDomain
+	forwardingSignalChannel     chan *models.ForwardMessage
+	routingManager 	*routing.RoutingManager
+	scalingManager  *domainController.ScalingManager
 
-	newDomainInformationCounter map[string]int
+
 }
 
 func NewDomainInformationProcessor(incomingTopicChannel chan *models.RawTopicMessage, forwardFlag bool) *DomainInformationProcessor {
@@ -35,7 +43,8 @@ func NewDomainInformationProcessor(incomingTopicChannel chan *models.RawTopicMes
 	processor.forwardFlag = forwardFlag
 	processor.forwardingSignalChannel = make(chan *models.RealWorldDomain)
 
-	processor.newDomainInformationCounter = make(map[string]int)
+	processor.routingManager = routing.NewRoutingManager(configuration.DomainControllerConfigurationManagerInstance().Config().ScalingInterfaceAddress)
+	processor.scalingManager = domainController.NewScalingManager()
 	go processor.run()
 	processor.processorStarted.Wait()
 	fmt.Println("Producer Created")
@@ -44,6 +53,10 @@ func NewDomainInformationProcessor(incomingTopicChannel chan *models.RawTopicMes
 
 func (processor *DomainInformationProcessor) State() int64 {
 	return atomic.LoadInt64(&processor.state)
+}
+
+func (processor *DomainInformationProcessor) ForwardSignalChannel() chan *models.ForwardMessage {
+	return processor.forwardingSignalChannel
 }
 
 func (processor *DomainInformationProcessor)  Close() {
@@ -57,7 +70,7 @@ func (processor *DomainInformationProcessor) run() {
 
 	processor.processorStarted.Done()
 	for closed := atomic.LoadInt64(&processor.state) == 1; !closed; closed = atomic.LoadInt64(&processor.state) == 1 {
-		open := processor.ProcessDomainInformationMessages()
+		open := processor.processDomainInformationMessages()
 		if !open {
 			processor.Close()
 			break
@@ -66,7 +79,7 @@ func (processor *DomainInformationProcessor) run() {
 	processor.processorStopped.Done()
 }
 
-func (processor *DomainInformationProcessor) ProcessDomainInformationMessages() bool {
+func (processor *DomainInformationProcessor) processDomainInformationMessages() bool {
 	rawTopic, ok := <-processor.incomingTopicChannel
 	if rawTopic != nil {
 		go processor.processDomainInformationMessage(rawTopic)
@@ -74,24 +87,24 @@ func (processor *DomainInformationProcessor) ProcessDomainInformationMessages() 
 	return ok
 }
 
+
 func (processor *DomainInformationProcessor) processDomainInformationMessage(topic *models.RawTopicMessage) {
 	var domainInformationMessage *models.DomainInformationMessage
 	if err := json.Unmarshal(topic.Payload, &domainInformationMessage); err != nil {
 		fmt.Println(err)
 		return
 	}
-	ownDomain := models.NewRealWorldDomain("default")
 
 	processor.storeDomainInformation(domainInformationMessage)
 
-	//Forward DomainInformation to correct Domain Controller
-	if !domainInformationMessage.RealWorldDomain.IsSubDomainOf(ownDomain) {
-		processor.forwardingSignalChannel <- domainInformationMessage.RealWorldDomain
+	if processor.forwardFlag {
+		processor.forwardingSignalChannel <- models.NewForwardMessage(domainInformationMessage.RealWorldDomain,domainInformationMessage.ForwardPriority)
 	}
+	if processor.scalingManager.CheckWorkloadForDomain(domainInformationMessage.RealWorldDomain) {
+		if domainController := processor.scalingManager.CreateNewDominControllerForDomain(domainInformationMessage.RealWorldDomain); domainController != nil {
+			processor.routingManager.AddDomainControllerForDomain(domainController, domainInformationMessage.RealWorldDomain)
+		}
 
-	processor.newDomainInformationCounter[domainInformationMessage.RealWorldDomain.Name] += domainInformationMessage.ForwardPriority
-	if  processor.forwardFlag && processor.newDomainInformationCounter[domainInformationMessage.RealWorldDomain.Name] > ForwardThreshold {
-		processor.forwardingSignalChannel <- domainInformationMessage.RealWorldDomain
 	}
 }
 
