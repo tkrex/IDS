@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"encoding/json"
-	"github.com/tkrex/IDS/common/routing"
 	"net/url"
 	"errors"
 	"time"
@@ -42,8 +41,8 @@ func (handler *DomainInformationForBrokerRequestHandler) handleRequest(brokerId 
 	message := models.NewDomainInformationMessage(domain,broker,topics)
 	return message,nil
 
-	destinationDomainController,err := routing.NewRoutingManager().DomainControllerForDomain(domain,false)
-	if err != nil {
+	destinationDomainController := RequestRoutingManagerInstance().DomainControllerForDomain(domain)
+	if destinationDomainController == nil {
 		return nil, errors.New("No target controller found")
 	}
 	return handler.forwardRequestToDomainController(brokerId,informationRequest,destinationDomainController)

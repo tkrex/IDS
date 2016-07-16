@@ -1,16 +1,13 @@
 package providing
 
 import (
-	"github.com/tkrex/IDS/common/controlling"
 	"github.com/tkrex/IDS/common/models"
-
 	"fmt"
 	"net/http"
 	"io/ioutil"
 	"encoding/json"
 	"errors"
 	"net/url"
-	"github.com/tkrex/IDS/common/routing"
 )
 
 type BrokerRequestHandler struct {
@@ -39,15 +36,9 @@ func (handler *BrokerRequestHandler) handleRequest(informationRequest *models.Do
 	sortedBrokers := handler.sortBrokersByDomains(brokers)
 	return sortedBrokers, nil
 
-	dbDelegate, err := controlling.NewControlMessageDBDelegate()
-	if err != nil {
-		return nil,err
-	}
-	defer dbDelegate.Close()
-
 	domain := models.NewRealWorldDomain(informationRequest.Domain())
-	targetDomain := domain.FirstLevelDomain()
-	destinationDomainController,_ := routing.NewRoutingManager().DomainControllerForDomain(targetDomain,false)
+	targetDomain := domain.TopLevelDomain()
+	destinationDomainController := RequestRoutingManagerInstance().DomainControllerForDomain(targetDomain)
 
 	if destinationDomainController != nil {
 		brokers, _ :=  handler.requestBrokersFromDomainController(informationRequest,destinationDomainController)

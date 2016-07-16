@@ -1,4 +1,4 @@
-package domainController
+package common
 
 import (
 	"github.com/tkrex/IDS/common/models"

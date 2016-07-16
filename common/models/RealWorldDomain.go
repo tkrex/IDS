@@ -19,7 +19,7 @@ func (domain *RealWorldDomain) String() string {
 	return fmt.Sprintf("Name: %s", domain.Name)
 }
 
-func (domain *RealWorldDomain) FirstLevelDomain() *RealWorldDomain {
+func (domain *RealWorldDomain) TopLevelDomain() *RealWorldDomain {
 	domainLevels := domain.DomainLevels()
 	return NewRealWorldDomain(domainLevels[0])
 }

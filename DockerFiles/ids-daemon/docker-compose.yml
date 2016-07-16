@@ -6,7 +6,6 @@ services:
     expose:
       - "27017"
     command: mongod --smallfiles --quiet --logpath=/dev/null
-  
   ids-daemon:
     depends_on:
       - database

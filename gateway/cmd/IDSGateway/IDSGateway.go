@@ -2,23 +2,23 @@ package main
 
 import (
 	"github.com/tkrex/IDS/gateway/domainControllerManagement"
-	"net/url"
+	"github.com/tkrex/IDS/gateway/providing"
+	"github.com/tkrex/IDS/common"
+	"github.com/tkrex/IDS/common/models"
+	"fmt"
 )
 
 func main() {
-	managementBrokerAddress,_ := url.Parse("ws://localhost:11883")
 
 
-	_ = domainControllerManagement.NewServerMaintenanceWebInterface("8080",managementBrokerAddress)
-	//managementServerAddress := "http://localhost:8080"
+	_ = controlling.NewDomainContollerManagementInterface("8080")
 
-	//providing.NewIDSGatewayWebInterface("8000")
+	providing.NewIDSGatewayWebInterface("8000")
 
-
-
-	//worker := common.NewDomainControllerRegistrationWorker(managementServerAddress)
-	//worker.RequestNewDomainControllerForDomain(models.NewRealWorldDomain("default"))
-
+	scalingManager := common.NewScalingManager()
+	if domainController := scalingManager.CreateNewDominControllerForDomain(models.NewRealWorldDomain("default")); domainController != nil {
+		fmt.Println("Default DomainController created: ", domainController)
+	}
 	for  {}
 }
 

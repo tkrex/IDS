@@ -2,7 +2,6 @@ package controlling
 
 import (
 	"github.com/tkrex/IDS/common/models"
-	"github.com/tkrex/IDS/common/controlling"
 	"github.com/tkrex/IDS/gateway/scaling"
 	"errors"
 	"fmt"
@@ -12,7 +11,6 @@ type DomainControllerManager struct {
 
 }
 
-const defaultDomain = models.NewRealWorldDomain("default")
 
 func NewDomainControllerManager() *DomainControllerManager {
 	worker := new(DomainControllerManager)
@@ -39,7 +37,7 @@ func (handler *DomainControllerManager) handleManagementRequest(request *models.
 func (handler *DomainControllerManager) DomainControllerForDomain(domain *models.RealWorldDomain) (*models.DomainController, error) {
 	var fetchError error
 	var requestedDomainController *models.DomainController
-	dbWorker, fetchError := controlling.NewControlMessageDBDelegate()
+	dbWorker := NewDomainControllerStorageManager()
 	domainLevels := domain.DomainLevels()
 	for i := len(domainLevels)-1; i >= 0; i-- {
 		fmt.Println("Searching Domain Controller for domain: ",domain)
@@ -61,10 +59,7 @@ func (handler *DomainControllerManager) DomainControllerForDomain(domain *models
 
 func (handler *DomainControllerManager) stopDomainControllerInstance(domain *models.RealWorldDomain) error {
 	var stopError error
-	dbWorker, error := controlling.NewControlMessageDBDelegate()
-	if error != nil {
-		stopError = errors.New("Failed to start new domain controller instance")
-	}
+	dbWorker := NewDomainControllerStorageManager()
 	defer dbWorker.Close()
 	existingDomainController := dbWorker.FindDomainControllerForDomain(domain)
 	if existingDomainController != nil {
@@ -83,10 +78,8 @@ func (handler *DomainControllerManager) stopDomainControllerInstance(domain *mod
 
 func (handler *DomainControllerManager) startNewDomainControllerInstance(domain *models.RealWorldDomain, parentDomain *models.RealWorldDomain) (*models.DomainController, error) {
 	var startError error
-	dbWorker, error := controlling.NewControlMessageDBDelegate()
-	if error != nil {
-		startError = errors.New("Failed to start new domain controller instance")
-	}
+	dbWorker := NewDomainControllerStorageManager()
+
 	defer dbWorker.Close()
 
 	existingDomainController := dbWorker.FindDomainControllerForDomain(domain)

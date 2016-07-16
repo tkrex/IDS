@@ -8,7 +8,6 @@ import (
 	"sync"
 	"github.com/tkrex/IDS/common/models"
 	"github.com/tkrex/IDS/gateway/registration"
-	"github.com/tkrex/IDS/common/routing"
 	"strings"
 )
 
@@ -36,7 +35,6 @@ func (webInterface *IDSGatewayWebInterface) run(port string) {
 	fileHandler := http.FileServer(fs)
 	router.HandleFunc("/rest/domainInformation/{domain}", webInterface.handleDomainInformation).Methods("GET")
 	router.HandleFunc("/rest/brokers/{brokerId}/{domain}", webInterface.getDomainInformationForBroker).Methods("GET")
-	router.HandleFunc("/rest/domainControllers/{domainName}", webInterface.getDomainControllerForDomain).Methods("GET")
 	router.HandleFunc("/rest/brokers/{domainName}", webInterface.getBrokersForDomain).Methods("GET")
 	router.HandleFunc("/rest/brokers", webInterface.addBroker).Methods("POST")
 	router.HandleFunc("/rest/brokers", webInterface.addBroker).Methods("GET")
@@ -74,25 +72,6 @@ func (webInterface *IDSGatewayWebInterface) handleDomainInformation(res http.Res
 		return
 	}
 	fmt.Fprint(res, string(outgoingJSON))
-}
-
-func (webInterface *IDSGatewayWebInterface) getDomainControllerForDomain(res http.ResponseWriter, req *http.Request) {
-	fmt.Println("Domain Controller Request Received")
-
-	requestParameters := mux.Vars(req)
-	domainName := requestParameters["domainName"]
-	if domainName == "" {
-		http.Error(res, "Error", http.StatusInternalServerError)
-		return
-	}
-	domain := models.NewRealWorldDomain(domainName)
-	domainController, _ := routing.NewRoutingManager().DomainControllerForDomain(domain,false)
-	if domainController != nil {
-		fmt.Println("Responding with Domain Controller: ",domainController)
-		json.NewEncoder(res).Encode(domainController)
-		return
-	}
-	http.Error(res,"No DomainController Found",http.StatusNoContent)
 }
 
 func (webInterface *IDSGatewayWebInterface) getDomainInformationForBroker(res http.ResponseWriter, req *http.Request) {

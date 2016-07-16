@@ -92,7 +92,6 @@ func (processor *TopicProcessor) checkIncomingTopic() bool {
 			return ok
 		}
 		processor.collectIncomingTopic(rawTopic)
-
 	}
 	return ok
 }

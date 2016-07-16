@@ -36,7 +36,7 @@ func (publisher *MqttPublisher) Publish(data []byte, topic string) error  {
 	if token := publisher.client.Publish(topic, 2, false, data); token.Wait() && token.Error() != nil {
 		return token.Error()
 	}
-	fmt.Println("Published to Domain Controller")
+	fmt.Println("Message Published")
 	return nil
 }
 

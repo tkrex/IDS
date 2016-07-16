@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"errors"
 	"github.com/tkrex/IDS/gateway/persistence"
-	"github.com/tkrex/IDS/common/routing"
 )
 
 type BrokerRegistrationHandler struct {

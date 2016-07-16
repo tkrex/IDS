@@ -5,6 +5,7 @@ import (
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"fmt"
+	"os"
 )
 
 const (
@@ -15,29 +16,30 @@ const (
 	DomainControllerCollection = "domainController"
 )
 
-type ControlMessageDBDelegate struct {
+type DomainControllerStorageManager struct {
 	session *mgo.Session
 }
 
-func NewControlMessageDBDelegate() (*ControlMessageDBDelegate, error) {
-	databaseWorker := new(ControlMessageDBDelegate)
+func NewDomainControllerStorageManager() *DomainControllerStorageManager {
+	databaseWorker := new(DomainControllerStorageManager)
 	var error error
 	databaseWorker.session, error = mgo.Dial(Host)
 	if error != nil {
-		return nil, error
+		fmt.Println("Cant Connect to Database")
+		os.Exit(1)
 	}
-	return databaseWorker, error
+	return databaseWorker
 }
 
-func (dbWoker *ControlMessageDBDelegate)Close() {
+func (dbWoker *DomainControllerStorageManager)Close() {
 	dbWoker.session.Close()
 }
 
-func (dbWorker *ControlMessageDBDelegate) domainControllerCollection() *mgo.Collection {
+func (dbWorker *DomainControllerStorageManager) domainControllerCollection() *mgo.Collection {
 	return dbWorker.session.DB(Database).C(DomainControllerCollection)
 }
 
-func (worker *ControlMessageDBDelegate) FindAllDomainController() ([]*models.DomainController, error) {
+func (worker *DomainControllerStorageManager) FindAllDomainController() ([]*models.DomainController, error) {
 	var domainControllers []*models.DomainController
 
 	coll := worker.domainControllerCollection()
@@ -48,8 +50,7 @@ func (worker *ControlMessageDBDelegate) FindAllDomainController() ([]*models.Dom
 	return domainControllers, nil
 }
 
-
-func (worker *ControlMessageDBDelegate) StoreDomainController(domainController *models.DomainController) (bool, error) {
+func (worker *DomainControllerStorageManager) StoreDomainController(domainController *models.DomainController) (bool, error) {
 	coll := worker.domainControllerCollection()
 	index := mgo.Index{
 		Key:        []string{"domain.name"},
@@ -64,14 +65,13 @@ func (worker *ControlMessageDBDelegate) StoreDomainController(domainController *
 	return newInformation, err
 }
 
-
-func (worker *ControlMessageDBDelegate) RemoveDomainControllerForDomain(domain *models.RealWorldDomain) error {
+func (worker *DomainControllerStorageManager) RemoveDomainControllerForDomain(domain *models.RealWorldDomain) error {
 	coll := worker.domainControllerCollection()
 	err := coll.Remove(bson.M{"domain.name":domain.Name})
 	return err
 }
 
-func (worker *ControlMessageDBDelegate) FindDomainControllerForDomain(domain *models.RealWorldDomain)  *models.DomainController {
+func (worker *DomainControllerStorageManager) FindDomainControllerForDomain(domain *models.RealWorldDomain) *models.DomainController {
 	coll := worker.domainControllerCollection()
 	var domainController *models.DomainController
 	if err := coll.Find(bson.M{"domain.name":domain.Name}).One(&domainController); err != nil {

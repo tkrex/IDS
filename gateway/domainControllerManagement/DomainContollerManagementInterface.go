@@ -8,19 +8,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
-	"net/url"
 )
 
 type DomainContollerManagementInterface struct {
 	port                    string
-	managementBrokerAddress *url.URL
 	providerStarted         sync.WaitGroup
 	providerStopped         sync.WaitGroup
 }
 
-func NewDomainContollerManagementInterface(port string, managementBrokerAddress *url.URL) *DomainContollerManagementInterface {
+func NewDomainContollerManagementInterface(port string) *DomainContollerManagementInterface {
 	webInterface := new(DomainContollerManagementInterface)
-	webInterface.managementBrokerAddress = managementBrokerAddress
 	webInterface.providerStarted.Add(1)
 	webInterface.providerStopped.Add(1)
 	go webInterface.run(port)

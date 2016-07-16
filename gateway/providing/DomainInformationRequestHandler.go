@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"encoding/json"
 	"time"
-	"github.com/tkrex/IDS/common/routing"
 	"net/url"
 )
 
@@ -45,7 +44,7 @@ func (handler *DomainInformationRequestHandler) handleRequest(informationRequest
 
 
 	domain = models.NewRealWorldDomain(informationRequest.Domain())
-	destinationController,_ := routing.NewRoutingManager().DomainControllerForDomain(domain,false)
+	destinationController := RequestRoutingManagerInstance().DomainControllerForDomain(domain)
 
 	if destinationController != nil {
 		return handler.requestDomainInformationFromDomainController(informationRequest,destinationController)
