@@ -32,6 +32,11 @@
     <![endif]-->
 
     <style>
+
+        body {
+            padding-top: 50px; /* Whatever the height of your navbar is; the
+default is 50px */
+        }
         .box{
 	width:20px;
 	height:20px;
@@ -51,9 +56,10 @@
     </style>
 </head>
 <!-- putting this at the top to remove the jarring load -->
-<script src='//maps.googleapis.com/maps/api/js?sensor=false&libraries=places'></script>
+<script src='//maps.googleapis.com/maps/api/js?key=AIzaSyCe7HJPmn5u_4ZBn-gyASUsJVE-sF6RnpI&libraries=places'></script>
 <script src='bower_components/lodash/dist/lodash.min.js'></script>
 <script src="bower_components/angular/angular.min.js"></script>
+<script src="bower_components/angular-google-chart/ng-google-chart.js"></script>
 <script src="bower_components/angular-google-places-autocomplete/src/autocomplete.js"></script>
 <link rel="stylesheet" href="bower_components/angular-google-places-autocomplete/src/autocomplete.css">
 <script src='bower_components/angular-simple-logger/dist/angular-simple-logger.min.js'></script>
@@ -64,8 +70,6 @@
 
 <body ng-app="gatewayApp" ng-controller="MainController">
 
-
- Navigation
 <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
 <div class="container">
 <!-- Brand and toggle get grouped for better mobile display -->
@@ -118,6 +122,7 @@ data-target="#bs-example-navbar-collapse-1">
 
     <div class="row">
         <div class="col-lg-12">
+            <div google-chart chart="chart"></div>
             <div ui-view></div>
         </div>
     </div>
@@ -127,7 +132,7 @@ data-target="#bs-example-navbar-collapse-1">
     <footer>
         <div class="row">
             <div class="col-lg-12">
-                <p>Copyright &copy; Your Website 2014</p>
+
             </div>
             <!-- /.col-lg-12 -->
         </div>
