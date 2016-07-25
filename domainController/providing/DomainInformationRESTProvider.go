@@ -55,8 +55,14 @@ func (webInterface *DomainInformationRESTProvider) getBrokersForDomain(res http.
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(res).Encode(brokers)
-	fmt.Println("Broker Request Responsed")
+	outgoingJSON, error := json.Marshal(brokers)
+
+	if error != nil {
+		fmt.Println(error.Error())
+		http.Error(res, "Error", http.StatusInternalServerError)
+		return
+	}
+	fmt.Fprint(res, string(outgoingJSON))
 }
 
 
@@ -74,16 +80,21 @@ func (webInterface *DomainInformationRESTProvider) getDomainInformationForBroker
 	json.Unmarshal([]byte(location),parsedLocation)
 	informationRequest := models.NewDomainInformationRequest(domainName,parsedLocation,name)
 
-
-
 	domainInformation, err := NewDomainInformationForBrokerRequestHandler().handleRequest(informationRequest,brokerId)
-	fmt.Println(domainInformation)
 	if err != nil {
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	json.NewEncoder(res).Encode(domainInformation)
+	fmt.Println(domainInformation)
+	outgoingJSON, error := json.Marshal(domainInformation)
+
+	if err != nil {
+		fmt.Println(error.Error())
+		http.Error(res, "Error", http.StatusInternalServerError)
+		return
+	}
+	fmt.Fprint(res, string(outgoingJSON))
 }
 
 func (webInterface *DomainInformationRESTProvider) handleDomainInformation(res http.ResponseWriter, req *http.Request) {
@@ -99,12 +110,19 @@ func (webInterface *DomainInformationRESTProvider) handleDomainInformation(res h
 	informationRequest := models.NewDomainInformationRequest(domainName,parsedLocation,name)
 
 	domainInformation, err := NewDomainInformationRequestHandler().handleRequest(informationRequest)
-	fmt.Println(domainInformation)
 	if err != nil {
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(res).Encode(domainInformation)
+	outgoingJSON, error := json.Marshal(domainInformation)
+
+
+	if err != nil {
+		fmt.Println(error.Error())
+		http.Error(res, "Error", http.StatusInternalServerError)
+		return
+	}
+	fmt.Fprint(res, string(outgoingJSON))
 }
 
 
