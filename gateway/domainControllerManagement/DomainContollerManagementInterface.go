@@ -41,6 +41,7 @@ func (webInterface *DomainContollerManagementInterface) run(port string) {
 }
 
 func (webInterface DomainContollerManagementInterface) instantiateDomainController(res http.ResponseWriter, req *http.Request) {
+	res.Header().Set("Content-Type", "application/json")
 	parameters := mux.Vars(req)
 	domainName := parameters["domain"]
 	domain := models.NewRealWorldDomain(domainName)
@@ -62,6 +63,8 @@ func (webInterface DomainContollerManagementInterface) instantiateDomainControll
 }
 
 func (webInterface DomainContollerManagementInterface) fetchDomainController(res http.ResponseWriter, req *http.Request) {
+	res.Header().Set("Content-Type", "application/json")
+
 	parameters := mux.Vars(req)
 	domainName := parameters["domain"]
 	domain := models.NewRealWorldDomain(domainName)
@@ -79,6 +82,7 @@ func (webInterface DomainContollerManagementInterface) fetchDomainController(res
 }
 
 func (webInterface DomainContollerManagementInterface) deleteDomainController(res http.ResponseWriter, req *http.Request) {
+	res.Header().Set("Content-Type", "application/json")
 	parameters := mux.Vars(req)
 	domainName := parameters["domain"]
 	domain := models.NewRealWorldDomain(domainName)
