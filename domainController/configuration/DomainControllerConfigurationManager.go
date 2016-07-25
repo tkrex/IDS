@@ -57,7 +57,7 @@ func (configManager *DomainControllerConfigurationManager) Config() *DomainContr
 func (configManager *DomainControllerConfigurationManager) initConfig() *DomainControllerConfiguration {
 
 	//Default values
-	parentDomainString := "default"
+	parentDomainString := "none"
 	ownDomainString := "default"
 	controllerID := "controllerID"
 	brokerURLString := "ws://broker-default:9001"

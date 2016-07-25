@@ -68,7 +68,7 @@ func (webInterface *DomainInformationRESTProvider) getBrokersForDomain(res http.
 
 func (webInterface *DomainInformationRESTProvider) getDomainInformationForBroker(res http.ResponseWriter, req *http.Request) {
 	res.Header().Set("Content-Type", "application/json")
-	fmt.Println("domain Information Request Received")
+	fmt.Println("Domain Information Request for Broker Received")
 
 	requestParameters := mux.Vars(req)
 	domainName := requestParameters["domain"]

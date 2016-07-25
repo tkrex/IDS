@@ -16,7 +16,7 @@ import (
 func main() {
 	controllerConfig  := configuration.DomainControllerConfigurationManagerInstance().Config()
 
-	isTopLevelController := controllerConfig.ParentDomain == nil
+	isTopLevelController := controllerConfig.ParentDomain == "none"
 	isDefaultController := controllerConfig.OwnDomain.Name == "default"
 	shouldForwardDomainInformation := isDefaultController || !isTopLevelController
 	go startDomainInformationProcessing(shouldForwardDomainInformation)
