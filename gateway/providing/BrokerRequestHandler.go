@@ -40,8 +40,13 @@ func (handler *BrokerRequestHandler) handleRequest(informationRequest *models.Do
 func (handler *BrokerRequestHandler) sortBrokersByDomains(brokers []*models.Broker) map[string][]*models.Broker {
 	sortedBrokers := make(map[string][]*models.Broker)
 	for _,broker := range brokers {
-		domains := sortedBrokers[broker.RealWorldDomain.Name]
-		domains = append(domains,broker)
+		domainBroker := sortedBrokers[broker.RealWorldDomain.Name]
+		if domainBroker != nil {
+			domainBroker = append(domainBroker,broker)
+			sortedBrokers[broker.RealWorldDomain.Name] = domainBroker
+		} else {
+			sortedBrokers[broker.RealWorldDomain.Name] = []*models.Broker{broker}
+		}
 	}
 	return sortedBrokers
 }
