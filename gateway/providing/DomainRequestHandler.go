@@ -16,7 +16,7 @@ func NewDomainRequestHandler() *DomainRequestHandler {
 
 func (requestHandler *DomainRequestHandler) handleRequest() ([]*models.RealWorldDomain, error){
 
-	return []*models.RealWorldDomain{ models.NewRealWorldDomain("education/schools"), models.NewRealWorldDomain("education"), models.NewRealWorldDomain("education/university")}, nil
+	return []*models.RealWorldDomain{ models.NewRealWorldDomain("education"), models.NewRealWorldDomain("wheater"),models.NewRealWorldDomain("automotive"), models.NewRealWorldDomain("education/university")}, nil
 	dbDelegate := persistence.NewGatewayDBWorker()
 	if dbDelegate == nil {
 		return nil, errors.New("No connection to database")

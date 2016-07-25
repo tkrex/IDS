@@ -48,6 +48,11 @@
             <h4>Internet Domain</h4>
             <p>{{details.broker.internetDomain}}</p>
 
+            <h4>Statistics</h4>
+            <p>Total Number of Topics: {{details.broker.statitics.numberOfTopics}}</p>
+            <p>Incoming Topics per Second: {{details.broker.statitics.topicsPerSecond}}</p>
+
+
             <h4>Location </h4>
             <ui-gmap-google-map center='map.center' zoom='map.zoom'>
                 <ui-gmap-marker coords="marker.coords" idkey="marker.idkey"></ui-gmap-marker>
@@ -75,10 +80,11 @@
                     <div class ="pre-scrollable">{{topic.payload}}</div>
                 </p>
                         <p class="text-info">Payload Similarity: {{topic.payloadSimilarity}}%</p>
-                <p class="text-info text-capitalize">Reliability: {{topic.updateBehavior.reliability}}</p>
                 <p class="text-info">Last Update : {{parseDataString(topic.lastUpdate).toString()}}</p>
                         <p class="text-info">Average Update Interval: {{topic.updateBehavior.averageInterval}} seconds </p>
-                <p class="text-info">Deviation: {{topic.updateBehavior.deviation}} seconds</p>
+                <p class="text-info">Update Interval Deviation: {{topic.updateBehavior.deviation}} seconds</p>
+                        <p class="text-info text-capitalize">Reliability: {{topic.updateBehavior.reliability}}</p>
+
                         <hr>
 
                     </div>

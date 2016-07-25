@@ -228,6 +228,7 @@ initializeMap();
                      function onMessageArrived(message) {
                        console.log("Received new Domain Information");
                        var json = JSON.parse(message.payloadString);
+                         console.log(json)
                        $scope.details = json;
                         $scope.$apply();
                      }
