@@ -11,6 +11,7 @@ import (
 func main() {
 
 	domainControllerManager := domainControllerManagement.NewDomainControllerManager()
+
 	if domainController,_ := domainControllerManager.StartNewDomainControllerInstance(models.NewRealWorldDomain("default"),models.NewRealWorldDomain("none")); domainController != nil {
 		fmt.Println("Default DomainController created: ", domainController)
 	}
