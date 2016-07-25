@@ -30,7 +30,8 @@ func NewDomainControllerDatabaseWorker() (*DomainControllerDatabaseWorker, error
 }
 
 func openSession() (*mgo.Session, error) {
-	host := os.Getenv("MONGODB_URI")
+	//host := os.Getenv("MONGODB_URI")
+	host := "db-default:27017"
 	session, err := mgo.Dial(host)
 	return session, err
 }

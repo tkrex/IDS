@@ -60,7 +60,7 @@ func (configManager *DomainControllerConfigurationManager) initConfig() *DomainC
 	parentDomainString := "default"
 	ownDomainString := "default"
 	controllerID := "controllerID"
-	brokerURLString := "ws://localhost:18833"
+	brokerURLString := "ws://broker-default:9001"
 	gatewayBrokerURLString := "ws://localhost:18833"
 	scalingInterfaceString := "http://localhost:8000"
 
