@@ -8,15 +8,9 @@ import (
 	"github.com/tkrex/IDS/common/models"
 	"github.com/tkrex/IDS/domainController/persistence"
 	"github.com/tkrex/IDS/domainController/configuration"
-	"os"
 	"github.com/tkrex/IDS/common/routing"
-	"github.com/tkrex/IDS/domainController"
+	"github.com/tkrex/IDS/common"
 )
-
-
-
-
-
 
 
 type DomainInformationProcessor struct {
@@ -30,7 +24,7 @@ type DomainInformationProcessor struct {
 	forwardFlag bool
 	forwardingSignalChannel     chan *models.ForwardMessage
 	routingManager 	*routing.RoutingManager
-	scalingManager  *domainController.ScalingManager
+	scalingManager  *common.ScalingManager
 
 
 }
@@ -41,10 +35,10 @@ func NewDomainInformationProcessor(incomingTopicChannel chan *models.RawTopicMes
 	processor.processorStopped.Add(1)
 	processor.incomingTopicChannel = incomingTopicChannel
 	processor.forwardFlag = forwardFlag
-	processor.forwardingSignalChannel = make(chan *models.RealWorldDomain)
+	processor.forwardingSignalChannel = make(chan *models.ForwardMessage)
 
 	processor.routingManager = routing.NewRoutingManager(configuration.DomainControllerConfigurationManagerInstance().Config().ScalingInterfaceAddress)
-	processor.scalingManager = domainController.NewScalingManager()
+	processor.scalingManager = common.NewScalingManager(configuration.DomainControllerConfigurationManagerInstance().Config().ScalingInterfaceAddress)
 	go processor.run()
 	processor.processorStarted.Wait()
 	fmt.Println("Producer Created")

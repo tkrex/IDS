@@ -16,7 +16,7 @@ type DomainInformationForwarder struct {
 	forwarderStarted       sync.WaitGroup
 	forwarderStopped       sync.WaitGroup
 
-	forwardSignalChannel   chan *models.RealWorldDomain
+	forwardSignalChannel   chan *models.ForwardMessage
 	routingManager         *routing.RoutingManager
 	forwardPriorityCounter map[string]int
 }

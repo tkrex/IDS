@@ -21,21 +21,6 @@ func NewBrokerRequestHandler() *BrokerRequestHandler {
 
 func (handler *BrokerRequestHandler) handleRequest(informationRequest *models.DomainInformationRequest) (map[string][]*models.Broker,error) {
 
-	domains := []*models.RealWorldDomain{ models.NewRealWorldDomain("education/schools"), models.NewRealWorldDomain("education"), models.NewRealWorldDomain("education/university")}
-	brokers := []*models.Broker{}
-	for _, domain := range domains {
-	//DEBUG CODE
-	broker := models.NewBroker()
-	broker.ID = "testID"
-	broker.IP = "localhost"
-	broker.RealWorldDomain = domain
-	broker.Geolocation = models.NewGeolocation("germany", "bavaria", "munich", 11.6309, 48.2499)
-	broker.Statitics.NumberOfTopics = 20
-	brokers = append(brokers, broker)
-	}
-	sortedBrokers := handler.sortBrokersByDomains(brokers)
-	return sortedBrokers, nil
-
 	domain := models.NewRealWorldDomain(informationRequest.Domain())
 	targetDomain := domain.TopLevelDomain()
 	destinationDomainController := RequestRoutingManagerInstance().DomainControllerForDomain(targetDomain)
