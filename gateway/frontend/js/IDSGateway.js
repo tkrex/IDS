@@ -1,5 +1,5 @@
 
-var sampleApp = angular.module('gatewayApp', ["ui.router","ngResource",'uiGmapgoogle-maps',"google.places"]);
+var sampleApp = angular.module('gatewayApp', ["ui.router","ngResource",'uiGmapgoogle-maps',"google.places","googlechart"]);
 
  sampleApp.config(function($stateProvider,$urlRouterProvider) {
     $urlRouterProvider.otherwise("/")
@@ -7,6 +7,11 @@ var sampleApp = angular.module('gatewayApp', ["ui.router","ngResource",'uiGmapgo
 
 
     $stateProvider
+
+        .state("start", {
+            url: "/",
+            templateUrl: "/html/start.html",
+            controller: "MainController"})
 
         .state("results", {
                 url: "/results/:domainName?country&city",
@@ -24,7 +29,7 @@ var sampleApp = angular.module('gatewayApp', ["ui.router","ngResource",'uiGmapgo
       });
 
 
-  sampleApp.controller('MainController', ["$scope",'$state','$resource','googlechart', function($scope, $state, $resource){
+  sampleApp.controller('MainController', ["$scope",'$state','$resource', function($scope, $state, $resource){
 
                  var Domains = $resource("rest/domains", {}, {search: {method:"GET", params: {}, isArray: true}});
                      $scope.getDomains = function(){
@@ -47,13 +52,13 @@ var sampleApp = angular.module('gatewayApp', ["ui.router","ngResource",'uiGmapgo
       var chart1 = {};
       chart1.type = "GeoChart";
       chart1.data = [
-          ['Locale', 'Count', 'Percent'],
-          ['Germany', 22, 23],
-          ['United States', 34, 11],
-          ['Brazil', 42, 11],
-          ['Canada', 57, 32],
-          ['France', 6, 9],
-          ['RU', 72, 3]
+          ['Locale', 'Brokers'],
+          ['Germany', 23],
+          ['United States', 11],
+          ['Brazil', 11],
+          ['Canada', 32],
+          ['France', 9],
+          ['RU', 3]
       ];
 
       chart1.options = {
@@ -62,13 +67,6 @@ var sampleApp = angular.module('gatewayApp', ["ui.router","ngResource",'uiGmapgo
           chartArea: {left:10,top:10,bottom:0,height:"100%"},
           colorAxis: {colors: ['#aec7e8', '#1f77b4']},
           displayMode: 'regions'
-      };
-
-      chart1.formatters = {
-          number : [{
-              columnNum: 1,
-              pattern: "$ #,##0.00"
-          }]
       };
 
       $scope.chart = chart1;
@@ -182,6 +180,13 @@ initializeMap();
                                 console.log("Broker Location: "+brokerLocation)
                                  $scope.marker = {idkey: 1,coords: brokerLocation};
                                  $scope.map = {center: {latitude: brokerLatitude, longitude: brokerLongitude}, zoom: 10, refresh: true };
+                  };
+
+                  $scope.parseDataString= function(dateString) {
+                        var date = new Date(dateString)
+                      console.log(date)
+                      return date
+
                   };
 
                   function initializeMap() {

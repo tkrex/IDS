@@ -28,13 +28,15 @@ func (handler *DomainInformationForBrokerRequestHandler) handleRequest(brokerId 
 	broker.ID = "testID"
 	broker.IP = "localhost"
 	broker.RealWorldDomain = models.NewRealWorldDomain("education")
-	broker.Geolocation = models.NewGeolocation("germany","bavaria","munich",11.6309,48.2499)
+	broker.Geolocation = models.NewGeolocation("Germany","Bavaria","Garching",11.6309,48.2499)
 
 	topics := []*models.Topic{}
 
 	for i := 0; i < 5; i++ {
 		topic := models.NewTopic("/home/kitchen","{\"temperature\":3}",time.Now())
 		topic.UpdateBehavior.UpdateIntervalDeviation = 3.0
+		topic.PayloadSimilarity = 80.5
+		topic.UpdateBehavior.Reliability = "automatic"
 		topics = append(topics, topic)
 	}
 

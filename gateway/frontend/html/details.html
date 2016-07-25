@@ -6,35 +6,83 @@
     <meta charset="utf-8">
     <style>
             .angular-google-map-container { height: 300px; }
+            .row-topic {
+                background-color: #316AC5;
+            }
+            .box{
+                width:20px;
+                height:20px;
+            }
+
+            .red{
+                background:#f00;
+            }
+            .green{
+                background:#0f0;
+            }
+            .blue{
+                background:#00f;
+            }
 
     </style>
 </head>
 
 <body>
-<h2>Broker Details for {{selectedInformation.broker.ip}}</h2>
+<div class="row">
+    <div class="col-sm-4 text-center">
+        <h2> Broker</h2>
+    </div>
+    <div class="col-sm-1 "></div>
+    <div class="col-sm-7 text-center">
+        <h2> Topics </h2>
+    </div>
 
+</div>
 <div class="container">
     <div class="row">
-        <div class="col-sm-4 well">
-            <h3>Broker</h3>
-            <p>IP Address: {{details.broker.ip}}</p>
-            <p>Internet Domain: {{details.broker.internetDomain}}</p>
+        <div class="col-sm-4">
+            <h4>Real World Domain </h4>
+            <p class="text-capitalize">{{details.broker.realWorldDomain.name}}</p>
+            <h4>IP Address</h4>
+                <p>{{details.broker.ip}}</p>
+            <h4>Internet Domain</h4>
+            <p>{{details.broker.internetDomain}}</p>
+
+            <h4>Location </h4>
             <ui-gmap-google-map center='map.center' zoom='map.zoom'>
                 <ui-gmap-marker coords="marker.coords" idkey="marker.idkey"></ui-gmap-marker>
             </ui-gmap-google-map>
-            <p>Location: {{details.broker.geolocation.country}}, {{details.broker.geolocation.region}}, {{details.broker.geolocation.city}}</p>
-            <p>RealWorldDomain: {{details.broker.realWorldDomain.name}}</p>
+
+            <address>
+                {{details.broker.geolocation.city}}<br>
+                {{details.broker.geolocation.region}}<br>
+                {{details.broker.geolocation.country}}<br>
+            </address>
+
+
 
 
         </div>
 
         <div class="col-sm-1 "></div>
-        <div class="col-sm-7 well">
+        <div class="col-sm-7">
             <div ng-repeat ="topic in details.topics">
-                <p>{{topic.name}}</p>
-                <p>Last Payload: {{topic.payload}}</p>
-                <p>Last Update : {{topic.lastUpdate}}</p>
-                <p>Deviation: {{topic.updateBehavior.deviation}}</p>
+
+                <div class="row" >
+                    <div class="col-sm-12">
+                <h4>Name: {{topic.name}} </h4>
+                <p class="text-info">Last Payload:
+                    <div class ="pre-scrollable">{{topic.payload}}</div>
+                </p>
+                        <p class="text-info">Payload Similarity: {{topic.payloadSimilarity}}%</p>
+                <p class="text-info text-capitalize">Reliability: {{topic.updateBehavior.reliability}}</p>
+                <p class="text-info">Last Update : {{parseDataString(topic.lastUpdate).toString()}}</p>
+                        <p class="text-info">Average Update Interval: {{topic.updateBehavior.averageInterval}} seconds </p>
+                <p class="text-info">Deviation: {{topic.updateBehavior.deviation}} seconds</p>
+                        <hr>
+
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -42,8 +90,16 @@
 
 </div>
 
+<script>
+    $(document).ready(function(){
+        $('[data-toggle="popover"]').popover();
+    });
+</script>
+
 </body>
 </html>
+
+
 
 
 

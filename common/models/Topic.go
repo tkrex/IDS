@@ -11,7 +11,7 @@ type Topic struct {
 	SimilarityCheckInterval int                `json:"-" bson:""`
 	FirstUpdateTimeStamp    time.Time            `json:"firstUpdate"`
 	LastUpdateTimeStamp     time.Time        `json:"lastUpdate" bson:"lastUpdate"`
-	UpdateBehavior          *UpdateBehavior
+	UpdateBehavior          *UpdateBehavior	   `json:"updateBehavior" bson:"updateBehavior`
 	Domain                  *RealWorldDomain   `json:"domain" bson:"domain`
 	Visibility              bool                `json:"-"`
 }

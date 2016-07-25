@@ -6,18 +6,20 @@ import (
 	"net/http"
 	"io/ioutil"
 	"encoding/json"
-	"github.com/tkrex/IDS/domainController/configuration"
 	"github.com/tkrex/IDS/domainController/persistence"
+	"net/url"
 )
 
 const ScalingThreshold = 10
 
 type ScalingManager struct {
-
+	scalingInterfaceURL *url.URL
 }
 
-func NewScalingManager() *ScalingManager {
-	return new(ScalingManager)
+func NewScalingManager(scalingInterfaceURL *url.URL) *ScalingManager {
+	scalingManager := new(ScalingManager)
+	scalingManager.scalingInterfaceURL = scalingInterfaceURL
+	return scalingManager
 }
 
 func (scalingManager *ScalingManager) CheckWorkloadForDomain(domain *models.RealWorldDomain) bool {
@@ -41,9 +43,7 @@ func (scalingManager *ScalingManager) CreateNewDominControllerForDomain(domain *
 
 //TODO: Add Parent Domain as parameter
 func (scalingManager *ScalingManager) requestNewDomainControllerForDomain(domain *models.RealWorldDomain) (*models.DomainController, error) {
-	config := configuration.DomainControllerConfigurationManagerInstance().Config()
-
-	req, err := http.NewRequest("GET", config.ScalingInterfaceAddress.String() + "/rest/domainControllers/" + domain.Name + "/new", nil)
+	req, err := http.NewRequest("GET", scalingManager.scalingInterfaceURL.String() + "/rest/domainControllers/" + domain.Name + "/new", nil)
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}

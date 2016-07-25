@@ -3,8 +3,7 @@ package main
 import (
 	"github.com/tkrex/IDS/gateway/providing"
 	"github.com/tkrex/IDS/gateway/domainControllerManagement"
-	"github.com/tkrex/IDS/common/models"
-	"fmt"
+
 )
 
 func main() {
@@ -14,10 +13,10 @@ func main() {
 
 	providing.NewIDSGatewayWebInterface("8000")
 
-	domainControllerManager := domainControllerManagement.NewDomainControllerManager()
+/*	domainControllerManager := domainControllerManagement.NewDomainControllerManager()
 	if domainController,_ := domainControllerManager.StartNewDomainControllerInstance(models.NewRealWorldDomain("default"),models.NewRealWorldDomain("none")); domainController != nil {
 		fmt.Println("Default DomainController created: ", domainController)
-	}
+	}*/
 	for  {}
 }
 

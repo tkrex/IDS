@@ -1,9 +1,13 @@
-<h2>Results for {{queryDomain}}</h2>
+
+<div ng-repeat="(domain, brokers) in results">
 
 <div class="row">
+    <div class="col-md-12 text-center">
+    <h2>{{domain}}</h2>
+        </div>
+</div>
+<div class="row">
     <div class="col-md-12">
-        <div ng-repeat="(domain, brokers) in results">
-            <p> {{domain}}</p>
         <div class="list-group" ng-repeat="broker in brokers">
             <a href="" ng-click="onBrokerSelect(broker)" class="list-group-item">
                 <span class="badge">{{broker.statistics.numberOfTopics}}</span>
