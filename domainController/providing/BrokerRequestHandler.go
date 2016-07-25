@@ -2,7 +2,6 @@ package providing
 
 import (
 	"github.com/tkrex/IDS/common/models"
-	"github.com/tkrex/IDS/domainController/persistence"
 )
 
 type BrokerRequestHandler struct {
