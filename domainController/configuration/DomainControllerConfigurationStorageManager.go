@@ -2,6 +2,7 @@ package configuration
 
 import (
 	"gopkg.in/mgo.v2"
+	"os"
 )
 
 const (
@@ -28,7 +29,8 @@ func NewDomainControllerConfigStorageManager() (*DomainControllerConfigStorageMa
 }
 
 func openSession() (*mgo.Session, error) {
-	session, err := mgo.Dial(Host)
+	host := os.Getenv("MONGODB_URI")
+	session, err := mgo.Dial(host)
 	return session, err
 }
 
