@@ -31,12 +31,12 @@ func (handler *BrokerRequestHandler) handleRequest(informationRequest *models.Do
 	}
 	return brokers, nil
 
-	dbDelegate,err := persistence.NewDomainControllerDatabaseWorker()
-	if err != nil {
-		return nil, err
-	}
-	defer dbDelegate.Close()
-	brokers,err = dbDelegate.FindBrokersForInformationRequest(informationRequest)
-	return brokers, err
+	//dbDelegate,err := persistence.NewDomainControllerDatabaseWorker()
+	//if err != nil {
+	//	return nil, err
+	//}
+	//defer dbDelegate.Close()
+	//brokers,err = dbDelegate.FindBrokersForInformationRequest(informationRequest)
+	//return brokers, err
 }
 

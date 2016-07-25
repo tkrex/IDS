@@ -39,7 +39,7 @@ func (provider *DomainInformationRESTProvider) run(port string) {
 
 func (webInterface *DomainInformationRESTProvider) getBrokersForDomain(res http.ResponseWriter, req *http.Request) {
 	res.Header().Set("Content-Type", "application/json")
-	fmt.Println("domain Information Request Received")
+	fmt.Println("Broker Request Received")
 
 	requestParameters := mux.Vars(req)
 	domainName := requestParameters["domain"]
@@ -56,6 +56,7 @@ func (webInterface *DomainInformationRESTProvider) getBrokersForDomain(res http.
 		return
 	}
 	json.NewEncoder(res).Encode(brokers)
+	fmt.Println("Broker Request Responsed")
 }
 
 
