@@ -161,7 +161,7 @@ initializeMap();
                         		};
                  $scope.getDomainInformation(selectedBrokerId,domain,location,name);
 
-                 var DomainController = $resource("rest/domainControllers/:domainName", {domainName: '@domainName'}, {search: {method:"GET", params: {domainName: "@domainName"}, isArray: false}});
+                 var DomainController = $resource("http://10.40.53.21:8080/rest/domainControllers/:domainName", {domainName: '@domainName'}, {search: {method:"GET", params: {domainName: "@domainName"}, isArray: false}});
                                   $scope.getDomainController = function(domainName){
                                          			// Passing parameters to Book calls will become arguments if
                                          			// we haven't defined it as part of the path (we did with id)
