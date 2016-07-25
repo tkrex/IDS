@@ -2,7 +2,6 @@ package configuration
 
 import (
 	"gopkg.in/mgo.v2"
-	"os"
 )
 
 const (

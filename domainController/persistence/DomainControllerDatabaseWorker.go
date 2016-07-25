@@ -5,7 +5,6 @@ import (
 	"gopkg.in/mgo.v2"
 	"github.com/tkrex/IDS/common/models"
 	"gopkg.in/mgo.v2/bson"
-	"os"
 )
 
 const (
