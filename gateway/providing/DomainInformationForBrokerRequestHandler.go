@@ -30,7 +30,7 @@ func (handler *DomainInformationForBrokerRequestHandler) handleRequest(brokerId 
 }
 
 func (handler *DomainInformationForBrokerRequestHandler) forwardRequestToDomainController(brokerId string, informationRequest *models.DomainInformationRequest,domainController *models.DomainController) (*models.DomainInformationMessage,error) {
-	requestUrlString := domainController.RestEndpoint.String() + "/brokers/" + brokerId + "/" + informationRequest.Domain()
+	requestUrlString := domainController.RestEndpoint.String() + "/rest/brokers/" + brokerId + "/" + informationRequest.Domain()
 	requestUrl,_ := url.Parse(requestUrlString)
 	query := requestUrl.Query()
 

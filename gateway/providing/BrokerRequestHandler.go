@@ -50,7 +50,7 @@ func (handler *BrokerRequestHandler) sortBrokersByDomains(brokers []*models.Brok
 	return sortedBrokers
 }
 func (handler *BrokerRequestHandler) requestBrokersFromDomainController(informationRequest *models.DomainInformationRequest, domainController *models.DomainController) ([]*models.Broker,error) {
-	requestUrlString := domainController.RestEndpoint.String() + "/brokers/" + informationRequest.Domain()
+	requestUrlString := domainController.RestEndpoint.String() + "/rest//brokers/" + informationRequest.Domain()
 	requestUrl,_ := url.Parse(requestUrlString)
 	query := requestUrl.Query()
 	//query.Set("location",informationRequest.Location())
