@@ -37,11 +37,11 @@ func startDomainInformationProcessing(forwardFlag bool) {
 
 	desiredTopic  := "#"
 	subscriberConfig := models.NewMqttClientConfiguration(config.ControllerBrokerAddress,config.DomainControllerID)
-	subscriber := subscribing.NewMqttSubscriber(subscriberConfig,desiredTopic,false)
+	subscriber := subscribing.NewMqttSubscriber(subscriberConfig,desiredTopic)
 	//processing layer
 	processor := processing.NewDomainInformationProcessor(subscriber.IncomingTopicsChannel(),forwardFlag)
 	if forwardFlag {
-		forwarding.NewDomainInformationForwarder(processor.ForwardSignalChannel())
+		forwarding.NewDomainInformationForwarder(processor.ForwardSignalChannel(),processor.RoutingInformationChannel())
 	}
 
 }

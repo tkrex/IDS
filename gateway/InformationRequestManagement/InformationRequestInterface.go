@@ -9,6 +9,7 @@ import (
 	"github.com/tkrex/IDS/common/models"
 	"strings"
 	"os"
+	"github.com/tkrex/IDS/gateway/brokerRegistration"
 )
 
 type InformationRequestInterface struct {

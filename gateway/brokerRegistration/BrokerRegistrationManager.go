@@ -12,7 +12,7 @@ type BrokerRegistrationManager struct {
 }
 
 func NewBrokerRegistrationManager() *BrokerRegistrationManager {
-	manager := new(BrokerRegistrationManager
+	manager := new(BrokerRegistrationManager)
 	manager.registrationStorageDelegate = NewBrokerRegistrationStorage()
 	return manager
 }
@@ -31,7 +31,7 @@ func (manager *BrokerRegistrationManager) RegisterBroker(broker *models.Broker) 
 	}
 
 	broker.ID = brokerID
-	if _, found := manager.registrationStorageDelegate.FindBrokerById(brokerID); found {
+	if broker,_ := manager.registrationStorageDelegate.FindBrokerById(brokerID); broker != nil {
 		fmt.Println("Broker Already Registered")
 	} else {
 		if err = manager.registrationStorageDelegate.StoreBroker(broker); err != nil {

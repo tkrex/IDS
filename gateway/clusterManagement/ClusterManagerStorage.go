@@ -64,10 +64,11 @@ func (worker *ClusterManagerStorage) RemoveDomainControllerForDomain(domain *mod
 func (worker *ClusterManagerStorage) FindDomainControllerForDomain(domain *models.RealWorldDomain) (*models.DomainController,error) {
 	coll := worker.domainControllerCollection()
 	var domainController *models.DomainController
-	if err := coll.Find(bson.M{"domain.name":domain.Name}).One(&domainController); err != nil {
+	err := coll.Find(bson.M{"domain.name":domain.Name}).One(&domainController)
+	if err != nil {
 		fmt.Println(err)
 	}
-	return domainController
+	return domainController, err
 }
 
 

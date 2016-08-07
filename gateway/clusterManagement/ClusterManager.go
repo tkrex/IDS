@@ -39,7 +39,7 @@ func (manager *ClusterManager) domainControllerForDomain(domain *models.RealWorl
 	domainLevels := domain.DomainLevels()
 	for i := len(domainLevels) - 1; i >= 0; i-- {
 		fmt.Println("Searching Domain Controller for domain: ", domain)
-		requestedDomainController = manager.clusterManagementStorage.FindDomainControllerForDomain(domain)
+		requestedDomainController,_ = manager.clusterManagementStorage.FindDomainControllerForDomain(domain)
 		if requestedDomainController != nil {
 			break
 		}
@@ -47,7 +47,7 @@ func (manager *ClusterManager) domainControllerForDomain(domain *models.RealWorl
 	}
 
 	if requestedDomainController == nil {
-		requestedDomainController = manager.clusterManagementStorage.FindDomainControllerForDomain(models.NewRealWorldDomain("default"))
+		requestedDomainController,_ = manager.clusterManagementStorage.FindDomainControllerForDomain(models.NewRealWorldDomain("default"))
 		if requestedDomainController == nil {
 			fetchError = errors.New("No DomainController found")
 		}
@@ -57,13 +57,11 @@ func (manager *ClusterManager) domainControllerForDomain(domain *models.RealWorl
 
 func (manager *ClusterManager) stopDomainControllerInstance(domain *models.RealWorldDomain) error {
 	var stopError error
-	dbWorker := NewClusterManagerStorage()
-	defer dbWorker.Close()
-	existingDomainController := dbWorker.FindDomainControllerForDomain(domain)
+	existingDomainController,_ := manager.clusterManagementStorage.FindDomainControllerForDomain(domain)
 	if existingDomainController != nil {
 		stopError = NewDockerManager().StopDomainControllerInstance(domain)
 		if stopError == nil {
-			dbWorker.RemoveDomainControllerForDomain(domain)
+			manager.clusterManagementStorage.RemoveDomainControllerForDomain(domain)
 		} else {
 			stopError = errors.New("Failed to start new domain controller instance")
 		}
@@ -75,17 +73,14 @@ func (manager *ClusterManager) stopDomainControllerInstance(domain *models.RealW
 
 func (manager *ClusterManager) StartNewDomainControllerInstance(domain *models.RealWorldDomain, parentDomain *models.RealWorldDomain) (*models.DomainController, error) {
 	var startError error
-	dbWorker := NewClusterManagerStorage()
 
-	defer dbWorker.Close()
-
-	existingDomainController := dbWorker.FindDomainControllerForDomain(domain)
+	existingDomainController,_ := manager.clusterManagementStorage.FindDomainControllerForDomain(domain)
 	if existingDomainController != nil {
 		startError = errors.New("Domain Controller for this domain already exists")
 	}
 	domainController, startError := NewDockerManager().StartDomainControllerInstance(parentDomain, domain);
 	if domainController != nil {
-		dbWorker.StoreDomainController(domainController)
+		manager.clusterManagementStorage.StoreDomainController(domainController)
 	} else {
 		startError = errors.New("Failed to start new domain controller instance")
 
