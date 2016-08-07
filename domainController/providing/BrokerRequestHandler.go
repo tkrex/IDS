@@ -13,14 +13,14 @@ func NewBrokerRequestHandler() *BrokerRequestHandler {
 }
 
 
-func (handler *BrokerRequestHandler) handleRequest(informationRequest *models.DomainInformationRequest) ([]*models.Broker,error) {
+func (handler *BrokerRequestHandler) HandleRequest(informationRequest *models.DomainInformationRequest) ([]*models.Broker,error) {
 
 	broker1 := models.NewBroker()
 	broker1.ID = "weatherBroker"
 	broker1.IP = "12.12.12.12:1833"
 	broker1.InternetDomain = "krex.in.tum.de"
-	broker1.Statitics.NumberOfTopics = 1022
-	broker1.Statitics.ReceivedTopicsPerSeconds = 10
+	broker1.Statistics.NumberOfTopics = 1022
+	broker1.Statistics.ReceivedTopicsPerSeconds = 10
 	broker1.RealWorldDomain = models.NewRealWorldDomain("weather")
 	broker1.Geolocation = models.NewGeolocation("Germany", "Bavaria", "Garching", 11.6309, 48.2499)
 
@@ -28,8 +28,8 @@ func (handler *BrokerRequestHandler) handleRequest(informationRequest *models.Do
 	broker.ID = "weatherBroker"
 	broker.IP = "143.142.192.192:1833"
 	broker.InternetDomain = "unknown.de"
-	broker.Statitics.NumberOfTopics = 1022
-	broker.Statitics.ReceivedTopicsPerSeconds = 10
+	broker.Statistics.NumberOfTopics = 1022
+	broker.Statistics.ReceivedTopicsPerSeconds = 10
 	broker.RealWorldDomain = models.NewRealWorldDomain("weather")
 	broker.Geolocation = models.NewGeolocation("Germany", "NRW", "Siegen", 11.6309, 48.2499)
 	return []*models.Broker{broker,broker1}, nil

@@ -50,7 +50,7 @@ func (webInterface *DomainInformationRESTProvider) getBrokersForDomain(res http.
 	json.Unmarshal([]byte(location),parsedLocation)
 
 	informationRequest := models.NewDomainInformationRequest(domainName, parsedLocation,name)
-	brokers, err := NewBrokerRequestHandler().handleRequest(informationRequest)
+	brokers, err := NewBrokerRequestHandler().HandleRequest(informationRequest)
 	if err != nil {
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
@@ -80,7 +80,7 @@ func (webInterface *DomainInformationRESTProvider) getDomainInformationForBroker
 	json.Unmarshal([]byte(location),parsedLocation)
 	informationRequest := models.NewDomainInformationRequest(domainName,parsedLocation,name)
 
-	domainInformation, err := NewDomainInformationForBrokerRequestHandler().handleRequest(informationRequest,brokerId)
+	domainInformation, err := NewDomainInformationForBrokerRequestHandler().HandleRequest(informationRequest,brokerId)
 	if err != nil {
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
@@ -109,7 +109,7 @@ func (webInterface *DomainInformationRESTProvider) handleDomainInformation(res h
 	name := req.FormValue("name")
 	informationRequest := models.NewDomainInformationRequest(domainName,parsedLocation,name)
 
-	domainInformation, err := NewDomainInformationRequestHandler().handleRequest(informationRequest)
+	domainInformation, err := NewDomainInformationRequestHandler().HandleRequest(informationRequest)
 	if err != nil {
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return

@@ -8,8 +8,9 @@ import (
 	"github.com/tkrex/IDS/common/models"
 	"github.com/tkrex/IDS/domainController/persistence"
 	"github.com/tkrex/IDS/common/publishing"
-	"github.com/tkrex/IDS/common/routing"
 	"github.com/tkrex/IDS/domainController/configuration"
+	"github.com/tkrex/IDS/common/forwardRouting"
+	"os"
 )
 
 type DomainInformationForwarder struct {
@@ -17,8 +18,11 @@ type DomainInformationForwarder struct {
 	forwarderStopped       sync.WaitGroup
 
 	forwardSignalChannel   chan *models.ForwardMessage
-	routingManager         *routing.RoutingManager
+	routingInformationChannel chan *models.DomainController
+	routingManager         *forwardRouting.ForwardRoutingManager
 	forwardPriorityCounter map[string]int
+
+	informationStorageDelegate *persistence.DomainInformationStorage
 }
 
 const (
@@ -26,11 +30,19 @@ const (
 	ForwardThreshold = 10
 )
 
-func NewDomainInformationForwarder(forwardSignalChannel chan *models.ForwardMessage) *DomainInformationForwarder {
+func NewDomainInformationForwarder(forwardSignalChannel chan *models.ForwardMessage, routingInformationChannel chan *models.DomainController) *DomainInformationForwarder {
 	forwarder := new(DomainInformationForwarder)
 	forwarder.forwardSignalChannel = forwardSignalChannel
-	forwarder.routingManager = routing.NewRoutingManager(configuration.DomainControllerConfigurationManagerInstance().Config().ScalingInterfaceAddress)
+	forwarder.routingInformationChannel = routingInformationChannel
+	forwarder.routingManager = forwardRouting.NewForwardRoutingManager(configuration.DomainControllerConfigurationManagerInstance().Config().ClusterManagementAddress)
 	forwarder.forwardPriorityCounter = make(map[string]int)
+
+	informationStorageDelegate,error := persistence.NewDomainInformationStorage()
+	if error != nil {
+		fmt.Println(error)
+		os.Exit(1)
+	}
+	forwarder.informationStorageDelegate = informationStorageDelegate
 	forwarder.forwarderStarted.Add(1)
 	forwarder.forwarderStopped.Add(1)
 	go forwarder.run()
@@ -40,6 +52,7 @@ func NewDomainInformationForwarder(forwardSignalChannel chan *models.ForwardMess
 
 func (forwarder *DomainInformationForwarder) run() {
 	go forwarder.listenOnForwardSignal()
+	go forwarder.listenOnRoutingInformationChannel()
 	go forwarder.startForwardTicker()
 	forwarder.forwarderStarted.Done()
 }
@@ -57,6 +70,22 @@ func (forwarder *DomainInformationForwarder) listenOnForwardSignal() {
 			go forwarder.processForwardMessage(forwardMessage)
 		}
 	}
+}
+
+func (forwarder *DomainInformationForwarder) listenOnRoutingInformationChannel() {
+	for {
+		newDomainController, open := <-forwarder.routingInformationChannel
+		if !open {
+			break
+		}
+		if newDomainController != nil {
+			go forwarder.processNewDomainController(newDomainController  )
+		}
+	}
+}
+
+func (forwarder *DomainInformationForwarder) processNewDomainController(domainController *models.DomainController) {
+	forwarder.routingManager.AddDomainControllerForDomain(domainController,domainController.Domain)
 }
 
 func (forwarder *DomainInformationForwarder) startForwardTicker() {
@@ -86,9 +115,7 @@ func (forwarder *DomainInformationForwarder) processForwardMessage(forwardMessag
 }
 
 func (forwarder *DomainInformationForwarder) checkDomainsForForwarding() {
-	dbDelagte, _ := persistence.NewDomainControllerDatabaseWorker()
-	defer dbDelagte.Close()
-	domains, _ := dbDelagte.FindAllDomains()
+	domains, _ := forwarder.informationStorageDelegate.FindAllDomains()
 	for _, domain := range domains {
 		forwarder.forwardDomainInformation(domain)
 	}
@@ -97,10 +124,7 @@ func (forwarder *DomainInformationForwarder) checkDomainsForForwarding() {
 func (forwarder *DomainInformationForwarder) forwardDomainInformation(domain *models.RealWorldDomain) {
 	forwarder.forwardPriorityCounter[domain.Name] = 0
 
-	domainInformationDelegate, _ := persistence.NewDomainControllerDatabaseWorker()
-	defer domainInformationDelegate.Close()
-
-	domainInformation, err := domainInformationDelegate.FindDomainInformationByDomainName(domain.Name)
+	domainInformation, err := forwarder.informationStorageDelegate.FindDomainInformationByDomainName(domain.Name)
 
 	if err != nil {
 		fmt.Println(err)
@@ -108,7 +132,7 @@ func (forwarder *DomainInformationForwarder) forwardDomainInformation(domain *mo
 	}
 
 	if len(domainInformation) == 0 {
-		domainInformationDelegate.RemoveDomain(domain)
+		forwarder.informationStorageDelegate.RemoveDomain(domain)
 		return
 	}
 

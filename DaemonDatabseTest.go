@@ -7,8 +7,8 @@ import (
 )
 
 func main() {
-	dbDelegate,_ := persistence.NewDaemonDatabaseWorker()
-	topic := models.NewTopic("testTopic","",time.Now())
+	dbDelegate,_ := persistence.NewDomainInformationStorage()
+	topic := models.NewTopicInformation("testTopic","",time.Now())
 	topic.Visibility = true
 	topic.Domain = models.NewRealWorldDomain("newDomain")
 	dbDelegate.UpdateTopicDomainAndVisibility(topic)

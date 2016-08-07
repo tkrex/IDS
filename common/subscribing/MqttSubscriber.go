@@ -14,24 +14,21 @@ type  MqttSubscriber struct {
   state                 int64
   incomingTopicsChannel chan *models.RawTopicMessage
   client                MQTT.Client
+
   topic string
 
   producerStarted       sync.WaitGroup
   producerStopped       sync.WaitGroup
-
-  topicCounter          int
   config                *models.MqttClientConfiguration
-  isDaemon              bool
 }
 
 
 
 
-func NewMqttSubscriber(subscriberConfig *models.MqttClientConfiguration, topic string, isDaemon bool) *MqttSubscriber {
+func NewMqttSubscriber(subscriberConfig *models.MqttClientConfiguration, topic string) *MqttSubscriber {
   subscriber := new(MqttSubscriber)
   subscriber.incomingTopicsChannel = make(chan *models.RawTopicMessage,100)
   subscriber.config = subscriberConfig
-  subscriber.isDaemon = isDaemon
   subscriber.topic = topic
   subscriber.producerStarted.Add(1)
   subscriber.producerStopped.Add(1)

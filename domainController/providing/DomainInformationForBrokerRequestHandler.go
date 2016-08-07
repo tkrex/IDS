@@ -13,36 +13,36 @@ func NewDomainInformationForBrokerRequestHandler() *DomainInformationForBrokerRe
 	return new(DomainInformationForBrokerRequestHandler)
 }
 
-func (handler *DomainInformationForBrokerRequestHandler) handleRequest(informationRequest *models.DomainInformationRequest, brokerId string) (*models.DomainInformationMessage, error) {
+func (handler *DomainInformationForBrokerRequestHandler) HandleRequest(informationRequest *models.DomainInformationRequest, brokerId string) (*models.DomainInformationMessage, error) {
 	domain := models.NewRealWorldDomain(informationRequest.Domain())
 
 	broker := models.NewBroker()
-	topics := []*models.Topic{}
+	topics := []*models.TopicInformation{}
 
 	broker = models.NewBroker()
 	broker.ID = "weatherBroker"
 	broker.IP = "12.12.12.12:1833"
 	broker.InternetDomain = "krex.in.tum.de"
-	broker.Statitics.NumberOfTopics = 1022
-	broker.Statitics.ReceivedTopicsPerSeconds = 10
+	broker.Statistics.NumberOfTopics = 1022
+	broker.Statistics.ReceivedTopicsPerSeconds = 10
 	broker.RealWorldDomain = models.NewRealWorldDomain("weather")
 	broker.Geolocation = models.NewGeolocation("Germany", "Bavaria", "Garching", 11.6309, 48.2499)
 
-	topic := models.NewTopic("/fmi/server-room", "{\"temperature\":-6}", time.Now())
+	topic := models.NewTopicInformation("/fmi/server-room", "{\"temperature\":-6}", time.Now())
 	topic.UpdateBehavior.AverageUpdateIntervalInSeconds = 180
 	topic.UpdateBehavior.UpdateIntervalDeviation = 3.0
 	topic.PayloadSimilarity = 80.5
 	topic.UpdateBehavior.Reliability = "automatic"
 	topics = append(topics, topic)
 
-	topic = models.NewTopic("/fmi/ls1", "{\"temperature\":30}", time.Now())
+	topic = models.NewTopicInformation("/fmi/ls1", "{\"temperature\":30}", time.Now())
 	topic.UpdateBehavior.AverageUpdateIntervalInSeconds = 120
 	topic.UpdateBehavior.UpdateIntervalDeviation = 70.0
 	topic.PayloadSimilarity = 87
 	topic.UpdateBehavior.Reliability = "semi-automatic"
 	topics = append(topics, topic)
 
-	topic = models.NewTopic("/fmi/ls2", "{\"temperature\":10}", time.Now())
+	topic = models.NewTopicInformation("/fmi/ls2", "{\"temperature\":10}", time.Now())
 	topic.UpdateBehavior.AverageUpdateIntervalInSeconds = 30
 	topic.UpdateBehavior.UpdateIntervalDeviation = 200
 	topic.PayloadSimilarity = 40

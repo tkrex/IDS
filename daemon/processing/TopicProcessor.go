@@ -5,11 +5,12 @@ import (
 	"sync"
 	"fmt"
 
-	"github.com/tkrex/IDS/common"
 	"github.com/tkrex/IDS/common/models"
 	"github.com/tkrex/IDS/daemon/persistence"
 	"time"
 	"encoding/json"
+	"github.com/tkrex/IDS/common/utilities"
+	"math"
 )
 
 type TopicProcessor struct {
@@ -19,13 +20,11 @@ type TopicProcessor struct {
 	state                    int64
 	processorStarted         sync.WaitGroup
 	processorStopped         sync.WaitGroup
-	databaseDelegate         *persistence.DaemonDatabaseWorker
+	databaseDelegate         *persistence.DomainInformationStorage
 	topicUpdates             []*models.RawTopicMessage
 	incomingTopicChannel     chan *models.RawTopicMessage
 
 	forwardingSignalChannel  chan int
-	topicReliabilityStrategy models.UpdateReliabilityStrategy
-
 	newTopicsCounter         int
 }
 
@@ -41,7 +40,6 @@ func NewTopicProcessor(incomingTopicChannel chan *models.RawTopicMessage) *Topic
 	processor.processorStopped.Add(1)
 	processor.incomingTopicChannel = incomingTopicChannel
 	processor.forwardingSignalChannel = make(chan int)
-	processor.topicReliabilityStrategy = models.MeanAbsoluteDeviation{}
 	processor.topicUpdates = make([]*models.RawTopicMessage, 0, BulkUpdateThreshold)
 	go processor.run()
 	processor.processorStarted.Wait()
@@ -65,7 +63,7 @@ func (processor *TopicProcessor)  Close() {
 }
 
 func (processor *TopicProcessor) run() {
-	dbDelegate, err := persistence.NewDaemonDatabaseWorker()
+	dbDelegate, err := persistence.NewDomainInformationStorage()
 	if err != nil {
 		fmt.Println("Stopping Topic Processor: No Conbection to DB")
 		return
@@ -124,7 +122,7 @@ func (processor *TopicProcessor) processIncomingTopics() {
 	for name, _ := range sortedUpdates {
 		topicNames = append(topicNames, name)
 	}
-	existingTopics, _ := processor.databaseDelegate.FindTopicsByName(topicNames)
+	existingTopics, _ := processor.databaseDelegate.FindTopicsByNames(topicNames)
 	fmt.Printf("Number of Existing Topics: %d", len(existingTopics))
 	processor.mergeExistingTopicsWithUpdates(existingTopics, sortedUpdates)
 }
@@ -143,8 +141,8 @@ func (processor *TopicProcessor) sortTopicUpdatesByName(topicUpdates []*models.R
 	return sortedTopics
 }
 
-func (processor *TopicProcessor) mergeExistingTopicsWithUpdates(existingTopics map[string]*models.Topic, sortedTopics map[string][]*models.RawTopicMessage) {
-	resultingTopicUpdates := make([]*models.Topic, 0, len(sortedTopics))
+func (processor *TopicProcessor) mergeExistingTopicsWithUpdates(existingTopics map[string]*models.TopicInformation, sortedTopics map[string][]*models.RawTopicMessage) {
+	resultingTopicUpdates := make([]*models.TopicInformation, 0, len(sortedTopics))
 	processor.newTopicsCounter += (len(sortedTopics) - len(existingTopics))
 
 	var brokerDomain *models.RealWorldDomain
@@ -152,7 +150,7 @@ func (processor *TopicProcessor) mergeExistingTopicsWithUpdates(existingTopics m
 	brokerDomain = broker.RealWorldDomain
 
 	for name, topicArray := range sortedTopics {
-		var resultingTopic *models.Topic
+		var resultingTopic *models.TopicInformation
 		existingTopic, _ := existingTopics[name]
 		resultingTopic = existingTopic
 		for _, topic := range topicArray {
@@ -164,7 +162,7 @@ func (processor *TopicProcessor) mergeExistingTopicsWithUpdates(existingTopics m
 
 		resultingTopicUpdates = append(resultingTopicUpdates, resultingTopic)
 	}
-	_, err := processor.databaseDelegate.StoreTopics(resultingTopicUpdates)
+	err := processor.databaseDelegate.StoreTopics(resultingTopicUpdates)
 	if err != nil {
 		fmt.Println("could not update topics")
 		return
@@ -179,11 +177,11 @@ func (processor *TopicProcessor) checkForInformationForwarding() {
 	}
 }
 
-func (processor *TopicProcessor) updateTopicInformation(existingTopic *models.Topic, newTopic *models.RawTopicMessage) *models.Topic {
-	var resultingTopic *models.Topic
+func (processor *TopicProcessor) updateTopicInformation(existingTopic *models.TopicInformation, newTopic *models.RawTopicMessage) *models.TopicInformation {
+	var resultingTopic *models.TopicInformation
 
 	if existingTopic == nil {
-		resultingTopic = models.NewTopic(newTopic.Name, string(newTopic.Payload), newTopic.ArrivalTime)
+		resultingTopic = models.NewTopicInformation(newTopic.Name, string(newTopic.Payload), newTopic.ArrivalTime)
 		processor.calculateUpdateBehavior(resultingTopic, 0)
 	} else {
 		resultingTopic = existingTopic
@@ -197,7 +195,7 @@ func (processor *TopicProcessor) updateTopicInformation(existingTopic *models.To
 	return resultingTopic
 }
 
-func (processor *TopicProcessor) calculatePayloadSimilarity(topic *models.Topic, newJSONPayload string) {
+func (processor *TopicProcessor) calculatePayloadSimilarity(topic *models.TopicInformation, newJSONPayload string) {
 	if topic.UpdateBehavior.NumberOfUpdates % 100 == 0 {
 		fmt.Println("DEBUG: Similarity Check for Topic: ", topic.Name)
 		processor.calculatePayloadSimilarityCheckInterval(topic)
@@ -220,11 +218,11 @@ func (processor *TopicProcessor) calculatePayloadSimilarity(topic *models.Topic,
 		}
 
 		similarity := float64(hitCounter) / float64(len(oldJsonKeys)) * 100.0
-		topic.PayloadSimilarity = common.RoundUp(similarity,2)
+		topic.PayloadSimilarity = utilities.RoundUp(similarity,2)
 	}
 }
 
-func (processor *TopicProcessor) calculatePayloadSimilarityCheckInterval(topic *models.Topic) {
+func (processor *TopicProcessor) calculatePayloadSimilarityCheckInterval(topic *models.TopicInformation) {
 	topicSimilarityCheckInterval := int(SimilarityCheckInterval.Seconds()) / int(topic.UpdateBehavior.AverageUpdateIntervalInSeconds)
 	fmt.Println(topicSimilarityCheckInterval)
 	topic.SimilarityCheckInterval = topicSimilarityCheckInterval
@@ -261,13 +259,13 @@ func (processor *TopicProcessor) updateBrokerStatistics() {
 		return
 	}
 	numberOfTopics := processor.databaseDelegate.CountTopics()
-	broker.Statitics.NumberOfTopics = numberOfTopics
-	secondsSinceLastStatisticUpdate := time.Now().Sub(broker.Statitics.LastStatisticUpdate)
+	broker.Statistics.NumberOfTopics = numberOfTopics
+	secondsSinceLastStatisticUpdate := time.Now().Sub(broker.Statistics.LastStatisticUpdate)
 	incomingTopicFrequency := BulkUpdateThreshold / secondsSinceLastStatisticUpdate.Seconds()
-	broker.Statitics.ReceivedTopicsPerSeconds = incomingTopicFrequency
+	broker.Statistics.ReceivedTopicsPerSeconds = incomingTopicFrequency
 }
 
-func (processor *TopicProcessor) calculateUpdateBehavior(topic *models.Topic, newUpdateInterval int) {
+func (processor *TopicProcessor) calculateUpdateBehavior(topic *models.TopicInformation, newUpdateInterval int) {
 	updateBehavior := topic.UpdateBehavior
 	if updateBehavior.NumberOfUpdates == 0 {
 		updateBehavior.NumberOfUpdates++
@@ -277,19 +275,39 @@ func (processor *TopicProcessor) calculateUpdateBehavior(topic *models.Topic, ne
 		updateBehavior.MaximumUpdateIntervalInSeconds = int(newUpdateInterval)
 		updateBehavior.MinimumUpdateIntervalInSeconds = int(newUpdateInterval)
 	} else if topic.UpdateBehavior.NumberOfUpdates > 1 {
-		updateBehavior.MaximumUpdateIntervalInSeconds = common.Max(updateBehavior.MaximumUpdateIntervalInSeconds, newUpdateInterval)
-		updateBehavior.MinimumUpdateIntervalInSeconds = common.Min(updateBehavior.MinimumUpdateIntervalInSeconds, newUpdateInterval)
+		updateBehavior.MaximumUpdateIntervalInSeconds = utilities.Max(updateBehavior.MaximumUpdateIntervalInSeconds, newUpdateInterval)
+		updateBehavior.MinimumUpdateIntervalInSeconds = utilities.Min(updateBehavior.MinimumUpdateIntervalInSeconds, newUpdateInterval)
 		updateBehavior.AverageUpdateIntervalInSeconds = (updateBehavior.AverageUpdateIntervalInSeconds * float64(len(updateBehavior.UpdateIntervalsInSeconds)) + float64(newUpdateInterval)) / float64(len(updateBehavior.UpdateIntervalsInSeconds) + 1)
 	}
 
 	updateBehavior.UpdateIntervalsInSeconds = append(updateBehavior.UpdateIntervalsInSeconds, float64(newUpdateInterval))
 	updateBehavior.NumberOfUpdates++
-	updateBehavior.UpdateIntervalDeviation = processor.topicReliabilityStrategy.Calculate(updateBehavior)
+	updateBehavior.UpdateIntervalDeviation = processor.calculateMeanAbosluteDeviation(updateBehavior)
 	processor.determineReliability(topic)
 
 }
 
-func (processor *TopicProcessor)  determineReliability(topic *models.Topic) {
+func (processor *TopicProcessor) calculateMeanAbosluteDeviation(updateStats *models.UpdateBehavior) float64 {
+	if len(updateStats.UpdateIntervalsInSeconds) < 2 {
+		return -1.0
+	}
+	deviationSum := float64(0)
+	for _,interval := range updateStats.UpdateIntervalsInSeconds {
+		deviation := math.Abs(interval - updateStats.AverageUpdateIntervalInSeconds)
+		deviationSum +=  deviation
+	}
+	meanAbsoluteDeviation := deviationSum / float64(len(updateStats.UpdateIntervalsInSeconds))
+
+	//Reset Array to current average + deviation to avoid memory leak
+	if len(updateStats.UpdateIntervalsInSeconds) == 1000 {
+		updateStats.UpdateIntervalsInSeconds = make([]float64,0,1000)
+		updateStats.UpdateIntervalsInSeconds[0] = updateStats.AverageUpdateIntervalInSeconds + updateStats.UpdateIntervalDeviation
+	}
+	return meanAbsoluteDeviation
+}
+
+
+func (processor *TopicProcessor)  determineReliability(topic *models.TopicInformation) {
 	intervalDeviation := topic.UpdateBehavior.UpdateIntervalDeviation
 	reliability := ""
 	if intervalDeviation >= 0 && intervalDeviation <= 30 * time.Minute.Seconds() {

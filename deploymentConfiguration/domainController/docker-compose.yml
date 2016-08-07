@@ -1,0 +1,30 @@
+version: '2'
+services:
+  broker:
+    container_name: ${broker}
+    image: toke/mosquitto
+    ports:
+      - "9001"
+  database:
+    container_name: ${db}
+    image: mongo:3.0
+    expose:
+      - "27017"
+
+    command: mongod --smallfiles --quiet --logpath=/dev/null
+  ids-domaincontroller:
+    container_name: ${domainController}
+    image: tkrex/ids-domaincontroller
+    ports:
+      - "8080"
+    depends_on:
+      - broker
+      - database
+    environment:
+      - MONGODB_URI=${db}:27017
+      - BROKER_URI=ws://${broker}:9001
+      - MANAGEMENT_INTERFACE_URI=http://10.40.53.21:8080
+      - GATEWAY_BROKER_URI=ws://10.40.53.21:9001
+      - PARENT_DOMAIN=${parent_domain}
+      - OWN_DOMAIN=${own_domain}
+      - CONTROLLER_ID=${controller_id}

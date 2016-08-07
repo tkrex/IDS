@@ -24,22 +24,22 @@ func DomainControllerConfigurationManagerInstance() *DomainControllerConfigurati
 
 
 type DomainControllerConfiguration struct {
-	DomainControllerID string `bson:"id"`
-	ParentDomain *models.RealWorldDomain `bson:"parentDomain"`
-	OwnDomain *models.RealWorldDomain `bson:"ownDomain"`
-	ControllerBrokerAddress *url.URL `bson:"controllerBrokerAddress"`
-	GatewayBrokerAddress *url.URL `bson:"gatewayBrokerAddress"`
-	ScalingInterfaceAddress *url.URL `bson:"scalingInterfaceAddress"`
+	DomainControllerID       string `bson:"id"`
+	ParentDomain             *models.RealWorldDomain `bson:"parentDomain"`
+	OwnDomain                *models.RealWorldDomain `bson:"ownDomain"`
+	ControllerBrokerAddress  *url.URL `bson:"controllerBrokerAddress"`
+	GatewayBrokerAddress     *url.URL `bson:"gatewayBrokerAddress"`
+	ClusterManagementAddress *url.URL `bson:"scalingInterfaceAddress"`
 }
 
-func NewDomainControllerConfiguration(controllerID string,parentDomain *models.RealWorldDomain, ownDomain *models.RealWorldDomain, controllerBrokerAddress *url.URL, gatewayBrokerAddress *url.URL, scalingInterfaceAddress *url.URL) *DomainControllerConfiguration {
+func NewDomainControllerConfiguration(controllerID string,parentDomain *models.RealWorldDomain, ownDomain *models.RealWorldDomain, controllerBrokerAddress *url.URL, gatewayBrokerAddress *url.URL, clusterManagementAddress *url.URL) *DomainControllerConfiguration {
 	config := new(DomainControllerConfiguration)
 	config.DomainControllerID = controllerID
 	config.ParentDomain = parentDomain
 	config.OwnDomain = ownDomain
 	config.ControllerBrokerAddress = controllerBrokerAddress
 	config.GatewayBrokerAddress = gatewayBrokerAddress
-	config.ScalingInterfaceAddress = scalingInterfaceAddress
+	config.ClusterManagementAddress = clusterManagementAddress
 	return config
 }
 

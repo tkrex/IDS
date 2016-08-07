@@ -77,7 +77,7 @@ func (configManager *DaemonConfigurationManager) initConfig() *DaemonConfigurati
 }
 
 func (configManager *DaemonConfigurationManager) storeConfig(config *DaemonConfiguration) error {
-	storageManager, err := NewDaemonConfigStorageManager()
+	storageManager, err := NewDaemonConfigurationStorage()
 	if err != nil {
 		return err
 	}
@@ -86,7 +86,7 @@ func (configManager *DaemonConfigurationManager) storeConfig(config *DaemonConfi
 }
 
 func (configManager *DaemonConfigurationManager) fetchDomainControllerConfig() (*DaemonConfiguration, error) {
-	storageManager, err := NewDaemonConfigStorageManager()
+	storageManager, err := NewDaemonConfigurationStorage()
 	if err != nil {
 		return nil, err
 	}

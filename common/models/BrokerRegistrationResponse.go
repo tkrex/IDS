@@ -1,6 +1,8 @@
 package models
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type BrokerRegistrationResponse struct {
 	Broker           *Broker `json:"broker"`

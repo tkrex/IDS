@@ -8,8 +8,7 @@ import (
 	"github.com/tkrex/IDS/common/models"
 	"github.com/tkrex/IDS/domainController/persistence"
 	"github.com/tkrex/IDS/domainController/configuration"
-	"github.com/tkrex/IDS/common/routing"
-	"github.com/tkrex/IDS/common"
+	"github.com/tkrex/IDS/domainController/scaling"
 )
 
 
@@ -17,40 +16,39 @@ type DomainInformationProcessor struct {
 	// Flag to indicate that the consumer state
 	// 0 == Running
 	// 1 == Closed
-	state                       int64
-	processorStarted            sync.WaitGroup
-	processorStopped            sync.WaitGroup
-	incomingTopicChannel        chan *models.RawTopicMessage
-	forwardFlag bool
-	forwardingSignalChannel     chan *models.ForwardMessage
-	routingManager 	*routing.RoutingManager
-	scalingManager  *common.ScalingManager
+	state                      int64
+	processorStarted           sync.WaitGroup
+	processorStopped           sync.WaitGroup
+	incomingInformationChannel chan *models.RawTopicMessage
+	forwardFlag                bool
+	forwardingSignalChannel    chan *models.ForwardMessage
+	routingInformationChannel  chan *models.DomainController
+	scalingManager             *scaling.ScalingRequestManager
 
 
 }
 
-func NewDomainInformationProcessor(incomingTopicChannel chan *models.RawTopicMessage, forwardFlag bool) *DomainInformationProcessor {
+func NewDomainInformationProcessor(incomingInformationChannel chan *models.RawTopicMessage, forwardFlag bool) *DomainInformationProcessor {
 	processor := new(DomainInformationProcessor)
 	processor.processorStarted.Add(1)
 	processor.processorStopped.Add(1)
-	processor.incomingTopicChannel = incomingTopicChannel
+	processor.incomingInformationChannel = incomingInformationChannel
 	processor.forwardFlag = forwardFlag
 	processor.forwardingSignalChannel = make(chan *models.ForwardMessage)
-
-	processor.routingManager = routing.NewRoutingManager(configuration.DomainControllerConfigurationManagerInstance().Config().ScalingInterfaceAddress)
-	processor.scalingManager = common.NewScalingManager(configuration.DomainControllerConfigurationManagerInstance().Config().ScalingInterfaceAddress)
+	processor.routingInformationChannel = make(chan *models.DomainController)
+	processor.scalingManager = scaling.NewScalingManager(configuration.DomainControllerConfigurationManagerInstance().Config().ClusterManagementAddress)
 	go processor.run()
 	processor.processorStarted.Wait()
 	fmt.Println("Producer Created")
 	return processor
 }
 
-func (processor *DomainInformationProcessor) State() int64 {
-	return atomic.LoadInt64(&processor.state)
-}
-
 func (processor *DomainInformationProcessor) ForwardSignalChannel() chan *models.ForwardMessage {
 	return processor.forwardingSignalChannel
+}
+
+func (processor *DomainInformationProcessor) RoutingInformationChannel() chan *models.DomainController {
+	return processor.routingInformationChannel
 }
 
 func (processor *DomainInformationProcessor)  Close() {
@@ -74,7 +72,7 @@ func (processor *DomainInformationProcessor) run() {
 }
 
 func (processor *DomainInformationProcessor) processDomainInformationMessages() bool {
-	rawTopic, ok := <-processor.incomingTopicChannel
+	rawTopic, ok := <-processor.incomingInformationChannel
 	if rawTopic != nil {
 		go processor.processDomainInformationMessage(rawTopic)
 	}
@@ -96,14 +94,14 @@ func (processor *DomainInformationProcessor) processDomainInformationMessage(top
 	}
 	if processor.scalingManager.CheckWorkloadForDomain(domainInformationMessage.RealWorldDomain) {
 		if domainController := processor.scalingManager.CreateNewDominControllerForDomain(domainInformationMessage.RealWorldDomain); domainController != nil {
-			processor.routingManager.AddDomainControllerForDomain(domainController, domainInformationMessage.RealWorldDomain)
+			processor.routingInformationChannel <- domainController
 		}
 
 	}
 }
 
 func (processor *DomainInformationProcessor) storeDomainInformation(information *models.DomainInformationMessage) {
-	dbDelegate, _ := persistence.NewDomainControllerDatabaseWorker()
+	dbDelegate, _ := persistence.NewDomainInformationStorage()
 	if dbDelegate == nil {
 		return
 	}

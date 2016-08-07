@@ -8,7 +8,7 @@ import (
 	"time"
 	"github.com/tkrex/IDS/daemon/persistence"
 	"github.com/tkrex/IDS/common/publishing"
-	"github.com/tkrex/IDS/common/routing"
+	"github.com/tkrex/IDS/common/forwardRouting"
 	"github.com/tkrex/IDS/daemon/configuration"
 )
 
@@ -17,7 +17,7 @@ type DomainInformationForwarder struct {
 	forwarderStopped     sync.WaitGroup
 	forwardSignalChannel chan int
 	lastForwardTimestamp           time.Time
-	routingManager 	*routing.RoutingManager
+	routingManager 	*forwardRouting.ForwardRoutingManager
 }
 
 const (
@@ -28,7 +28,7 @@ func NewDomainInformationForwarder(forwardSignalChannel chan int) *DomainInforma
 	forwarder := new(DomainInformationForwarder)
 	forwarder.forwardSignalChannel = forwardSignalChannel
 	forwarder.lastForwardTimestamp = time.Now()
-	forwarder.routingManager = routing.NewRoutingManager(configuration.DaemonConfigurationManagerInstance().Config().RoutingManagementURL)
+	forwarder.routingManager = forwardRouting.NewForwardRoutingManager(configuration.DaemonConfigurationManagerInstance().Config().RoutingManagementURL)
 	forwarder.forwarderStarted.Add(1)
 	forwarder.forwarderStopped.Add(1)
 	go forwarder.run()
@@ -72,7 +72,7 @@ func (forwarder *DomainInformationForwarder) forwardAllDomainInformation() {
 	defer func() { forwarder.lastForwardTimestamp = time.Now()}()
 
 	fmt.Println("Forwarding All Domain Information")
-	dbDelegate, _ := persistence.NewDaemonDatabaseWorker()
+	dbDelegate, _ := persistence.NewDomainInformationStorage()
 	if dbDelegate == nil {
 		return
 	}
@@ -96,7 +96,7 @@ func (forwarder *DomainInformationForwarder) calculateForwardPriority(domainInfo
 }
 
 func (forwarder *DomainInformationForwarder) forwardDomainInformation(domain *models.RealWorldDomain) {
-	dbDelagte, err := persistence.NewDaemonDatabaseWorker()
+	dbDelagte, err := persistence.NewDomainInformationStorage()
 	if err != nil {
 		fmt.Println(err)
 	}

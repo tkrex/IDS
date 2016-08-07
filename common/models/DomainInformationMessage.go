@@ -6,10 +6,10 @@ type DomainInformationMessage struct {
 	RealWorldDomain *RealWorldDomain `json:"domain" bson:"domain"`
 	ForwardPriority int `json:"forwardPriority"`
 	Broker   *Broker `json:"broker" bson:"broker"`
-	Topics   []*Topic `json:"topics" bson:"topics"`
+	Topics   []*TopicInformation `json:"topics" bson:"topics"`
 }
 
-func NewDomainInformationMessage(domain *RealWorldDomain, broker *Broker, topics []*Topic) *DomainInformationMessage {
+func NewDomainInformationMessage(domain *RealWorldDomain, broker *Broker, topics []*TopicInformation) *DomainInformationMessage {
 	message := new(DomainInformationMessage)
 	message.RealWorldDomain = domain
 	message.Topics = topics

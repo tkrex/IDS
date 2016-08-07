@@ -8,9 +8,9 @@ type Geolocation struct {
 	Latitude float32 `json:"latitude"`
 }
 
-func NewGeolocation(county, region, city string, long float32,lat float32) *Geolocation {
+func NewGeolocation(country, region, city string, long float32,lat float32) *Geolocation {
 	location := new(Geolocation)
-	location.Country = county
+	location.Country = country
 	location.Region = region
 	location.City = city
 	location.Longitude = long

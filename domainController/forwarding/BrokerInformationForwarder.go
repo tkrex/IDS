@@ -47,7 +47,7 @@ func (forwarder *BrokerInformationForwarder) startForwardTicker() {
 
 
 func (forwarder *BrokerInformationForwarder) forwardBrokerInformation() {
-	dbManager, _ := persistence.NewDomainControllerDatabaseWorker()
+	dbManager, _ := persistence.NewDomainInformationStorage()
 	defer dbManager.Close()
 
 	brokers, err := dbManager.FindAllBrokers()

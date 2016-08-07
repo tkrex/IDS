@@ -20,7 +20,7 @@ const (
 	Endpoint = "https://api.webshrinker.com/categories/v2/"
 )
 
-func NewWebsiteCategorizationWorker() *WebsiteCategorizationWorker {
+func Ø() *WebsiteCategorizationWorker {
 	worker := new(WebsiteCategorizationWorker)
 	return worker
 }

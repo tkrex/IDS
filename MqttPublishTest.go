@@ -2,40 +2,63 @@ package main
 
 import (
 	"github.com/tkrex/IDS/common/models"
-	"github.com/tkrex/IDS/common/publishing"
 	"time"
 	"encoding/json"
 	"net/url"
-	"github.com/tkrex/IDS/common/subscribing"
+	"github.com/tkrex/IDS/common/publishing"
 )
 
 func main() {
 
 
-	//DEBUG CODE
-	domain := models.NewRealWorldDomain("education")
+
 	broker := models.NewBroker()
-	broker.ID = "testID"
-	broker.IP = "new host"
-	broker.RealWorldDomain = models.NewRealWorldDomain("education")
-	broker.Geolocation = models.NewGeolocation("germany","bavaria","munich",11.6309,48.2499)
+	topics := []*models.TopicInformation{}
 
-	topics := []*models.Topic{}
+	broker = models.NewBroker()
+	broker.ID = "weatherBroker"
+	broker.IP = "12.12.12.12:1833"
+	broker.InternetDomain = "krex.in.tum.de"
+	broker.Statistics.NumberOfTopics = 1022
+	broker.Statistics.ReceivedTopicsPerSeconds = 10
+	broker.RealWorldDomain = models.NewRealWorldDomain("weather")
+	broker.Geolocation = models.NewGeolocation("Germany", "Bavaria", "Garching", 11.6309, 48.2499)
 
-	for i := 0; i < 5; i++ {
-		topic := models.NewTopic("/home/kitchen","{\"temperature\":3}",time.Now())
-		topic.UpdateBehavior.UpdateIntervalDeviation = 3.0
-		topics = append(topics, topic)
-	}
+	topic := models.NewTopicInformation("/fmi/server-room", "{\"temperature\":-6}", time.Now())
+	topic.UpdateBehavior.AverageUpdateIntervalInSeconds = 180
+	topic.UpdateBehavior.UpdateIntervalDeviation = 3.0
+	topic.PayloadSimilarity = 80.5
+	topic.UpdateBehavior.Reliability = "automatic"
+	topics = append(topics, topic)
 
+	topic = models.NewTopicInformation("/fmi/ls1", "{\"temperature\":30}", time.Now())
+	topic.UpdateBehavior.AverageUpdateIntervalInSeconds = 120
+	topic.UpdateBehavior.UpdateIntervalDeviation = 70.0
+	topic.PayloadSimilarity = 87
+	topic.UpdateBehavior.Reliability = "semi-automatic"
+	topics = append(topics, topic)
 
-	message := models.NewDomainInformationMessage(domain,broker,topics)
+	topic = models.NewTopicInformation("/fmi/ls2", "{\"temperature\":10}", time.Now())
+	topic.UpdateBehavior.AverageUpdateIntervalInSeconds = 30
+	topic.UpdateBehavior.UpdateIntervalDeviation = 200
+	topic.PayloadSimilarity = 40
+	topic.UpdateBehavior.Reliability = "non-deterministic"
+	topics = append(topics, topic)
 
-	json,_ := json.Marshal(message)
+	topic = models.NewTopicInformation("/fmi/smart-lab", "{\"temperature\":10}", time.Now())
+	topic.UpdateBehavior.AverageUpdateIntervalInSeconds = 60
+	topic.UpdateBehavior.UpdateIntervalDeviation = 5
+	topic.PayloadSimilarity = 99
+	topic.UpdateBehavior.Reliability = "automatic"
+	topics = append(topics, topic)
 
-	brokerURL,_  :=  url.Parse("ws://10.40.53.21:32769")
+	message := models.NewDomainInformationMessage(broker.RealWorldDomain, broker, topics)
+
+	bytes,_ := json.Marshal(message)
+
+	brokerURL,_  :=  url.Parse("ws://10.40.53.21:32870")
 	publishConfig := models.NewMqttClientConfiguration(brokerURL,"testPublisher")
 	publisher := publishing.NewMqttPublisher(publishConfig,false)
-	publisher.Publish(json,"test")
-	for {}
+	publisher.Publish(bytes,"weatherBroker")
+	publisher.Close()
 }

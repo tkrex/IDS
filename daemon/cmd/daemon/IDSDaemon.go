@@ -22,7 +22,7 @@ func main() {
 }
 
 func startBrokerRegistration(config *configuration.DaemonConfiguration) {
-	_ = registration.NewBrokerRegistrationWorker(config.RegistrationURL)
+	_ = registration.NewBrokerRegistrattionManager(config.RegistrationURL)
 }
 
 func startTopicProcessing(config *configuration.DaemonConfiguration) {
