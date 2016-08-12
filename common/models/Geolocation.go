@@ -1,5 +1,6 @@
 package models
 
+//Geolocation information
 type Geolocation struct {
 	Country string `json:"country"`
 	Region  string `json:"region"`

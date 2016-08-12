@@ -5,6 +5,7 @@ import (
 	"strings"
 )
 
+//Structure for Application Domains
 type RealWorldDomain struct {
 	Name string `json:"name"`
 }

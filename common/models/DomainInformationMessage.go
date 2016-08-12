@@ -2,6 +2,7 @@ package models
 
 import "fmt"
 
+//Contains the information forwarded by a Daemon to Domain Controller. Also, this structure is used for search request responses.
 type DomainInformationMessage struct {
 	RealWorldDomain *RealWorldDomain `json:"domain" bson:"domain"`
 	ForwardPriority int `json:"forwardPriority"`

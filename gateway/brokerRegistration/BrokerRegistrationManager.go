@@ -7,6 +7,7 @@ import (
 	"errors"
 )
 
+//Manages the Broker Registration
 type BrokerRegistrationManager struct {
 	registrationStorageDelegate *BrokerRegistrationStorage
 }
@@ -17,6 +18,10 @@ func NewBrokerRegistrationManager() *BrokerRegistrationManager {
 	return manager
 }
 
+
+//Handles incoming registration requests.
+//Create ID for a new Broker.
+//Stores information at database.
 func (manager *BrokerRegistrationManager) RegisterBroker(broker *models.Broker) (*models.Broker, error) {
 
 	brokerIdentificationString := broker.IP + broker.InternetDomain

@@ -19,6 +19,8 @@ func NewBrokerRequestHandler() *BrokerRequestHandler {
 }
 
 
+//Forwards the request to the corresponding Top Level Domain Controller
+//Returns the results sorted by Domains
 func (handler *BrokerRequestHandler) HandleRequest(informationRequest *models.DomainInformationRequest) (map[string][]*models.Broker,error) {
 
 	domain := models.NewRealWorldDomain(informationRequest.Domain())

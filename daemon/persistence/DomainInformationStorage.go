@@ -14,7 +14,7 @@ const (
 	BrokerCollection = "broker"
 	DomainCollection = "domains"
 )
-
+//Manages MongoDB  database interaction
 type DomainInformationStorage struct {
 	session *mgo.Session
 }
@@ -30,10 +30,11 @@ func NewDomainInformationStorage() (*DomainInformationStorage, error) {
 	return databaseWorker, error
 }
 
+//Disconnects from MongoDB databse
 func (dbWoker *DomainInformationStorage)Close() {
 	dbWoker.session.Close()
 }
-
+//Connects to MongoDB databse
 func openSession() (*mgo.Session, error) {
 	host := os.Getenv("MONGODB_URI")
 	session, err := mgo.Dial(host)
@@ -145,7 +146,7 @@ func (dbWoker *DomainInformationStorage) StoreTopics(topics []*models.TopicInfor
 
 
 
-func (dbWoker *DomainInformationStorage) CountTopics() int {
+func (dbWoker *DomainInformationStorage) NumberOfTopics() int {
 	coll := dbWoker.topicCollection()
 	count, err := coll.Find(nil).Count()
 	if err != nil {

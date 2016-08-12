@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"net"
 )
-
+//Manages the Broker Registration Interface
 type BrokerRegistrationInterface struct {
 	port                    string
 	providerStarted         sync.WaitGroup
@@ -26,6 +26,7 @@ func NewBrokerRegistrationInterface(port string) *BrokerRegistrationInterface {
 	return webInterface
 }
 
+//Starts the REST interface at the specified port
 func (webInterface *BrokerRegistrationInterface) run(port string) {
 	router := mux.NewRouter()
 	router.HandleFunc("/rest/brokers", webInterface.addBroker).Methods("POST")
@@ -38,6 +39,7 @@ func (webInterface *BrokerRegistrationInterface) run(port string) {
 	go http.Serve(listener, router)
 }
 
+//Delegates registration request to BrokerRegistrationManager
 func (webInterface *BrokerRegistrationInterface) addBroker(res http.ResponseWriter, req *http.Request) {
 	res.Header().Set("Content-Type", "application/json")
 

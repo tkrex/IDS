@@ -5,8 +5,10 @@ import (
 	"gopkg.in/mgo.v2"
 	"github.com/tkrex/IDS/common/models"
 	"gopkg.in/mgo.v2/bson"
+	"os"
 )
 
+//Names of MongoDB Database and Collections
 const (
 	Database = "IDSDomainController"
 	BrokerCollection = "brokers"
@@ -14,6 +16,7 @@ const (
 	DomainCollection = "domains"
 )
 
+//Manages storage of DomainInformationMessages via a MongoDB
 type DomainInformationStorage struct {
 	session *mgo.Session
 }
@@ -29,8 +32,8 @@ func NewDomainInformationStorage() (*DomainInformationStorage, error) {
 }
 
 func openSession() (*mgo.Session, error) {
-	//host := os.Getenv("MONGODB_URI")
-	host := "db-default:27017"
+	host := os.Getenv("MONGODB_URI")
+	//host := "db-default:27017"
 	session, err := mgo.Dial(host)
 	return session, err
 }
@@ -176,3 +179,32 @@ func (dbWorker*DomainInformationStorage) FindAllDomains() ([]*models.RealWorldDo
 	err := coll.Find(nil).All(&domains)
 	return domains, err
 }
+
+func (dbWoker *DomainInformationStorage) FindDomainInformationForBroker(informationRequest *models.DomainInformationRequest, brokerId string) (*models.DomainInformationMessage, error) {
+	var domainInformation *models.DomainInformationMessage
+	var error error
+	regex := bson.M{"$regex":bson.RegEx{"^" + informationRequest.Domain(), "m"}}
+
+	coll := dbWoker.domainInformationCollection()
+	if error = coll.Find(bson.M{"domain.name": regex, "broker.id": brokerId, "broker.geolocation.country" : informationRequest.Location().Country }).One(&domainInformation); error != nil {
+		fmt.Println(error)
+	}
+	return domainInformation, error
+}
+
+func (dbWoker *DomainInformationStorage) FindBrokersForInformationRequest(informationRequest *models.DomainInformationRequest) ([]*models.Broker, error) {
+	coll := dbWoker.brokerCollection()
+	var domainInformation []*models.DomainInformationMessage
+	var error error
+	regex := bson.M{"$regex":bson.RegEx{"^" + informationRequest.Domain(), "m"}}
+	if error := coll.Find(bson.M{"domain.name": regex, "broker.geolocation.country":informationRequest.Location().Country}).Select(bson.M{"broker":1}).All(&domainInformation); error != nil {
+		fmt.Printf("Query Error: %s", error.Error())
+		return nil,error
+	}
+	brokers := make([]*models.Broker, 0, len(domainInformation))
+	for _, information := range domainInformation {
+		brokers = append(brokers, information.Broker)
+	}
+	return brokers, error
+}
+

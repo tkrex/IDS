@@ -12,6 +12,7 @@ import (
 	"github.com/tkrex/IDS/gateway/brokerRegistration"
 )
 
+//Provide a REST interface for DomainInformationRequests
 type InformationRequestInterface struct {
 	port            string
 	providerStarted sync.WaitGroup
@@ -27,6 +28,7 @@ func NewInformationRequestInterface(port string) *InformationRequestInterface {
 	return webInterface
 }
 
+//Defines and starts the REST interface at the specified port
 func (webInterface *InformationRequestInterface) run(port string) {
 	fmt.Println("IDSGatewayInterface started")
 	webInterface.providerStarted.Done()
@@ -45,6 +47,7 @@ func (webInterface *InformationRequestInterface) run(port string) {
 	http.ListenAndServe(":" + port, router)
 }
 
+//Parses and delegates the request for DomainInformation to the DomainInformationRequestHandler
 func (webInterface *InformationRequestInterface) handleDomainInformation(res http.ResponseWriter, req *http.Request) {
 	//res.Header().Set("Content-Type", "application/json")
 	fmt.Println("domain Information Request Received")
@@ -75,6 +78,7 @@ func (webInterface *InformationRequestInterface) handleDomainInformation(res htt
 	fmt.Fprint(res, string(outgoingJSON))
 }
 
+//Parses and delegates the request to the DomainInformationForBrokerRequestHandler
 func (webInterface *InformationRequestInterface) getDomainInformationForBroker(res http.ResponseWriter, req *http.Request) {
 	res.Header().Set("Content-Type", "application/json")
 	fmt.Println("Domain Information Request Received")
@@ -106,6 +110,7 @@ func (webInterface *InformationRequestInterface) getDomainInformationForBroker(r
 	fmt.Fprint(res, string(outgoingJSON))
 }
 
+//Parses and delegates the request to the BrokerRequestHandler
 func (webInterface *InformationRequestInterface) getBrokersForDomain(res http.ResponseWriter, req *http.Request) {
 	res.Header().Set("Content-Type", "application/json")
 	fmt.Println("Received Broker Request")
@@ -137,6 +142,7 @@ func (webInterface *InformationRequestInterface) getBrokersForDomain(res http.Re
 }
 
 
+//Parses and delegates the request to the Registration Manager
 func (webInterface *InformationRequestInterface) getAllDomains(res http.ResponseWriter, req *http.Request) {
 	fmt.Println("Domain Request Received")
 	domains , err := brokerRegistration.NewBrokerRegistrationManager().AvailableDomains()

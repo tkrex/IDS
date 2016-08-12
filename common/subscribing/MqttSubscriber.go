@@ -8,7 +8,7 @@ import (
   "sync/atomic"
   "github.com/tkrex/IDS/common/models"
 )
-
+//Provides the functionality of subscribing to topics of a MQTT Broker
 type  MqttSubscriber struct {
 
   state                 int64
@@ -46,16 +46,17 @@ func NewMqttSubscriber(subscriberConfig *models.MqttClientConfiguration, topic s
   subscriber.producerStarted.Wait()
   return subscriber
 }
-
+//Returns a channel to which the MqttSubscriber forwards incoming MQTT messages
 func (subscriber *MqttSubscriber) IncomingTopicsChannel() chan *models.RawTopicMessage {
   return subscriber.incomingTopicsChannel
 }
 
-
+//Returns the current state of the Subscriber
 func (subscriber *MqttSubscriber) State() int64 {
   return atomic.LoadInt64(&subscriber.state)
 }
 
+//Connects to the MQTT Broker specified in the MqttClientConfig and subscribes to the topic specified when initializing the subscriber
 func (subscriber *MqttSubscriber) run() {
   
   if token := subscriber.client.Connect(); token.Wait() && token.Error() != nil {
@@ -72,6 +73,8 @@ func (subscriber *MqttSubscriber) run() {
   subscriber.producerStarted.Done()
 }
 
+
+//Unsubscribes from the topic and disconnects from the MQTT Broker
 func (subscriber *MqttSubscriber) stopCollectingTopics() {
   defer subscriber.producerStopped.Done()
 
@@ -86,17 +89,18 @@ func (subscriber *MqttSubscriber) stopCollectingTopics() {
   fmt.Println("Disconnected")
 }
 
-
+//Callback for receiving MQTT messages
 func (subscriber *MqttSubscriber) onReceiveMessage(msg MQTT.Message) {
   rawTopic := models.NewRawTopicMessage(msg.Topic(),msg.Payload())
 
   if closed := subscriber.State() == 1; !closed {
-    fmt.Println(rawTopic.Name)
+    fmt.Println(rawTopic.Topic)
     subscriber.incomingTopicsChannel <- rawTopic
   }
 
 }
 
+//Closes incomingTopicsChannel and disconnects from MQTT Broker
 func (subscriber *MqttSubscriber) Close() {
   fmt.Println("Closing Subscriber")
   atomic.StoreInt64(&subscriber.state,1)

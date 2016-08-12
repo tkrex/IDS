@@ -4,6 +4,7 @@ import (
 	"fmt"
 )
 
+//Contains Broker Information
 type Broker struct {
 	ID              string `json:"id"`
 	IP              string `json:"ip"`

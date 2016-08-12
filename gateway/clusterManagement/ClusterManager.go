@@ -16,6 +16,7 @@ func NewClusterManager() *ClusterManager {
 	return worker
 }
 
+//Delegate Incoming ClusterManagementRequests to the corresponding method
 func (manager *ClusterManager) HandleManagementRequest(request *models.ClusterManagementRequest) (*models.DomainController, error) {
 
 	var requestError error
@@ -33,6 +34,8 @@ func (manager *ClusterManager) HandleManagementRequest(request *models.ClusterMa
 	return requestedDomainController, requestError
 }
 
+
+//Returns a Domain Controller responsible for collecting information for the specified Real World Domain
 func (manager *ClusterManager) domainControllerForDomain(domain *models.RealWorldDomain) (*models.DomainController, error) {
 	var fetchError error
 	var requestedDomainController *models.DomainController
@@ -55,6 +58,7 @@ func (manager *ClusterManager) domainControllerForDomain(domain *models.RealWorl
 	return requestedDomainController, fetchError
 }
 
+//Stops Domain Controller , which is assigned to the specifed Domain if existing
 func (manager *ClusterManager) stopDomainControllerInstance(domain *models.RealWorldDomain) error {
 	var stopError error
 	existingDomainController,_ := manager.clusterManagementStorage.FindDomainControllerForDomain(domain)
@@ -71,6 +75,8 @@ func (manager *ClusterManager) stopDomainControllerInstance(domain *models.RealW
 	return stopError
 }
 
+
+//Starts a new Domain Controller for the specified Domain via the Docker Manager
 func (manager *ClusterManager) StartNewDomainControllerInstance(domain *models.RealWorldDomain, parentDomain *models.RealWorldDomain) (*models.DomainController, error) {
 	var startError error
 

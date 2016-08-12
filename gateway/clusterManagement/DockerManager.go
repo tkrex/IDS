@@ -8,6 +8,7 @@ import (
 	"github.com/tkrex/IDS/common/models"
 	"net/url"
 )
+//Manages the creating and deletion of multi-container Docker application via docker-compose
 type DockerManager struct {
 
 }
@@ -17,6 +18,10 @@ func NewDockerManager() *DockerManager {
 }
 
 
+
+//Sets the config of the new Domain Controller via ENV variabels.
+//After starting up the composite the public ports of the Domain Controller services are determined
+//Returns the Domain Controller information
 func (dockerManager *DockerManager) StartDomainControllerInstance(parentDomain,ownDomain *models.RealWorldDomain) (*models.DomainController, error) {
 
 	envVariables := dockerManager.buildEnvVariables(parentDomain,ownDomain)
@@ -46,6 +51,7 @@ func (dockerManager *DockerManager) StartDomainControllerInstance(parentDomain,o
 	return domainController, nil
 }
 
+//Sets the Domain Controller Config via ENV variables
 func (dockerManager *DockerManager) buildEnvVariables(parentDomain, ownDomain *models.RealWorldDomain) map[string]string{
 	domainControllerName := "domainController-"+ownDomain.Name
 	brokerName := "broker-"+ownDomain.Name
@@ -58,7 +64,7 @@ func (dockerManager *DockerManager) buildEnvVariables(parentDomain, ownDomain *m
 	envVariables["parent_domain"] = parentDomain.Name
 	return envVariables
 }
-
+//Sets ENV variables
 func (dockerManager *DockerManager) setEnvVariables(variables map[string]string) {
 	for key, value := range variables {
 		if error := os.Setenv(key,value); error != nil {
@@ -67,6 +73,7 @@ func (dockerManager *DockerManager) setEnvVariables(variables map[string]string)
 	}
 }
 
+//Gets external port for the internal port of a container,
 func (dockerManager *DockerManager) getContainerPort(containerName string, internalPort string) string {
 	var (
 		cmdOut []byte
@@ -85,6 +92,7 @@ func (dockerManager *DockerManager) getContainerPort(containerName string, inter
 }
 
 //TODO: Implement
+//Stops Docker Composite
 func (dockerManager *DockerManager) StopDomainControllerInstance(domain *models.RealWorldDomain) error {
 	var error error
 	return error

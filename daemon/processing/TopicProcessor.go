@@ -131,12 +131,12 @@ func (processor *TopicProcessor) processIncomingTopics() {
 func (processor *TopicProcessor) sortTopicUpdatesByName(topicUpdates []*models.RawTopicMessage) map[string][]*models.RawTopicMessage {
 	sortedTopics := make(map[string][]*models.RawTopicMessage)
 	for _, topic := range topicUpdates {
-		_, entryExists := sortedTopics[topic.Name]
+		_, entryExists := sortedTopics[topic.Topic]
 		if !entryExists {
-			sortedTopics[topic.Name] = make([]*models.RawTopicMessage, 0, len(topicUpdates))
+			sortedTopics[topic.Topic] = make([]*models.RawTopicMessage, 0, len(topicUpdates))
 
 		}
-		sortedTopics[topic.Name] = append(sortedTopics[topic.Name], topic)
+		sortedTopics[topic.Topic] = append(sortedTopics[topic.Topic], topic)
 	}
 	return sortedTopics
 }
@@ -181,7 +181,7 @@ func (processor *TopicProcessor) updateTopicInformation(existingTopic *models.To
 	var resultingTopic *models.TopicInformation
 
 	if existingTopic == nil {
-		resultingTopic = models.NewTopicInformation(newTopic.Name, string(newTopic.Payload), newTopic.ArrivalTime)
+		resultingTopic = models.NewTopicInformation(newTopic.Topic, string(newTopic.Payload), newTopic.ArrivalTime)
 		processor.calculateUpdateBehavior(resultingTopic, 0)
 	} else {
 		resultingTopic = existingTopic
@@ -258,7 +258,7 @@ func (processor *TopicProcessor) updateBrokerStatistics() {
 		fmt.Println("TOPIC PROCESSOR: ",err)
 		return
 	}
-	numberOfTopics := processor.databaseDelegate.CountTopics()
+	numberOfTopics := processor.databaseDelegate.NumberOfTopics()
 	broker.Statistics.NumberOfTopics = numberOfTopics
 	secondsSinceLastStatisticUpdate := time.Now().Sub(broker.Statistics.LastStatisticUpdate)
 	incomingTopicFrequency := BulkUpdateThreshold / secondsSinceLastStatisticUpdate.Seconds()

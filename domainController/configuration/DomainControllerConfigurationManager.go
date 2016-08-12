@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"sync"
 )
-
+//Singleton which manages the Domain Controller Configuration
 type DomainControllerConfigurationManager struct {
 	config *DomainControllerConfiguration
 }
@@ -28,17 +28,15 @@ type DomainControllerConfiguration struct {
 	ParentDomain             *models.RealWorldDomain `bson:"parentDomain"`
 	OwnDomain                *models.RealWorldDomain `bson:"ownDomain"`
 	ControllerBrokerAddress  *url.URL `bson:"controllerBrokerAddress"`
-	GatewayBrokerAddress     *url.URL `bson:"gatewayBrokerAddress"`
 	ClusterManagementAddress *url.URL `bson:"scalingInterfaceAddress"`
 }
 
-func NewDomainControllerConfiguration(controllerID string,parentDomain *models.RealWorldDomain, ownDomain *models.RealWorldDomain, controllerBrokerAddress *url.URL, gatewayBrokerAddress *url.URL, clusterManagementAddress *url.URL) *DomainControllerConfiguration {
+func NewDomainControllerConfiguration(controllerID string,parentDomain *models.RealWorldDomain, ownDomain *models.RealWorldDomain, controllerBrokerAddress *url.URL, clusterManagementAddress *url.URL) *DomainControllerConfiguration {
 	config := new(DomainControllerConfiguration)
 	config.DomainControllerID = controllerID
 	config.ParentDomain = parentDomain
 	config.OwnDomain = ownDomain
 	config.ControllerBrokerAddress = controllerBrokerAddress
-	config.GatewayBrokerAddress = gatewayBrokerAddress
 	config.ClusterManagementAddress = clusterManagementAddress
 	return config
 }
@@ -49,11 +47,12 @@ func NewDomainControllerConfigurationManager() *DomainControllerConfigurationMan
 	configManager.config = configManager.initConfig()
 	return configManager
 }
-
+//Returns Domain Controller Config
 func (configManager *DomainControllerConfigurationManager) Config() *DomainControllerConfiguration {
 	return configManager.config
 }
 
+//Loads Domain Controller Configuration from Environment Variables
 func (configManager *DomainControllerConfigurationManager) initConfig() *DomainControllerConfiguration {
 
 	//Default values
@@ -61,15 +60,7 @@ func (configManager *DomainControllerConfigurationManager) initConfig() *DomainC
 	ownDomainString := "default"
 	controllerID := "controllerID"
 	brokerURLString := "ws://broker-default:9001"
-	gatewayBrokerURLString := "ws://localhost:18833"
 	scalingInterfaceString := "http://localhost:8000"
-
-
-	if existingConfig, _ :=  configManager.fetchDomainControllerConfig(); existingConfig != nil {
-		configManager.config = existingConfig
-		return existingConfig
-	}
-
 
 	var parsingError error
 	parentDomainString = os.Getenv("PARENT_DOMAIN")
@@ -86,34 +77,11 @@ func (configManager *DomainControllerConfigurationManager) initConfig() *DomainC
 	scalingInterfaceString = os.Getenv("MANAGEMENT_INTERFACE_URI")
 	scalingInterfaceURL, parsingError := url.Parse(scalingInterfaceString)
 
-	gatewayBrokerURLString = os.Getenv("GATEWAY_BROKER_URI")
-	gatewayBrokerURL,parsingError := url.Parse(gatewayBrokerURLString)
 
 	if parsingError != nil {
 		fmt.Println("ConfigManager: Parsing Error")
 	}
 
-	config := NewDomainControllerConfiguration(controllerID, parentDomain,ownDomain, brokerURL,gatewayBrokerURL,scalingInterfaceURL)
-	configManager.storeConfig(config)
+	config := NewDomainControllerConfiguration(controllerID, parentDomain,ownDomain, brokerURL,scalingInterfaceURL)
 	return config
-}
-
-
-func (configManager *DomainControllerConfigurationManager) storeConfig(config *DomainControllerConfiguration) error{
-	storageManager, err := NewDomainControllerConfigStorageManager()
-	if err != nil {
-		return err
-	}
-	err = storageManager.StoreDomainControllerConfig(config)
-	return err
-}
-
-func (configManager *DomainControllerConfigurationManager) fetchDomainControllerConfig() (*DomainControllerConfiguration,error) {
-	storageManager, err := NewDomainControllerConfigStorageManager()
-	if err != nil {
-		return nil, err
-	}
-	defer storageManager.Close()
-	conifg ,error := storageManager.FindDomainControllerConfig()
-	return conifg, error
 }

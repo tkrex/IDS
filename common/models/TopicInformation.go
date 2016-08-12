@@ -4,6 +4,7 @@ import (
 	"time"
 )
 
+//Contains all information collected for a Topic
 type TopicInformation struct {
 	Name                    string        `json:"name" bson:"name"`
 	LastPayload             string       `json:"payload" bson:"payload"`
@@ -16,20 +17,34 @@ type TopicInformation struct {
 	Visibility              bool                `json:"-"`
 }
 
+func NewTopicInformation(name string, payload string, arrivalTime time.Time) *TopicInformation {
+	topic := new(TopicInformation)
+	topic.Name = name
+	topic.LastPayload = payload
+	topic.FirstUpdateTimeStamp = arrivalTime
+	topic.LastUpdateTimeStamp = arrivalTime
+	topic.SimilarityCheckInterval = 1
+	topic.Visibility = true
+	topic.UpdateBehavior = NewUpdateBehavior()
+	return topic
+}
+
+//Contains the information of a MQTT messages, as well as the arrival time
 type RawTopicMessage struct {
-	Name        string
+	Topic       string
 	Payload     []byte
 	ArrivalTime time.Time
 }
 
-func NewRawTopicMessage(name string, payload []byte) *RawTopicMessage {
+func NewRawTopicMessage(topic string, payload []byte) *RawTopicMessage {
 	message := new(RawTopicMessage)
-	message.Name = name
+	message.Topic = topic
 	message.Payload = payload
 	message.ArrivalTime = time.Now()
 	return message
 }
 
+//Contains information about the time-related behavior of a Topic
 type UpdateBehavior struct {
 	NumberOfUpdates                int                  `json:"numberOfUpdates"`
 	UpdateIntervalsInSeconds       []float64           `json:"allIntervals"`
@@ -45,17 +60,7 @@ func NewUpdateBehavior() *UpdateBehavior {
 	return behavior
 }
 
-func NewTopicInformation(name string, payload string, arrivalTime time.Time) *TopicInformation {
-	topic := new(TopicInformation)
-	topic.Name = name
-	topic.LastPayload = payload
-	topic.FirstUpdateTimeStamp = arrivalTime
-	topic.LastUpdateTimeStamp = arrivalTime
-	topic.SimilarityCheckInterval = 1
-	topic.Visibility = true
-	topic.UpdateBehavior = NewUpdateBehavior()
-	return topic
-}
+
 
 
 

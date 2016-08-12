@@ -7,6 +7,7 @@ import (
 	"sync"
 )
 
+//Singleton, which initilazing the config of the daemon via Environment Variables
 type DaemonConfigurationManager struct {
 	config *DaemonConfiguration
 }
@@ -42,11 +43,12 @@ func newDaemonConfigurationManager() *DaemonConfigurationManager {
 	configManager.config = configManager.initConfig()
 	return configManager
 }
-
+//Returns Configuration
 func (configManager *DaemonConfigurationManager) Config() *DaemonConfiguration {
 	return configManager.config
 }
 
+//Creates Configuration by loading Environment Variables of Host OS
 func (configManager *DaemonConfigurationManager) initConfig() *DaemonConfiguration {
 	fmt.Println("Init Config")
 
@@ -72,26 +74,6 @@ func (configManager *DaemonConfigurationManager) initConfig() *DaemonConfigurati
 	}
 
 	config := NewDaemonConfiguration(brokerURL,routingManagementURL,registrationURL,mongoURL)
-	//configManager.storeConfig(config)
 	return config
-}
-
-func (configManager *DaemonConfigurationManager) storeConfig(config *DaemonConfiguration) error {
-	storageManager, err := NewDaemonConfigurationStorage()
-	if err != nil {
-		return err
-	}
-	err = storageManager.StoreDaemonConfig(config)
-	return err
-}
-
-func (configManager *DaemonConfigurationManager) fetchDomainControllerConfig() (*DaemonConfiguration, error) {
-	storageManager, err := NewDaemonConfigurationStorage()
-	if err != nil {
-		return nil, err
-	}
-	defer storageManager.Close()
-	conifg, error := storageManager.FindDaemonConfig()
-	return conifg, error
 }
 

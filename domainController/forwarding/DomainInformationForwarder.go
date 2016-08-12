@@ -13,6 +13,7 @@ import (
 	"os"
 )
 
+//Mangages Forwarding of DomainInformationMessages to Parent Domain Controller
 type DomainInformationForwarder struct {
 	forwarderStarted       sync.WaitGroup
 	forwarderStopped       sync.WaitGroup
@@ -26,7 +27,9 @@ type DomainInformationForwarder struct {
 }
 
 const (
+	//Timeout for forwarding Domain Information
 	DomainForwardInterval = 1 * time.Hour
+	//If sum of forward priorities of incoming DomainInformationMessages exceeds this threshold all DomainInformationMessages are forwarded
 	ForwardThreshold = 10
 )
 
@@ -50,6 +53,7 @@ func NewDomainInformationForwarder(forwardSignalChannel chan *models.ForwardMess
 	return forwarder
 }
 
+//Starts listening on forward and routingInformation signals
 func (forwarder *DomainInformationForwarder) run() {
 	go forwarder.listenOnForwardSignal()
 	go forwarder.listenOnRoutingInformationChannel()
@@ -57,9 +61,8 @@ func (forwarder *DomainInformationForwarder) run() {
 	forwarder.forwarderStarted.Done()
 }
 
-func (forwarder *DomainInformationForwarder) close() {
-}
 
+//Listens on channel for ForwardMessage from DomainInformationProcessor
 func (forwarder *DomainInformationForwarder) listenOnForwardSignal() {
 	for {
 		forwardMessage, open := <-forwarder.forwardSignalChannel
@@ -72,6 +75,7 @@ func (forwarder *DomainInformationForwarder) listenOnForwardSignal() {
 	}
 }
 
+//Listens on channel for RoutingInformation from DomainInformationProcessor
 func (forwarder *DomainInformationForwarder) listenOnRoutingInformationChannel() {
 	for {
 		newDomainController, open := <-forwarder.routingInformationChannel
@@ -84,17 +88,22 @@ func (forwarder *DomainInformationForwarder) listenOnRoutingInformationChannel()
 	}
 }
 
+
+//Domain Controller information from DomainProcessor are added to Routing Manager cache
 func (forwarder *DomainInformationForwarder) processNewDomainController(domainController *models.DomainController) {
 	forwarder.routingManager.AddDomainControllerForDomain(domainController,domainController.Domain)
 }
 
+//Starts ticker which checks repeadetly if DomainInformation of a Real World Domain should be forwarded
 func (forwarder *DomainInformationForwarder) startForwardTicker() {
 	forwardTicker := time.NewTicker(DomainForwardInterval)
 	for _ = range forwardTicker.C {
-		forwarder.checkDomainsForForwarding()
+		forwarder.forwardsAllDomainInformation()
 	}
 }
 
+
+//Proccesses forward messages from DomainInformationProcessor by forwarding all DomainInformationMessages for the corresponding Domain
 func (forwarder *DomainInformationForwarder) processForwardMessage(forwardMessage *models.ForwardMessage) {
 	config := configuration.DomainControllerConfigurationManagerInstance().Config()
 	parentDomain := config.ParentDomain
@@ -114,13 +123,19 @@ func (forwarder *DomainInformationForwarder) processForwardMessage(forwardMessag
 	}
 }
 
-func (forwarder *DomainInformationForwarder) checkDomainsForForwarding() {
+//Forward DomainMessages for each Real World Domain
+func (forwarder *DomainInformationForwarder) forwardsAllDomainInformation() {
 	domains, _ := forwarder.informationStorageDelegate.FindAllDomains()
 	for _, domain := range domains {
 		forwarder.forwardDomainInformation(domain)
 	}
 }
 
+
+//Forward DomainInformationMessages for a Real World Domain.
+//Fetches messages from database.
+//Request Parent Domain Controller.
+//Delegates forwarding to MqttPublisher.
 func (forwarder *DomainInformationForwarder) forwardDomainInformation(domain *models.RealWorldDomain) {
 	forwarder.forwardPriorityCounter[domain.Name] = 0
 

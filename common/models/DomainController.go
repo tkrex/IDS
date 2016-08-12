@@ -5,6 +5,7 @@ import (
 	"net/url"
 )
 
+//Contains information about Domain Controller instances.
 type DomainController  struct{
 	RestEndpoint *url.URL `json:"restEndpoint" bson:"restEndpoint"`
 	BrokerAddress *url.URL `json:"brokerAddress"`

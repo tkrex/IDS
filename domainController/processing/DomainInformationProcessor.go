@@ -11,7 +11,7 @@ import (
 	"github.com/tkrex/IDS/domainController/scaling"
 )
 
-
+//Processes incoming DomainInformationMessages from Daemons and Sub Level Domain Controllers
 type DomainInformationProcessor struct {
 	// Flag to indicate that the consumer state
 	// 0 == Running
@@ -43,14 +43,18 @@ func NewDomainInformationProcessor(incomingInformationChannel chan *models.RawTo
 	return processor
 }
 
+
+//Returns channel via which the DomainInformationProcessor signals the forwarding of DomainInformationMessages
 func (processor *DomainInformationProcessor) ForwardSignalChannel() chan *models.ForwardMessage {
 	return processor.forwardingSignalChannel
 }
 
+//Returns channel which is used to send Domain Controller information to DomainInformationForwarder
 func (processor *DomainInformationProcessor) RoutingInformationChannel() chan *models.DomainController {
 	return processor.routingInformationChannel
 }
 
+//Stops DomainInformation Processors
 func (processor *DomainInformationProcessor)  Close() {
 	fmt.Println("Closing Processor")
 	atomic.StoreInt64(&processor.state, 1)
@@ -58,6 +62,8 @@ func (processor *DomainInformationProcessor)  Close() {
 	fmt.Println("Processor Closed")
 }
 
+
+//Starts processing incoming DomainInformationMessages
 func (processor *DomainInformationProcessor) run() {
 
 	processor.processorStarted.Done()
@@ -71,6 +77,7 @@ func (processor *DomainInformationProcessor) run() {
 	processor.processorStopped.Done()
 }
 
+//Processes incoming DomainInformationMessages received from a MqttSubscriber
 func (processor *DomainInformationProcessor) processDomainInformationMessages() bool {
 	rawTopic, ok := <-processor.incomingInformationChannel
 	if rawTopic != nil {
@@ -79,7 +86,8 @@ func (processor *DomainInformationProcessor) processDomainInformationMessages() 
 	return ok
 }
 
-
+///Processes a RawTopicMessag containing a DomainInformationMessage
+//Checks if DomainInformationMessages for a Real World Domain should be forwarded
 func (processor *DomainInformationProcessor) processDomainInformationMessage(topic *models.RawTopicMessage) {
 	var domainInformationMessage *models.DomainInformationMessage
 	if err := json.Unmarshal(topic.Payload, &domainInformationMessage); err != nil {
@@ -100,6 +108,7 @@ func (processor *DomainInformationProcessor) processDomainInformationMessage(top
 	}
 }
 
+//Stores received DomainInformationMessages in database
 func (processor *DomainInformationProcessor) storeDomainInformation(information *models.DomainInformationMessage) {
 	dbDelegate, _ := persistence.NewDomainInformationStorage()
 	if dbDelegate == nil {

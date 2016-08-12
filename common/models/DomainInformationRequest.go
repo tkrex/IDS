@@ -1,5 +1,6 @@
 package models
 
+//Contains all query options for a search request
 type DomainInformationRequest struct {
 	domain    string
 	location  *Geolocation

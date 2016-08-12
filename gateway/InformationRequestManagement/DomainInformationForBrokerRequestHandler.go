@@ -28,7 +28,7 @@ func (handler *DomainInformationForBrokerRequestHandler) HandleRequest(brokerId 
 	}
 	return handler.forwardRequestToDomainController(brokerId,informationRequest,destinationDomainController)
 }
-
+//Forwards the request to the corresponding Top Level Domain Controller and returns the results
 func (handler *DomainInformationForBrokerRequestHandler) forwardRequestToDomainController(brokerId string, informationRequest *models.DomainInformationRequest,domainController *models.DomainController) (*models.DomainInformationMessage,error) {
 	requestUrlString := domainController.RestEndpoint.String() + "/rest/brokers/" + brokerId + "/" + informationRequest.Domain()
 	requestUrl,_ := url.Parse(requestUrlString)

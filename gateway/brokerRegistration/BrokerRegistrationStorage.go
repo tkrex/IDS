@@ -14,7 +14,7 @@ const (
 	BrokerCollection = "brokers"
 	DomainCollection = "domains"
 )
-
+//Handles Storage of registered Brokers via a MongoDB
 type BrokerRegistrationStorage struct {
 	session *mgo.Session
 }

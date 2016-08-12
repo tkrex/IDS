@@ -9,22 +9,25 @@ import (
 	"encoding/json"
 )
 
+//Categorizes a Website using the Web Shrinker API
 type WebsiteCategorizationWorker struct {
 	accessToken      string
 	apiServerAddress string
 }
 
+//URL and Authentication Information for Web Shrinker API
 const (
 	AccessKey = "owLf4fHmY0jMwQLNapZD"
 	AccessSecret = "F1ltaStEs68ObV92fTq1"
 	Endpoint = "https://api.webshrinker.com/categories/v2/"
 )
 
-func Ø() *WebsiteCategorizationWorker {
+func NewWebsiteCategorizationWorker() *WebsiteCategorizationWorker {
 	worker := new(WebsiteCategorizationWorker)
 	return worker
 }
 
+//Request and returns categories for a Website URL
 func (worker *WebsiteCategorizationWorker) RequestCategoriesForWebsite(websiteAddress string) ([]string, error) {
 	base64String := b64.StdEncoding.EncodeToString([]byte(websiteAddress))
 	client := http.Client{}

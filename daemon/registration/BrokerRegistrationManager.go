@@ -16,7 +16,7 @@ import (
 )
 
 const RegisterInterval = time.Second * 10
-
+//Manages the registration of the local Broker at the Information Discovery Gateway
 type BrokerRegistrationManager struct {
 	registrationServerAddress *url.URL
 	registerTicker            *time.Ticker
@@ -25,7 +25,7 @@ type BrokerRegistrationManager struct {
 	dbDelegate                *persistence.DomainInformationStorage
 }
 
-func NewBrokerRegistrattionManager(registrationServerAddress *url.URL) *BrokerRegistrationManager {
+func NewBrokerRegistrationManager(registrationServerAddress *url.URL) *BrokerRegistrationManager {
 	worker := new(BrokerRegistrationManager)
 	worker.registrationServerAddress = registrationServerAddress
 	worker.workerStarted.Add(1)
@@ -35,6 +35,8 @@ func NewBrokerRegistrattionManager(registrationServerAddress *url.URL) *BrokerRe
 	return worker
 }
 
+
+//Collects information about local MQTT Broker and sends a registration request to the Information Discovery Gateway
 func (worker *BrokerRegistrationManager) registerBroker() {
 	databaseWorker, err := persistence.NewDomainInformationStorage()
 	if err != nil {
@@ -73,6 +75,7 @@ func (worker *BrokerRegistrationManager) registerBroker() {
 	}()
 }
 
+//Returns true if Broker is already registered. Thhe indicator is the ID, which is received when registering.
 func (worker *BrokerRegistrationManager) isBrokerRegistered() bool {
 	isBrokerRegistered := true
 	broker, err := worker.dbDelegate.FindBroker()
@@ -84,6 +87,7 @@ func (worker *BrokerRegistrationManager) isBrokerRegistered() bool {
 	return isBrokerRegistered
 }
 
+//Find Domain Name for Broker based on the IP Address via a Reverse DNS lookup
 func (worker *BrokerRegistrationManager) findDomainNameForBroker(broker *models.Broker) {
 	name, err := net.LookupAddr(broker.IP)
 	if err != nil {
@@ -93,6 +97,7 @@ func (worker *BrokerRegistrationManager) findDomainNameForBroker(broker *models.
 	broker.InternetDomain = name[0]
 }
 
+//Uses Website Categorizing API to determine Real World Domain of Broker
 func (worker *BrokerRegistrationManager) findRealWorldDomainsForBroker(broker *models.Broker) {
 	categorizer := NewWebsiteCategorizationWorker()
 	categories, _ := categorizer.RequestCategoriesForWebsite("www.in.tum.de")
@@ -110,6 +115,8 @@ func (worker *BrokerRegistrationManager) findGeolocationForBroker(broker *models
 	broker.Geolocation = location
 }
 
+
+//Sends Registration request to Information Discovery Gateway
 func (worker *BrokerRegistrationManager) sendRegistrationRequestForBroker(broker *models.Broker) bool {
 	fmt.Println("Sending Broker Registration Request")
 

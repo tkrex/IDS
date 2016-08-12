@@ -9,6 +9,8 @@ import (
 	"github.com/tkrex/IDS/common/models"
 )
 
+
+//Provides a REST interface for DomainInformationRequests
 type DomainInformationRESTProvider struct {
 	port string
 	providerStarted sync.WaitGroup
@@ -25,6 +27,8 @@ func NewDomainInformationRESTProvider(port string) *DomainInformationRESTProvide
 	return provider
 }
 
+
+//Starts up REST interface at specified port
 func (provider *DomainInformationRESTProvider) run(port string) {
 	fmt.Println("DomainController Rest Interface started")
 	 provider.providerStarted.Done()
@@ -37,6 +41,7 @@ func (provider *DomainInformationRESTProvider) run(port string) {
 	http.ListenAndServe(":" + port, router)
 }
 
+//Parses and delegates request to BrokerRequestHandler
 func (webInterface *DomainInformationRESTProvider) getBrokersForDomain(res http.ResponseWriter, req *http.Request) {
 	res.Header().Set("Content-Type", "application/json")
 	fmt.Println("Broker Request Received")
@@ -65,7 +70,7 @@ func (webInterface *DomainInformationRESTProvider) getBrokersForDomain(res http.
 	fmt.Fprint(res, string(outgoingJSON))
 }
 
-
+//Parses and delegates request to DomainInformationBrokerRequestHandler
 func (webInterface *DomainInformationRESTProvider) getDomainInformationForBroker(res http.ResponseWriter, req *http.Request) {
 	res.Header().Set("Content-Type", "application/json")
 	fmt.Println("Domain Information Request for Broker Received")
@@ -97,6 +102,7 @@ func (webInterface *DomainInformationRESTProvider) getDomainInformationForBroker
 	fmt.Fprint(res, string(outgoingJSON))
 }
 
+//Parses and delegates request to DomainInformationHandler
 func (webInterface *DomainInformationRESTProvider) handleDomainInformation(res http.ResponseWriter, req *http.Request) {
 	res.Header().Set("Content-Type", "application/json")
 	fmt.Println("domain Information Request Received")
@@ -124,6 +130,3 @@ func (webInterface *DomainInformationRESTProvider) handleDomainInformation(res h
 	}
 	fmt.Fprint(res, string(outgoingJSON))
 }
-
-
-

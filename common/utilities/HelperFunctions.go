@@ -5,6 +5,7 @@ import (
 	"github.com/tkrex/IDS/common/models"
 )
 
+//Minimum
 func Min(x, y int) int {
 	if x < y {
 		return x
@@ -12,6 +13,7 @@ func Min(x, y int) int {
 	return y
 }
 
+//Maximum
 func Max(x, y int) int {
 	if x > y {
 		return x
@@ -19,6 +21,7 @@ func Max(x, y int) int {
 	return y
 }
 
+//Rounds up floats to the defined number of places
 func RoundUp(input float64, places int) (newVal float64) {
 	var round float64
 	pow := math.Pow(10, float64(places))

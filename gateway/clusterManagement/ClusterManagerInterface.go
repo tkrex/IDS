@@ -10,6 +10,7 @@ import (
 	"net"
 )
 
+//Manages the Cluster Manager REST interface
 type ClusterManagerInterface struct {
 	port                    string
 	providerStarted         sync.WaitGroup
@@ -25,7 +26,7 @@ func NewClusterManagerInterface(port string) *ClusterManagerInterface {
 	fmt.Println("Maintance Web Interface Started")
 	return webInterface
 }
-
+ //Defines and starts REST interface at specified port
 func (webInterface *ClusterManagerInterface) run(port string) {
 	router := mux.NewRouter()
 	router.HandleFunc("/rest/domainControllers/{domain}/new", webInterface.instantiateDomainController).Methods("GET")
@@ -40,6 +41,7 @@ func (webInterface *ClusterManagerInterface) run(port string) {
 	go http.Serve(listener, router)
 }
 
+//Delegates request for creating Domain Controller to ClusterManager
 func (webInterface ClusterManagerInterface) instantiateDomainController(res http.ResponseWriter, req *http.Request) {
 	res.Header().Set("Content-Type", "application/json")
 	res.Header().Set("Access-Control-Allow-Origin", "*")
@@ -64,6 +66,7 @@ func (webInterface ClusterManagerInterface) instantiateDomainController(res http
 	json.NewEncoder(res).Encode(&domainController)
 }
 
+//Delegates request for fetching  Domain Controller Information to ClusterManager
 func (webInterface ClusterManagerInterface) fetchDomainController(res http.ResponseWriter, req *http.Request) {
 	res.Header().Set("Content-Type", "application/json")
 	res.Header().Set("Access-Control-Allow-Origin", "*")
@@ -84,6 +87,7 @@ func (webInterface ClusterManagerInterface) fetchDomainController(res http.Respo
 	json.NewEncoder(res).Encode(&domainController)
 }
 
+//Delegates request for deleting  Domain Controller Information to ClusterManager
 func (webInterface ClusterManagerInterface) deleteDomainController(res http.ResponseWriter, req *http.Request) {
 	res.Header().Set("Content-Type", "application/json")
 	res.Header().Set("Access-Control-Allow-Origin", "*")

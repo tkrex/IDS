@@ -2,6 +2,7 @@ package models
 
 import "net/url"
 
+// Information necessary for connecting to a MQTT Broker
 type MqttClientConfiguration struct {
 	brokerAddress *url.URL
 	clientID 	string

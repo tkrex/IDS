@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"encoding/json"
-	"time"
 	"net/url"
 )
 
@@ -18,32 +17,30 @@ func NewDomainInformationRequestHandler() *DomainInformationRequestHandler {
 	return new(DomainInformationRequestHandler)
 }
 
-
+//Forwards the request to the corresponding Top Level Domain Controller and returns the results
 func (handler *DomainInformationRequestHandler) HandleRequest(informationRequest *models.DomainInformationRequest) []*models.DomainInformationMessage {
-	domainInformation := []*models.DomainInformationMessage{}
-
-	//DEBUG CODE
-	domain := models.NewRealWorldDomain("education")
-	broker := models.NewBroker()
-	broker.ID = "testID"
-	broker.IP = "localhost"
-	broker.RealWorldDomain = models.NewRealWorldDomain("education")
-	broker.Geolocation = models.NewGeolocation("germany","bavaria","munich",11.6309,48.2499)
-
-	topics := []*models.TopicInformation{}
-
-	for i := 0; i < 5; i++ {
-		topic := models.NewTopicInformation("/home/kitchen","{\"temperature\":3}",time.Now())
-		topic.UpdateBehavior.UpdateIntervalDeviation = 3.0
-		topics = append(topics, topic)
-	}
-
-	message := models.NewDomainInformationMessage(domain,broker,topics)
-	domainInformation = append(domainInformation,message)
-	return domainInformation
+	////DEBUG CODE
+	//domain := models.NewRealWorldDomain("education")
+	//broker := models.NewBroker()
+	//broker.ID = "testID"
+	//broker.IP = "localhost"
+	//broker.RealWorldDomain = models.NewRealWorldDomain("education")
+	//broker.Geolocation = models.NewGeolocation("germany","bavaria","munich",11.6309,48.2499)
+	//
+	//topics := []*models.TopicInformation{}
+	//
+	//for i := 0; i < 5; i++ {
+	//	topic := models.NewTopicInformation("/home/kitchen","{\"temperature\":3}",time.Now())
+	//	topic.UpdateBehavior.UpdateIntervalDeviation = 3.0
+	//	topics = append(topics, topic)
+	//}
+	//
+	//message := models.NewDomainInformationMessage(domain,broker,topics)
+	//domainInformation = append(domainInformation,message)
+	//return domainInformation
 
 
-	domain = models.NewRealWorldDomain(informationRequest.Domain())
+	domain := models.NewRealWorldDomain(informationRequest.Domain())
 	destinationController := RequestRoutingManagerInstance().DomainControllerForDomain(domain)
 
 	if destinationController != nil {

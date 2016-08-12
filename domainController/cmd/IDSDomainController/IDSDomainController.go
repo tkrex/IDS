@@ -12,7 +12,7 @@ import (
 )
 
 
-
+//Starts up all components of Domain Controller
 func main() {
 	controllerConfig  := configuration.DomainControllerConfigurationManagerInstance().Config()
 
@@ -27,6 +27,8 @@ func main() {
 }
 
 
+
+//Starts receiving and processing DomainInformationMessages from Daemon and Domain Controllers
 func startDomainInformationProcessing(forwardFlag bool) {
 	//producer layer
 

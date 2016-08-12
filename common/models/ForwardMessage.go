@@ -1,5 +1,6 @@
 package models
 
+
 type ForwardMessage struct {
 	Domain   *RealWorldDomain
 	Priority int

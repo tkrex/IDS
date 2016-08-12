@@ -2,6 +2,7 @@ package models
 
 import "time"
 
+//Contains Broker Statistics
 type BrokerStatistics struct {
 NumberOfTopics           int `json:"numberOfTopics"`
 ReceivedTopicsPerSeconds float64 `json:"topicsPerSecond"`

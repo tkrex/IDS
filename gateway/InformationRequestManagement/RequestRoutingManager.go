@@ -6,6 +6,7 @@ import (
 	"github.com/tkrex/IDS/gateway/clusterManagement"
 )
 
+//Manages the routing of DomainInformationRequests to th Corresponding Top Level Domain Controller
 type RequestRoutingManager struct {
 	dbManager *clusterManagement.ClusterManagerStorage
 }
@@ -27,6 +28,8 @@ func newRequestRoutingManager() *RequestRoutingManager {
 	return  routingManager
 }
 
+
+//Determines the TopLevelDomain of the specified Domain and fetches the Domain Controller from the ClusterManagementStorage
 func (routingManager *RequestRoutingManager) DomainControllerForDomain(domain *models.RealWorldDomain) *models.DomainController {
 	topLevelDomain := domain.TopLevelDomain()
 	if domainController,_ := routingManager.dbManager.FindDomainControllerForDomain(topLevelDomain); domainController != nil {

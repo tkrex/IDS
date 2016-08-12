@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"github.com/tkrex/IDS/common/models"
 )
-
+//Determines Geolocation of Broker based on IP Address
 type GeoLocationFetcher struct {
 }
 
@@ -16,8 +16,10 @@ func NewGeoLocationFetcher() *GeoLocationFetcher {
 	fetcher := new(GeoLocationFetcher)
 	return fetcher
 }
+//Endpoint of Freegeoip API
+const APIEndpoint = "http://freegeoip.net/json/"
 
-const APIEndpoint = "http://192.168.99.100:8080/json/"
+//Reponse of API request
 type Location struct {
 	IP          string  `json:"id"`
 	CountryCode string  `json:"country_code"`
@@ -32,7 +34,7 @@ type Location struct {
 	MetroCode   int     `json:"metro_code"`
 }
 
-
+//Requests and returns geolocation based on IP Address
 func (fetcher *GeoLocationFetcher) SendGeoLocationRequest(address string) (*models.Geolocation,error)  {
 	response, err := http.Get(APIEndpoint + address)
 	if err != nil {

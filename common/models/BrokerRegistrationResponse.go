@@ -4,6 +4,7 @@ import (
 	"fmt"
 )
 
+//Contains information that are returned by the Registration Manager in case of a successful registration
 type BrokerRegistrationResponse struct {
 	Broker           *Broker `json:"broker"`
 	DomainController *DomainController `json:"domainControllers"`

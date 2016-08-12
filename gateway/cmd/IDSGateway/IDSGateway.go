@@ -9,6 +9,7 @@ import (
 	"github.com/tkrex/IDS/gateway/brokerRegistration"
 )
 
+//Starts up the component of the Gateway
 func main() {
 
 	domainControllerManager := clusterManagement.NewClusterManager()
